@@ -1,0 +1,179 @@
+# 🧊 FROSTY - System Properties
+# Maximum logging and debugging disable
+
+
+# RTP & JNI
+config.disable_rtt=true
+dalvik.vm.checkjni=false
+dalvik.vm.verify-bytecode=false
+ro.kernel.android.checkjni=0
+ro.kernel.checkjni=0
+
+# Database & Query Logging
+db.log.slow_query_threshold=0
+
+# Qualcomm SNS
+debug.qualcomm.sns.hal=0
+debug.qualcomm.sns.daemon=0
+debug.qualcomm.sns.libsensor1=0
+
+# EGL & Graphics
+debug.egl.profiler=0
+ro.egl.destroy_after_detach=false
+hwui.use_gpu_pixel_buffers=false
+debug.composition.type=gpu
+persist.sys.composition.type=gpu
+
+# SurfaceFlinger & HWC
+debug.hwc.otf=0
+debug.hwc_dump_en=0
+debug.sf.dump=0
+debug.sf.ddms=0
+debug.sf.gpu_comp_tiling=0
+debug.sf.disable_backpressure=1
+debug.sf.recomputecrop=0
+debug.sf.showupdates=0
+debug.sf.showcpu=0
+debug.sf.showbackground=0
+debug.sf.showfps=0
+
+# Game & Wayland
+debug.enable.gamed=0
+debug.enable.wl_log=0
+
+# ANR & Debugging
+debugtool.anrhistory=0
+ro.debuggable=0
+debug.atrace.tags.enableflags=0
+debug.kill_allocating_task=0
+debug_test=0
+
+# Logcat & Live Logging
+logcat.live=disable
+logcast.live=disable
+live.logcat=disable
+ro.logd.size=0
+log.redirect-stdio=false
+rw.logger=0
+
+# TCP & Network
+net.ipv4.tcp_no_metrics_save=1
+
+# Media & Stagefright
+media.stagefright.log-uri=0
+vidc.debug.level=0
+vendor.vidc.enc.disable_bframes=1
+video.disable.ubwc=1
+
+# Profiler
+profiler.debugmonitor=false
+profiler.launch=false
+profiler.hung.dumpdobugreport=false
+profiler.forse_disable_err_rpt=1
+profiler.forse_disable_ulog=1
+
+# StrictMode & Performance
+persist.android.strictmode=0
+
+# KSM & Cache
+ro.config.ksm.support=false
+ro.compcache.default=0
+av.debug.disable.pers.cache=true
+
+# Google Check-in
+ro.config.nocheckin=1
+
+# Battery Logging
+ro.sf.battery_log=0
+ro.sf.battery.log.enabled=0
+
+# Telephony
+ro.telephony.call_ring.multiple=false
+
+# IMS (Logging only - VoLTE preserved)
+persist.ims.disableDebugLogs=1
+persist.ims.enableADBLogs=0
+persist.ims.enableDebugLogs=0
+persist.ims.disableQXDMLogs=0
+persist.ims.disableIMSLogs=0
+
+# WiFi Direct
+persist.debug.wfd.enable=0
+persist.sys.wfd.virtual=0
+
+# Bluetooth (Audio quality preserved)
+vendor.fm.a2dp.conc.disabled=true
+
+# QMI & Sensors
+persist.data.qmi.adb_logmask=0
+persist.debug.sensors.hal=0
+
+# Broadcom
+persist.brcm.log=none
+persist.brcm.cp_crash=none
+persist.brcm.ap_crash=none
+
+# OEM & Radio
+persist.sys.dun.override=0
+persist.radio.oem_socket=false
+persist.oem.dump=0
+
+# Offline Logging (Keep enabled to prevent crashes)
+persist.sys.offlinelog.kernel=1
+persist.sys.offlinelog.logcat=1
+
+# Sleep Mode
+pm.sleep_mode=1
+
+# SDM Debug
+sdm.debug.disable_inline_rotator=1
+sdm.debug.disable_skip_validate=1
+
+# GPU & Games
+sys.games.gt.prof=1
+sys.hwc.gpu_perf_mode=0
+
+# Service Logging
+persist.service.pcsync.enable=0
+persist.service.lgospd.enable=0
+persist.service.logging.disable=true
+
+# Memory
+libc.debug.malloc=0
+
+# SSR Ramdumps
+persist.vendor.ssr.enable_ramdumps=0
+
+# Kernel & QEMU
+ro.kernel.qemu.gles=0
+
+# Detailed Log Outputs (All disabled)
+log.resolves=0
+log.pm4=0
+log.pm4mem=0
+log.shaders=0
+log.sc_dev=0
+log.cffdump=0
+log.cffdump_with_ifh=0
+log.cffdump_no_memzero=0
+log.dumpx=0
+log.primitives=0
+log_frame_info=0
+log_mp4dectime=0
+log_posttime=0
+log_profile=0
+log_playerdriver=0
+log_metadatadriver=0
+log_playerengine=0
+log_datapath=0
+log_mp4parsernode=0
+log_basedecnode=0
+log_audiodecnode=0
+log_videodecnode=0
+log_outputnode=0
+log_outputnodeinputport=0
+log_audiooutput=0
+log_surfaceoutput=0
+log_omxmp4=0
+log_ao=0
+log_fps_interval=0
