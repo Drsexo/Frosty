@@ -177,3 +177,12 @@ log_surfaceoutput=0
 log_omxmp4=0
 log_ao=0
 log_fps_interval=0
+
+# USAP pool (reduces memory overhead)
+persist.sys.usap_pool_enabled=false
+
+# Background process limit
+ro.sys.fw.bg_apps_limit=24
+
+# Disable usage stats collection
+persist.sys.usagestats=0

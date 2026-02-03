@@ -83,12 +83,13 @@ resetprop --delete ro.surface_flinger.supports_background_blur 2>/dev/null
 
 log "resetprop changes reverted"
 
+# Load user prefs
+ENABLE_GMS_DOZE=0
+ENABLE_DEEP_DOZE=0
+[ -f "$USER_PREFS" ] && . "$USER_PREFS"
+
 # REVERSE GMS DOZE
 log "Reversing GMS Doze..."
-
-# Load user prefs to check if doze was enabled
-ENABLE_GMS_DOZE=0
-[ -f "$USER_PREFS" ] && . "$USER_PREFS"
 
 if [ "$ENABLE_GMS_DOZE" = "1" ]; then
   # Re-add GMS to deviceidle whitelist
@@ -106,6 +107,51 @@ if [ "$ENABLE_GMS_DOZE" = "1" ]; then
     done
   done
   log "Device admin receivers re-enabled"
+fi
+
+# REVERSE DEEP DOZE
+log "Reversing Deep Doze..."
+
+if [ "$ENABLE_DEEP_DOZE" = "1" ]; then
+  # Delete custom doze constants
+  settings delete global device_idle_constants 2>/dev/null
+  log "Doze constants reverted to default"
+  
+  # Restore app standby settings
+  settings put global forced_app_standby_enabled 0 2>/dev/null
+  
+  # Restore network settings
+  settings put global wifi_scan_always_enabled 1 2>/dev/null
+  settings put global wifi_wakeup_enabled 1 2>/dev/null
+  settings put global ble_scan_always_enabled 1 2>/dev/null
+  settings put global wifi_networks_available_notification_on 1 2>/dev/null
+  settings put global network_scoring_ui_enabled 1 2>/dev/null
+  settings put global network_recommendations_enabled 1 2>/dev/null
+  settings put global mobile_data_always_on 1 2>/dev/null
+  log "Network settings restored"
+  
+  # Restore sensor settings
+  settings put global sensors_suspend_enabled 0 2>/dev/null
+  
+  # Unrestrict all third-party apps
+  log "Unrestricting apps..."
+  unrestricted=0
+  for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
+    appops set "$pkg" RUN_IN_BACKGROUND allow 2>/dev/null
+    appops set "$pkg" WAKE_LOCK allow 2>/dev/null
+    appops set "$pkg" SCHEDULE_EXACT_ALARM allow 2>/dev/null
+    appops set "$pkg" USE_EXACT_ALARM allow 2>/dev/null
+    appops set "$pkg" BODY_SENSORS allow 2>/dev/null
+    appops set "$pkg" ACTIVITY_RECOGNITION allow 2>/dev/null
+    am set-standby-bucket "$pkg" active 2>/dev/null
+    am set-inactive "$pkg" false 2>/dev/null
+    unrestricted=$((unrestricted + 1))
+  done
+  log "Unrestricted $unrestricted apps"
+  
+  # Exit forced doze
+  dumpsys deviceidle unforce 2>/dev/null
+  log "Device idle unforced"
 fi
 
 # RE-ENABLE ALL GMS SERVICES
@@ -145,6 +191,8 @@ log "  - System settings (analytics, logging)"
 log "  - Resetprop properties"
 log "  - Disabled GMS services"
 log "  - GMS Doze (if enabled)"
+log "  - Deep Doze (if enabled)"
+log "  - All app restrictions"
 log ""
 log "What reverts after reboot:"
 log "  - System.prop tweaks"

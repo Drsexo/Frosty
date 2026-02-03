@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [2.0] - 2026-02-03
+- Implement system-wide dozing for all apps.
+- Added more props and kernel tweaks.
+- Reworked action button and overhauled scripts.
+
+
 ## [1.0] **Initial release** - 2026-02-02
 
 - Added **GMS Doze Integration** based on [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze) by gloeyisk. Patches system XMLs to allow Android Doze to optimize GMS battery usage.

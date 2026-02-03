@@ -27,7 +27,7 @@ Unlike other optimizers, Frosty gives you **granular control** over which servic
 ### Why Frosty?
 
 - 🔋 **Massive Battery Savings** - Disable power-hungry GMS services that run 24/7
-- 💤 **GMS Doze Integration** - Force Android to optimize GMS battery usage
+- 💤 **Doze Integration** - Force Android to optimize all apps including GMS to improve battery
 - 🎯 **Selective Control** - Choose exactly which features to keep or freeze
 - ⚡ **Kernel Optimizations** - Optional scheduler, VM, and network tweaks
 - 🔄 **Fully Reversible** - Toggle between Frozen and Stock modes instantly
@@ -53,6 +53,12 @@ Based on [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze) by
 - **DeviceIdle Integration** - Allows Android Doze to optimize GMS
 - **Conflict Resolution** - Patches other modules that whitelist GMS
 - **Toggleable** - Enable/disable with the action button
+
+### 🔋 Deep Doze
+Based on [DeepDoze enforcer](https://github.com/Azyrn/DeepDoze-Enforcer) by Azyrn:
+- **Deep Sleep Enforcement** - Forces the device into deep sleep immediately when the screen locks.
+- **Background Restrictions** - Blocks apps from running in the background to stop battery-draining loops.
+- **WAKE_LOCK Denial** - Denies WAKE_LOCK permissions to block useless CPU-heavy wakelocks.
 
 ### ⚡ System Optimizations
 - **Kernel Tweaks** - Scheduler, VM, and network optimizations
@@ -103,6 +109,25 @@ You'll be prompted to configure:
 | 🔧 Kernel Tweaks | Scheduler, VM, network optimizations | YES |
 | 🎨 Blur Disable | Disable UI blur effects | NO |
 | 📝 Log Killing | Kill logging processes | YES |
+
+**System Tweaks:**
+| Option | Description | Default |
+|--------|-------------|---------|
+| 🔧 Kernel Tweaks | Scheduler, VM, network optimizations | YES |
+| 🎨 Blur Disable | Disable UI blur effects | NO |
+| 📝 Log Killing | Kill logging processes | YES |
+
+**Deep Doze levels:**
+| Feature | MODERATE |  MAXIMUM |
+| :-------------------------- | :------: | :------: |
+| Aggressive Doze Constants | ✅ |     ✅ |
+| App Standby Buckets (restricted) | ✅ | ✅ |
+| Appops: Deny `RUN_IN_BACKGROUND` | ✅ | ✅ |
+| Appops: Deny `WAKE_LOCK` | ❌ | ✅ |
+| Network Lockdown (disable sync/push) | ❌ | ✅ |
+| Sensor Freeze (stop sensor-triggered wakeups) | ❌ | ✅ |
+| Wakelock Killer (force-stop persistent wakelocks) | ❌ | ✅ |
+| Alarm Restrictions | ❌ | ✅ (safe) |
 
 **GMS Doze:**
 | Option | Description | Default |
@@ -178,7 +203,7 @@ All logs are stored in `/data/adb/modules/Frosty/logs/`:
 **A:** Check the log files.
 
 ### Q: What's the difference between Frozen and Stock mode?
-| Mode | Services | GMS Doze | Kernel Tweaks |
+| Mode | Services | Doze | Kernel Tweaks |
 |------|----------|----------|---------------|
 | 🧊 Frozen | Disabled per config | Active | Applied |
 | 🔥 Stock | All enabled | Inactive | Reverted after reboot |
@@ -189,3 +214,4 @@ All logs are stored in `/data/adb/modules/Frosty/logs/`:
 - **kaushikieeee** - [GhostGMS](https://github.com/kaushikieeee/GhostGMS) - Good base
 - **gloeyisk** - [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze) - GMS Doze implementation
 - **MoZoiD** - [GMS Component Disable Script](https://t.me/MoZoiDStack/137) - Few unique services
+- **Azyrn** - [DeepDoze enforcer](https://github.com/Azyrn/DeepDoze-Enforcer) - Force doze concept

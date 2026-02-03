@@ -6,7 +6,7 @@ MODDIR="${0%/*}"
 [ -z "$MODDIR" ] && MODDIR="/data/adb/modules/Frosty"
 
 LOGDIR="$MODDIR/logs"
-DOZE_LOG="$LOGDIR/doze.log"
+DOZE_LOG="$LOGDIR/gms_doze.log"
 USER_PREFS="$MODDIR/config/user_prefs"
 
 # Initialize
@@ -132,7 +132,7 @@ freeze_doze() {
   log_doze "═════════════════════════════════════"
   
   echo ""
-  echo "═════════════════════════════════════"
+  echo "═════════════════════════════════════════════"
   echo "  💤 GMS DOZE: ENABLED"
   echo ""
   echo "  Conflicting modules patched: $patched_mods"
@@ -140,16 +140,16 @@ freeze_doze() {
   echo "  GMS optimized: $is_optimized"
   echo ""
   echo "  📄 Details: $DOZE_LOG"
-  echo "═════════════════════════════════════"
+  echo "═════════════════════════════════════════════"
   echo ""
 }
 
 # STOCK DOZE - Disable battery optimization for GMS
 stock_doze() {
-  echo "═════════════════════════════════════" > "$DOZE_LOG"
+  echo "═════════════════════════════════════════════" > "$DOZE_LOG"
   echo "🔥 FROSTY Doze Log - STOCK Operation" >> "$DOZE_LOG"
   echo "Started: $(date '+%Y-%m-%d %H:%M:%S')" >> "$DOZE_LOG"
-  echo "═════════════════════════════════════" >> "$DOZE_LOG"
+  echo "═════════════════════════════════════════════" >> "$DOZE_LOG"
   echo "" >> "$DOZE_LOG"
   
   log_doze "[INFO] Disabling GMS battery optimization (restoring stock)..."
@@ -226,7 +226,7 @@ stock_doze() {
   log_doze "═════════════════════════════════════"
   
   echo ""
-  echo "═════════════════════════════════════"
+  echo "═════════════════════════════════════════════"
   echo "  🔥 GMS DOZE: DISABLED (Stock Mode)"
   echo ""
   echo "  XML patches removed: $xml_removed"
@@ -235,7 +235,7 @@ stock_doze() {
   echo "  ⚠️  Reboot recommended for full effect"
   echo ""
   echo "  📄 Details: $DOZE_LOG"
-  echo "═════════════════════════════════════"
+  echo "═════════════════════════════════════════════"
   echo ""
 }
 

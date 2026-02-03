@@ -4,4 +4,4 @@
 
 MODDIR="${0%/*}"
 chmod +x "$MODDIR/frosty.sh"
-exec "$MODDIR/frosty.sh" toggle
+exec "$MODDIR/frosty.sh" interactive

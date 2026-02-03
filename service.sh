@@ -84,7 +84,8 @@ ENABLE_KERNEL_TWEAKS=1
 ENABLE_BLUR_DISABLE=0
 ENABLE_LOG_KILLING=1
 ENABLE_GMS_DOZE=1
-CLEAR_GMS_CACHE=0
+ENABLE_DEEP_DOZE=1
+DEEP_DOZE_LEVEL=moderate
 DISABLE_TELEMETRY=1
 DISABLE_BACKGROUND=1
 DISABLE_LOCATION=0
@@ -103,6 +104,7 @@ log_boot " - Kernel Tweaks: $([ "$ENABLE_KERNEL_TWEAKS" = "1" ] && echo "ENABLED
 log_boot " - Blur Disable:  $([ "$ENABLE_BLUR_DISABLE" = "1" ] && echo "ENABLED" || echo "DISABLED")"
 log_boot " - Log Killing:   $([ "$ENABLE_LOG_KILLING" = "1" ] && echo "ENABLED" || echo "DISABLED")"
 log_boot " - GMS Doze:      $([ "$ENABLE_GMS_DOZE" = "1" ] && echo "ENABLED" || echo "DISABLED")"
+log_boot " - Deep Doze:     $([ "$ENABLE_DEEP_DOZE" = "1" ] && echo "ENABLED ($DEEP_DOZE_LEVEL)" || echo "DISABLED")"
 
 [ ! -f "$MODDIR/config/state" ] && echo "frozen" > "$MODDIR/config/state"
 
@@ -193,6 +195,16 @@ if [ "$ENABLE_KERNEL_TWEAKS" = "1" ]; then
   log_tweak ""
   log_tweak "[DEBUG]"
   write_val /proc/sys/debug/exception-trace 0 "exception-trace"
+  
+  log_tweak ""
+  log_tweak "[ENTROPY]"
+  write_val /proc/sys/kernel/random/read_wakeup_threshold 256 "read_wakeup_threshold"
+  write_val /proc/sys/kernel/random/write_wakeup_threshold 320 "write_wakeup_threshold"
+  
+  log_tweak ""
+  log_tweak "[PRINTK RATE LIMIT]"
+  write_val /proc/sys/kernel/printk_ratelimit 1 "printk_ratelimit"
+  write_val /proc/sys/kernel/printk_ratelimit_burst 5 "printk_ratelimit_burst"
   
   log_tweak ""
   log_tweak "[SCHED FEATURES]"
