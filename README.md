@@ -110,12 +110,6 @@ You'll be prompted to configure:
 | 🎨 Blur Disable | Disable UI blur effects | NO |
 | 📝 Log Killing | Kill logging processes | YES |
 
-**System Tweaks:**
-| Option | Description | Default |
-|--------|-------------|---------|
-| 🔧 Kernel Tweaks | Scheduler, VM, network optimizations | YES |
-| 🎨 Blur Disable | Disable UI blur effects | NO |
-| 📝 Log Killing | Kill logging processes | YES |
 
 **Deep Doze levels:**
 | Feature | MODERATE |  MAXIMUM |
@@ -136,16 +130,22 @@ You'll be prompted to configure:
 | 🗑️ Clear GMS Cache | Fix delayed notifications | NO |
 
 **GMS Categories:**
-| Category | What it affects | Default |
-|----------|-----------------|---------|
-| 📊 Telemetry | Ads, tracking, analytics | FREEZE |
-| 🔄 Background | Updates, sync services | FREEZE |
-| 📍 Location | Maps, navigation, geofence | FREEZE |
-| 📡 Connectivity | Cast, Quick Share, Nearby | FREEZE |
-| ☁️ Cloud | Sign-in, backup, autofill | FREEZE |
-| 💳 Payments | Google Pay, NFC payments | FREEZE |
-| ⌚ Wearables | Wear OS, Google Fit | FREEZE |
-| 🎮 Games | Play Games, achievements | FREEZE |
+
+#### Safe to Disable
+| Category | Potential impact |
+|----------|--------|
+| 📊 **Telemetry** | No functional impact. Stops background data collection, ad tracking, and analytics reporting. Improves privacy without affecting user-facing features. May reduce ad personalization across Google services. |
+| 🔄 **Background** | Minimal impact. Automatic app updates may be delayed until manual Play Store visits. Some background sync operations might take longer. Does not affect app functionality or notifications. |
+
+#### May Break Features
+| Category | Potential Impact |
+|----------|--------|
+| 📍 **Location** | Breaks all location-dependent functionality. Navigation apps fail to determine position or calculate routes. Location sharing stops working. Fitness tracking and step counting become unavailable. Weather apps may not detect local conditions. Ride-sharing and delivery apps lose pickup/dropoff accuracy. Smart home geofencing routines break. Emergency location services may be affected. |
+| 📡 **Connectivity** | Breaks wireless device-to-device communication. Screen casting to TVs, speakers, and smart displays stops. Fast file sharing between nearby Android devices fails. Automatic Bluetooth accessory pairing breaks. Apps with cast functionality lose output options. Some smart home device setup flows may fail. |
+| ☁️ **Cloud** | Breaks Google account integration across apps. "Sign in with Google" buttons fail. App data backup and restore stops. Password autofill and smart lock features break. Some banking and streaming apps may refuse to run due to security checks failing. Parental control features become unavailable. Instant app streaming stops working. |
+| 💳 **Payments** | Breaks contactless payments. NFC tap-to-pay at terminals fails. In-store checkout using phone stops working. Digital wallet access for tickets, boarding passes, and loyalty cards may be affected. Wearable payment functionality stops. Transaction notifications may not appear. |
+| ⌚ **Wearables** | Breaks all smartwatch integration. Wear OS devices lose notifications, apps, and sync capabilities. Fitness tracking apps cannot access health sensors. Heart rate monitoring and sleep tracking stop. Connected gym equipment and health devices may not sync. Watch face customization and app installation from phone breaks. |
+| 🎮 **Games** | Breaks gaming social features and progress sync. Achievements stop unlocking. Leaderboards become inaccessible. Game progress no longer syncs across devices. Multiplayer matchmaking fails. Some games may refuse to launch or show errors when accessing online features. |
 
 ### After Installation
 
@@ -167,26 +167,6 @@ All logs are stored in `/data/adb/modules/Frosty/logs/`:
 | `tweaks.log` | Kernel tweaks applied |
 | `doze.log` | GMS Doze operations |
 | `action.log` | Action button history |
-
-
-## 🧊 GMS Categories
-
-### Safe to Disable
-| Category | Services | Impact |
-|----------|----------|--------|
-| **Telemetry** | Ads, Analytics, Clearcut, Tron | None - just stops tracking |
-| **Background** | Chimera, Updates, MDM | May delay app updates |
-
-### May Break Features
-| Category | Services | What Breaks |
-|----------|----------|-------------|
-| **Location** | Fused Location, Geofence | Maps, Navigation, Find My Device |
-| **Connectivity** | Cast, Nearby, Quick Share | Chromecast, file sharing |
-| **Cloud** | Auth, Backup, Sync | Google Sign-in, backups |
-| **Payments** | Tap and Pay, Wallet | Google Pay, NFC payments |
-| **Wearables** | Fitness, Wearable | Smartwatch sync, Google Fit |
-| **Games** | Play Games | Achievements, cloud saves |
-
 
 ## ❓ FAQ
 
