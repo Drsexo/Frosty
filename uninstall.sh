@@ -2,28 +2,14 @@
 # 🧊 FROSTY - Uninstall Script
 # Reverts ALL changes made by the module
 
-MODDIR="${0%/*}"
 
-# BACKUP FILES BEFORE MODULE REMOVAL
+MODDIR="${0%/*}"
 TEMP_DIR="/data/local/tmp/frosty_uninstall"
 mkdir -p "$TEMP_DIR"
 
-# Copy gms_services.txt
-if [ -f "$MODDIR/config/gms_services.txt" ]; then
-  cp -f "$MODDIR/config/gms_services.txt" "$TEMP_DIR/gms_services.txt"
-fi
+[ -f "$MODDIR/config/gms_services.txt" ] && cp -f "$MODDIR/config/gms_services.txt" "$TEMP_DIR/"
+[ -f "$MODDIR/config/user_prefs" ] && cp -f "$MODDIR/config/user_prefs" "$TEMP_DIR/"
 
-# Copy user_prefs to check if doze was enabled
-if [ -f "$MODDIR/config/user_prefs" ]; then
-  cp -f "$MODDIR/config/user_prefs" "$TEMP_DIR/user_prefs"
-fi
-
-# Verify copy succeeded
-if [ ! -f "$TEMP_DIR/gms_services.txt" ]; then
-  echo "WARNING: Failed to backup gms_services.txt" >&2
-fi
-
-# CREATE BACKGROUND UNINSTALL SCRIPT
 cat > "/data/adb/frosty_uninstall_runner.sh" << 'UNINSTALL_EOF'
 #!/system/bin/sh
 
@@ -32,177 +18,80 @@ TEMP_DIR="/data/local/tmp/frosty_uninstall"
 GMS_LIST="$TEMP_DIR/gms_services.txt"
 USER_PREFS="$TEMP_DIR/user_prefs"
 
-log() {
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOGFILE"
-}
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOGFILE"; }
+echo "Frosty uninstall started $(date)" > "$LOGFILE"
 
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] Frosty uninstall started" > "$LOGFILE"
-
-# Wait for sdcard/system to be ready
-until [ -d "/sdcard/" ]; do
-  sleep 1
-done
+until [ -d "/sdcard/" ]; do sleep 1; done
 sleep 5
 
-# REVERSE SYSTEM SETTINGS
-log "Reversing system settings..."
-
-settings put global gmscorestat_enabled 1 2>/dev/null
-settings put global play_store_panel_logging_enabled 1 2>/dev/null
-settings put global clearcut_events 1 2>/dev/null
-settings put global clearcut_gcm 1 2>/dev/null
+# Revert settings
+log "Reverting settings..."
 settings delete global phenotype__debug_bypass_phenotype 2>/dev/null
 settings delete global phenotype_boot_count 2>/dev/null
 settings delete global phenotype_flags 2>/dev/null
-settings put global ga_collection_enabled 1 2>/dev/null
-settings put global clearcut_enabled 1 2>/dev/null
-settings put global analytics_enabled 1 2>/dev/null
-settings put global uploading_enabled 1 2>/dev/null
-settings put global bug_report_in_power_menu 1 2>/dev/null
-settings put global usage_stats_enabled 1 2>/dev/null
-settings put global usagestats_collection_enabled 1 2>/dev/null
 
-log "System settings reverted"
+# Revert resetprop
+log "Reverting resetprop..."
+for prop in tombstoned.max_tombstone_count ro.lmk.debug ro.lmk.log_stats \
+  dalvik.vm.dex2oat-minidebuginfo dalvik.vm.minidebuginfo \
+  disableBlurs enable_blurs_on_windows ro.launcher.blur.appLaunch \
+  ro.sf.blurs_are_expensive ro.surface_flinger.supports_background_blur; do
+  resetprop --delete "$prop" 2>/dev/null
+done
 
-# REVERSE RESETPROP CHANGES
-log "Reversing resetprop changes..."
-
-resetprop --delete tombstoned.max_tombstone_count 2>/dev/null
-resetprop --delete ro.lmk.debug 2>/dev/null
-resetprop --delete ro.lmk.log_stats 2>/dev/null
-resetprop --delete dalvik.vm.check-dex-sum 2>/dev/null
-resetprop --delete dalvik.vm.checkjni 2>/dev/null
-resetprop --delete dalvik.vm.dex2oat-minidebuginfo 2>/dev/null
-resetprop --delete dalvik.vm.minidebuginfo 2>/dev/null
-resetprop --delete dalvik.vm.verify-bytecode 2>/dev/null
-resetprop --delete disableBlurs 2>/dev/null
-resetprop --delete enable_blurs_on_windows 2>/dev/null
-resetprop --delete ro.launcher.blur.appLaunch 2>/dev/null
-resetprop --delete ro.sf.blurs_are_expensive 2>/dev/null
-resetprop --delete ro.surface_flinger.supports_background_blur 2>/dev/null
-
-log "resetprop changes reverted"
-
-# Load user prefs
 ENABLE_GMS_DOZE=0
 ENABLE_DEEP_DOZE=0
 [ -f "$USER_PREFS" ] && . "$USER_PREFS"
 
-# REVERSE GMS DOZE
-log "Reversing GMS Doze..."
-
+# Revert GMS Doze
 if [ "$ENABLE_GMS_DOZE" = "1" ]; then
-  # Re-add GMS to deviceidle whitelist
+  log "Reverting GMS Doze..."
   dumpsys deviceidle whitelist +com.google.android.gms >/dev/null 2>&1
-  log "GMS re-added to deviceidle whitelist"
-  
-  # Re-enable device admin receivers
   GMS_PKG="com.google.android.gms"
-  GMS_ADMIN1="$GMS_PKG/$GMS_PKG.auth.managed.admin.DeviceAdminReceiver"
-  GMS_ADMIN2="$GMS_PKG/$GMS_PKG.mdm.receivers.MdmDeviceAdminReceiver"
-  
-  for user_id in $(ls /data/user 2>/dev/null); do
-    for admin in "$GMS_ADMIN1" "$GMS_ADMIN2"; do
-      pm enable --user "$user_id" "$admin" >/dev/null 2>&1
-    done
+  for user_id in $(pm list users 2>/dev/null | grep -oE 'UserInfo\{[0-9]+' | grep -oE '[0-9]+'); do
+    pm enable --user "$user_id" "$GMS_PKG/$GMS_PKG.auth.managed.admin.DeviceAdminReceiver" >/dev/null 2>&1
+    pm enable --user "$user_id" "$GMS_PKG/$GMS_PKG.mdm.receivers.MdmDeviceAdminReceiver" >/dev/null 2>&1
   done
-  log "Device admin receivers re-enabled"
+  log "GMS Doze reverted"
 fi
 
-# REVERSE DEEP DOZE
-log "Reversing Deep Doze..."
-
+# Revert Deep Doze
 if [ "$ENABLE_DEEP_DOZE" = "1" ]; then
-  # Delete custom doze constants
+  log "Reverting Deep Doze..."
   settings delete global device_idle_constants 2>/dev/null
-  log "Doze constants reverted to default"
-  
-  # Restore app standby settings
   settings put global forced_app_standby_enabled 0 2>/dev/null
-  
-  # Restore network settings
-  settings put global wifi_scan_always_enabled 1 2>/dev/null
-  settings put global wifi_wakeup_enabled 1 2>/dev/null
-  settings put global ble_scan_always_enabled 1 2>/dev/null
-  settings put global wifi_networks_available_notification_on 1 2>/dev/null
-  settings put global network_scoring_ui_enabled 1 2>/dev/null
-  settings put global network_recommendations_enabled 1 2>/dev/null
-  settings put global mobile_data_always_on 1 2>/dev/null
-  log "Network settings restored"
-  
-  # Restore sensor settings
-  settings put global sensors_suspend_enabled 0 2>/dev/null
-  
-  # Unrestrict all third-party apps
-  log "Unrestricting apps..."
-  unrestricted=0
+
   for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
     appops set "$pkg" RUN_IN_BACKGROUND allow 2>/dev/null
     appops set "$pkg" WAKE_LOCK allow 2>/dev/null
     appops set "$pkg" SCHEDULE_EXACT_ALARM allow 2>/dev/null
     appops set "$pkg" USE_EXACT_ALARM allow 2>/dev/null
-    appops set "$pkg" BODY_SENSORS allow 2>/dev/null
-    appops set "$pkg" ACTIVITY_RECOGNITION allow 2>/dev/null
     am set-standby-bucket "$pkg" active 2>/dev/null
     am set-inactive "$pkg" false 2>/dev/null
-    unrestricted=$((unrestricted + 1))
   done
-  log "Unrestricted $unrestricted apps"
-  
-  # Exit forced doze
+
   dumpsys deviceidle unforce 2>/dev/null
-  log "Device idle unforced"
+
+  # Kill screen monitor if running
+  [ -f "/data/adb/modules/Frosty/tmp/screen_monitor.pid" ] && \
+    kill $(cat "/data/adb/modules/Frosty/tmp/screen_monitor.pid") 2>/dev/null
+  log "Deep Doze reverted"
 fi
 
-# RE-ENABLE ALL GMS SERVICES
-log "Re-enabling all GMS services..."
-
+# Re-enable GMS services
 if [ -f "$GMS_LIST" ]; then
+  log "Re-enabling GMS services..."
   count=0
-  failed=0
-  
   while IFS='|' read -r service category || [ -n "$service" ]; do
-    case "$service" in
-      \#*|"") continue ;;
-    esac
-    
+    case "$service" in \#*|"") continue ;; esac
     service=$(echo "$service" | tr -d ' ')
-    
-    if pm enable "$service" >/dev/null 2>&1; then
-      count=$((count + 1))
-    else
-      failed=$((failed + 1))
-    fi
+    pm enable "$service" >/dev/null 2>&1 && count=$((count + 1))
   done < "$GMS_LIST"
-  
-  log "Re-enabled $count services ($failed failed/not found)"
-else
-  log "WARNING: gms_services.txt not found, cannot re-enable services automatically"
+  log "Re-enabled $count services"
 fi
 
-# CLEANUP
-log ""
-log "═════════════════════════════════════"
-log "UNINSTALL COMPLETE"
-log "═════════════════════════════════════"
-log ""
-log "Immediately reverted:"
-log "  - System settings (analytics, logging)"
-log "  - Resetprop properties"
-log "  - Disabled GMS services"
-log "  - GMS Doze (if enabled)"
-log "  - Deep Doze (if enabled)"
-log "  - All app restrictions"
-log ""
-log "What reverts after reboot:"
-log "  - System.prop tweaks"
-log "  - Kernel tweaks"
-log "  - Logging daemons"
-log "  - GMS doze XML patches"
-log ""
-log "PLEASE REBOOT YOUR DEVICE!"
+log "UNINSTALL COMPLETE - Please reboot"
 
-# Cleanup temp files
 rm -rf "$TEMP_DIR"
 sleep 10
 rm -f "/data/adb/frosty_uninstall_runner.sh"

@@ -112,16 +112,15 @@ You'll be prompted to configure:
 
 
 **Deep Doze levels:**
-| Feature | MODERATE |  MAXIMUM |
-| :-------------------------- | :------: | :------: |
-| Aggressive Doze Constants | ✅ |     ✅ |
+| Feature | MODERATE | MAXIMUM |
+| :--- | :---: | :---: |
+| Aggressive Doze Constants | ✅ | ✅ |
 | App Standby Buckets (restricted) | ✅ | ✅ |
 | Appops: Deny `RUN_IN_BACKGROUND` | ✅ | ✅ |
 | Appops: Deny `WAKE_LOCK` | ❌ | ✅ |
-| Network Lockdown (disable sync/push) | ❌ | ✅ |
-| Sensor Freeze (stop sensor-triggered wakeups) | ❌ | ✅ |
 | Wakelock Killer (force-stop persistent wakelocks) | ❌ | ✅ |
-| Alarm Restrictions | ❌ | ✅ (safe) |
+| Alarm Restrictions | ❌ | ✅ |
+| Screen-off Deep Idle (5min delay) | ✅ | ✅ |
 
 **GMS Doze:**
 | Option | Description | Default |

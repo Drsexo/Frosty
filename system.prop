@@ -2,20 +2,8 @@
 # Maximum logging and debugging disable
 
 
-# RTP & JNI
 config.disable_rtt=true
-dalvik.vm.checkjni=false
-dalvik.vm.verify-bytecode=false
-ro.kernel.android.checkjni=0
-ro.kernel.checkjni=0
-
-# Database & Query Logging
 db.log.slow_query_threshold=0
-
-# Qualcomm SNS
-debug.qualcomm.sns.hal=0
-debug.qualcomm.sns.daemon=0
-debug.qualcomm.sns.libsensor1=0
 
 # EGL & Graphics
 debug.egl.profiler=0
@@ -24,7 +12,7 @@ hwui.use_gpu_pixel_buffers=false
 debug.composition.type=gpu
 persist.sys.composition.type=gpu
 
-# SurfaceFlinger & HWC
+# SurfaceFlinger
 debug.hwc.otf=0
 debug.hwc_dump_en=0
 debug.sf.dump=0
@@ -43,12 +31,11 @@ debug.enable.wl_log=0
 
 # ANR & Debugging
 debugtool.anrhistory=0
-ro.debuggable=0
 debug.atrace.tags.enableflags=0
 debug.kill_allocating_task=0
 debug_test=0
 
-# Logcat & Live Logging
+# Logcat
 logcat.live=disable
 logcast.live=disable
 live.logcat=disable
@@ -56,10 +43,10 @@ ro.logd.size=0
 log.redirect-stdio=false
 rw.logger=0
 
-# TCP & Network
+# Network
 net.ipv4.tcp_no_metrics_save=1
 
-# Media & Stagefright
+# Media
 media.stagefright.log-uri=0
 vidc.debug.level=0
 vendor.vidc.enc.disable_bframes=1
@@ -72,16 +59,13 @@ profiler.hung.dumpdobugreport=false
 profiler.forse_disable_err_rpt=1
 profiler.forse_disable_ulog=1
 
-# StrictMode & Performance
+# StrictMode
 persist.android.strictmode=0
 
 # KSM & Cache
 ro.config.ksm.support=false
 ro.compcache.default=0
 av.debug.disable.pers.cache=true
-
-# Google Check-in
-ro.config.nocheckin=1
 
 # Battery Logging
 ro.sf.battery_log=0
@@ -90,7 +74,7 @@ ro.sf.battery.log.enabled=0
 # Telephony
 ro.telephony.call_ring.multiple=false
 
-# IMS (Logging only - VoLTE preserved)
+# IMS Logging
 persist.ims.disableDebugLogs=1
 persist.ims.enableADBLogs=0
 persist.ims.enableDebugLogs=0
@@ -101,12 +85,11 @@ persist.ims.disableIMSLogs=0
 persist.debug.wfd.enable=0
 persist.sys.wfd.virtual=0
 
-# Bluetooth (Audio quality preserved)
+# Bluetooth
 vendor.fm.a2dp.conc.disabled=true
 
-# QMI & Sensors
+# QMI
 persist.data.qmi.adb_logmask=0
-persist.debug.sensors.hal=0
 
 # Broadcom
 persist.brcm.log=none
@@ -118,7 +101,7 @@ persist.sys.dun.override=0
 persist.radio.oem_socket=false
 persist.oem.dump=0
 
-# Offline Logging (Keep enabled to prevent crashes)
+# Offline Logging
 persist.sys.offlinelog.kernel=1
 persist.sys.offlinelog.logcat=1
 
@@ -129,7 +112,7 @@ pm.sleep_mode=1
 sdm.debug.disable_inline_rotator=1
 sdm.debug.disable_skip_validate=1
 
-# GPU & Games
+# GPU
 sys.games.gt.prof=1
 sys.hwc.gpu_perf_mode=0
 
@@ -141,13 +124,13 @@ persist.service.logging.disable=true
 # Memory
 libc.debug.malloc=0
 
-# SSR Ramdumps
+# SSR
 persist.vendor.ssr.enable_ramdumps=0
 
-# Kernel & QEMU
+# Kernel
 ro.kernel.qemu.gles=0
 
-# Detailed Log Outputs (All disabled)
+# Detailed Log Outputs
 log.resolves=0
 log.pm4=0
 log.pm4mem=0
@@ -177,12 +160,3 @@ log_surfaceoutput=0
 log_omxmp4=0
 log_ao=0
 log_fps_interval=0
-
-# USAP pool (reduces memory overhead)
-persist.sys.usap_pool_enabled=false
-
-# Background process limit
-ro.sys.fw.bg_apps_limit=24
-
-# Disable usage stats collection
-persist.sys.usagestats=0

@@ -3,6 +3,7 @@
 # Aggressive battery optimization for ALL apps
 # Based on DeepDoze Enforcer concepts
 
+
 MODDIR="${0%/*}"
 [ -z "$MODDIR" ] && MODDIR="/data/adb/modules/Frosty"
 
@@ -10,32 +11,23 @@ LOGDIR="$MODDIR/logs"
 DEEP_DOZE_LOG="$LOGDIR/deep_doze.log"
 USER_PREFS="$MODDIR/config/user_prefs"
 WHITELIST_FILE="$MODDIR/config/doze_whitelist.txt"
+MONITOR_PID_FILE="$MODDIR/tmp/screen_monitor.pid"
 
-# Initialize
-mkdir -p "$LOGDIR"
+mkdir -p "$LOGDIR" "$MODDIR/tmp"
 
-log_deep() {
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$DEEP_DOZE_LOG"
-}
+log_deep() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$DEEP_DOZE_LOG"; }
 
-# Load preferences
 ENABLE_DEEP_DOZE=0
 DEEP_DOZE_LEVEL="moderate"
 [ -f "$USER_PREFS" ] && . "$USER_PREFS"
 
-
-# WHITELIST MANAGEMENT
 generate_whitelist() {
-  # Create default whitelist if not exists
-  if [ ! -f "$WHITELIST_FILE" ]; then
-    cat > "$WHITELIST_FILE" << 'EOF'
-# 🧊 FROSTY - Deep Doze Whitelist
-# Apps listed here will NOT be restricted by Deep Doze
-# Add one package name per line
-# Lines starting with # are comments
+  [ -f "$WHITELIST_FILE" ] && return
+  cat > "$WHITELIST_FILE" << 'EOF'
+# Frosty Deep Doze Whitelist
+# One package per line, # for comments
 
-
-# SYSTEM CRITICAL - DO NOT REMOVE
+# System Critical
 android
 com.android.systemui
 com.android.settings
@@ -52,7 +44,7 @@ com.android.permissioncontroller
 com.android.networkstack
 com.android.captiveportallogin
 
-# PHONE & DIALER
+# Phone & Dialer
 com.android.phone
 com.android.server.telecom
 com.android.dialer
@@ -65,25 +57,19 @@ com.miui.phone
 com.miui.voip
 com.oppo.dialer
 com.coloros.phonemanager
-com.asus.dialer
 com.huawei.dialer
-com.sonymobile.android.dialer
 
-# SMS & MESSAGING
+# SMS & Messaging
 com.android.mms
 com.android.messaging
 com.google.android.apps.messaging
 com.samsung.android.messaging
-com.sec.android.app.samsungmessages
 com.oneplus.mms
 com.miui.mms
 com.oppo.mms
-com.coloros.mms
-com.asus.message
 com.huawei.mms
-com.sonymobile.android.messaging
 
-# ALARM & CLOCK
+# Alarm & Clock
 com.android.deskclock
 com.google.android.deskclock
 com.sec.android.app.clockpackage
@@ -91,86 +77,45 @@ com.samsung.android.app.clockpackage
 com.samsung.android.alarm
 com.oneplus.deskclock
 com.miui.clock
-com.miui.alarmclock
 com.oppo.clock
-com.coloros.alarmclock
-com.asus.alarmclock
 com.huawei.deskclock
-com.sonymobile.android.alarm
 
-# CONTACTS
+# Contacts
 com.android.contacts
 com.google.android.contacts
 com.samsung.android.contacts
-com.sec.android.app.contacts
-com.oneplus.contacts
-com.miui.contacts
-com.oppo.contacts
-com.coloros.contacts
 
-# KEYBOARDS
+# Keyboards
 com.android.inputmethod.latin
 com.google.android.inputmethod.latin
 com.samsung.android.honeyboard
-com.sec.android.inputmethod
 com.touchtype.swiftkey
-com.google.android.inputmethod.korean
-com.google.android.inputmethod.japanese
-com.google.android.inputmethod.pinyin
 
-# EMERGENCY & SAFETY
+# Emergency
 com.android.emergency
 com.google.android.apps.safetyhub
-com.samsung.android.emergencymode
-com.miui.sos
 
-
-# USER APPS - Add your important apps below
-
+# User Apps - Add your important apps below
 # com.whatsapp
 # org.telegram.messenger
-# your.banking.app
-# com.example
-
 EOF
-    log_deep "[INFO] Created default whitelist at $WHITELIST_FILE"
-  fi
+  log_deep "Created default whitelist"
 }
 
 is_whitelisted() {
   local pkg="$1"
-  
-  # Check built-in system critical (always whitelist)
   case "$pkg" in
     android|com.android.systemui|com.android.phone|com.android.settings|com.android.shell)
       return 0 ;;
     com.android.providers.*|com.android.inputmethod.*)
       return 0 ;;
   esac
-  
-  # Check whitelist file
-  if [ -f "$WHITELIST_FILE" ]; then
-    grep -q "^${pkg}$" "$WHITELIST_FILE" 2>/dev/null && return 0
-  fi
-  
+  [ -f "$WHITELIST_FILE" ] && grep -q "^${pkg}$" "$WHITELIST_FILE" 2>/dev/null && return 0
   return 1
 }
 
-is_system_app() {
-  local pkg="$1"
-  pm path "$pkg" 2>/dev/null | grep -q "^package:/system" && return 0
-  pm path "$pkg" 2>/dev/null | grep -q "^package:/product" && return 0
-  pm path "$pkg" 2>/dev/null | grep -q "^package:/vendor" && return 0
-  return 1
-}
-
-
-# AGGRESSIVE DOZE CONSTANTS
 apply_doze_constants() {
-  log_deep ""
-  log_deep "━━━ Aggressive Doze Constants ━━━"
-  
-  # Nuclear doze constants - instant idle, maximum sleep durations
+  log_deep "Applying doze constants..."
   local constants="light_after_inactive_to=0"
   constants="$constants,light_pre_idle_to=5000"
   constants="$constants,light_idle_to=3600000"
@@ -183,443 +128,224 @@ apply_doze_constants() {
   constants="$constants,max_idle_to=172800000"
   constants="$constants,quick_doze_delay_to=5000"
   constants="$constants,min_time_to_alarm=300000"
-  
-  if settings put global device_idle_constants "$constants" 2>/dev/null; then
-    log_deep "[OK]   Doze constants applied (instant idle)"
-  else
-    log_deep "[FAIL] Could not apply doze constants"
-  fi
-  
-  # Force enable doze
+
+  settings put global device_idle_constants "$constants" 2>/dev/null && \
+    log_deep "[OK] Doze constants applied" || log_deep "[FAIL] Doze constants"
+
   dumpsys deviceidle enable all 2>/dev/null
-  log_deep "[OK]   DeviceIdle enabled"
-  
-  # App standby settings
   settings put global app_standby_enabled 1 2>/dev/null
   settings put global forced_app_standby_enabled 1 2>/dev/null
   settings put global app_auto_restriction_enabled true 2>/dev/null
   settings put global adaptive_battery_management_enabled 1 2>/dev/null
-  log_deep "[OK]   App standby enabled"
+  log_deep "[OK] App standby enabled"
 }
 
 revert_doze_constants() {
-  log_deep ""
-  log_deep "━━━ Reverting Doze Constants ━━━"
-  
-  # Delete custom constants (restores defaults)
   settings delete global device_idle_constants 2>/dev/null
-  log_deep "[OK]   Doze constants reverted to default"
+  log_deep "[OK] Doze constants reverted"
 }
 
-
-# APP RESTRICTIONS (MODERATE + MAXIMUM)
 restrict_apps_moderate() {
-  log_deep ""
-  log_deep "━━━ App Restrictions (Moderate) ━━━"
-  
-  local count=0
-  local skipped=0
-  
-  # Get all third-party packages
+  log_deep "Restricting apps (moderate)..."
+  local count=0 skipped=0
   for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
     [ -z "$pkg" ] && continue
-    
-    # Skip whitelisted
     if is_whitelisted "$pkg"; then
       skipped=$((skipped + 1))
       continue
     fi
-    
-    # Deny RUN_IN_BACKGROUND
     appops set "$pkg" RUN_IN_BACKGROUND deny 2>/dev/null
-    
-    # Set to restricted standby bucket
     am set-standby-bucket "$pkg" restricted 2>/dev/null
-    
-    # Make inactive
     am set-inactive "$pkg" true 2>/dev/null
-    
     count=$((count + 1))
   done
-  
-  log_deep "[OK]   Restricted $count apps (skipped $skipped whitelisted)"
+  log_deep "[OK] Restricted $count apps (skipped $skipped)"
 }
 
 restrict_apps_maximum() {
-  log_deep ""
-  log_deep "━━━ App Restrictions (Maximum) ━━━"
-  
-  local count=0
-  local skipped=0
-  
-  # Get all third-party packages
+  log_deep "Restricting apps (maximum)..."
+  local count=0 skipped=0
   for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
     [ -z "$pkg" ] && continue
-    
-    # Skip whitelisted
     if is_whitelisted "$pkg"; then
       skipped=$((skipped + 1))
       continue
     fi
-    
-    # Deny RUN_IN_BACKGROUND
     appops set "$pkg" RUN_IN_BACKGROUND deny 2>/dev/null
-    
-    # Deny WAKE_LOCK (Maximum only)
     appops set "$pkg" WAKE_LOCK deny 2>/dev/null
-    
-    # Set to restricted standby bucket
     am set-standby-bucket "$pkg" restricted 2>/dev/null
-    
-    # Make inactive
     am set-inactive "$pkg" true 2>/dev/null
-    
     count=$((count + 1))
   done
-  
-  log_deep "[OK]   Restricted $count apps with WAKE_LOCK deny (skipped $skipped)"
+  log_deep "[OK] Restricted $count apps (skipped $skipped)"
 }
 
 unrestrict_apps() {
-  log_deep ""
-  log_deep "━━━ Removing App Restrictions ━━━"
-  
+  log_deep "Removing restrictions..."
   local count=0
-  
   for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
     [ -z "$pkg" ] && continue
-    
-    # Allow RUN_IN_BACKGROUND
     appops set "$pkg" RUN_IN_BACKGROUND allow 2>/dev/null
-    
-    # Allow WAKE_LOCK
     appops set "$pkg" WAKE_LOCK allow 2>/dev/null
-    
-    # Set to active bucket
     am set-standby-bucket "$pkg" active 2>/dev/null
-    
-    # Make active
     am set-inactive "$pkg" false 2>/dev/null
-    
     count=$((count + 1))
   done
-  
-  log_deep "[OK]   Unrestricted $count apps"
+  log_deep "[OK] Unrestricted $count apps"
 }
 
-
-# NETWORK LOCKDOWN (MAXIMUM ONLY)
-network_lockdown() {
-  log_deep ""
-  log_deep "━━━ Network Lockdown ━━━"
-  
-  # Disable background scanning
-  settings put global wifi_scan_always_enabled 0 2>/dev/null
-  settings put global wifi_wakeup_enabled 0 2>/dev/null
-  settings put global ble_scan_always_enabled 0 2>/dev/null
-  settings put global wifi_networks_available_notification_on 0 2>/dev/null
-  log_deep "[OK]   WiFi/BLE scanning disabled"
-  
-  # Disable network recommendations
-  settings put global network_scoring_ui_enabled 0 2>/dev/null
-  settings put global network_recommendations_enabled 0 2>/dev/null
-  log_deep "[OK]   Network recommendations disabled"
-  
-  # Mobile data always on = off
-  settings put global mobile_data_always_on 0 2>/dev/null
-  log_deep "[OK]   Mobile data always-on disabled"
-}
-
-network_restore() {
-  log_deep ""
-  log_deep "━━━ Network Restore ━━━"
-  
-  settings put global wifi_scan_always_enabled 1 2>/dev/null
-  settings put global wifi_wakeup_enabled 1 2>/dev/null
-  settings put global ble_scan_always_enabled 1 2>/dev/null
-  settings put global wifi_networks_available_notification_on 1 2>/dev/null
-  settings put global network_scoring_ui_enabled 1 2>/dev/null
-  settings put global network_recommendations_enabled 1 2>/dev/null
-  settings put global mobile_data_always_on 1 2>/dev/null
-  
-  log_deep "[OK]   Network settings restored"
-}
-
-
-# SENSOR FREEZE (MAXIMUM ONLY)
-freeze_sensors() {
-  log_deep ""
-  log_deep "━━━ Sensor Freeze ━━━"
-  
-  local count=0
-  
-  for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
-    [ -z "$pkg" ] && continue
-    is_whitelisted "$pkg" && continue
-    
-    appops set "$pkg" BODY_SENSORS deny 2>/dev/null
-    appops set "$pkg" ACTIVITY_RECOGNITION deny 2>/dev/null
-    appops set "$pkg" HIGH_SAMPLING_RATE_SENSORS deny 2>/dev/null
-    
-    count=$((count + 1))
-  done
-  
-  settings put global sensors_suspend_enabled 1 2>/dev/null
-  
-  log_deep "[OK]   Sensors frozen for $count apps"
-}
-
-unfreeze_sensors() {
-  log_deep ""
-  log_deep "━━━ Sensor Unfreeze ━━━"
-  
-  for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
-    [ -z "$pkg" ] && continue
-    
-    appops set "$pkg" BODY_SENSORS allow 2>/dev/null
-    appops set "$pkg" ACTIVITY_RECOGNITION allow 2>/dev/null
-    appops set "$pkg" HIGH_SAMPLING_RATE_SENSORS allow 2>/dev/null
-  done
-  
-  settings put global sensors_suspend_enabled 0 2>/dev/null
-  
-  log_deep "[OK]   Sensors unfrozen"
-}
-
-
-# WAKELOCK KILLER (MAXIMUM ONLY)
 kill_wakelocks() {
-  log_deep ""
-  log_deep "━━━ Wakelock Killer ━━━"
-  
+  log_deep "Killing wakelocks..."
   local killed=0
-  
-  # Parse active wakelocks from power service
-  dumpsys power 2>/dev/null | grep -E "PARTIAL_WAKE_LOCK|FULL_WAKE_LOCK" | while read -r line; do
-    pkg=$(echo "$line" | grep -oE "packageName=[^ ]+" | cut -d= -f2 | tr -d ',')
+  local tmpfile="$MODDIR/tmp/wakelocks.txt"
+  dumpsys power 2>/dev/null | grep -E "PARTIAL_WAKE_LOCK|FULL_WAKE_LOCK" > "$tmpfile"
+  while read -r line; do
+    local pkg=$(echo "$line" | grep -oE "packageName=[^ ]+" | cut -d= -f2 | tr -d ',')
     [ -z "$pkg" ] && continue
     is_whitelisted "$pkg" && continue
-    
-    # Force stop the wakelock holder
-    am force-stop "$pkg" 2>/dev/null && {
-      log_deep "[KILL] $pkg (holding wakelock)"
-      killed=$((killed + 1))
-    }
-  done
-  
-  log_deep "[OK]   Wakelock killer complete"
+    am force-stop "$pkg" 2>/dev/null && killed=$((killed + 1))
+  done < "$tmpfile"
+  rm -f "$tmpfile"
+  log_deep "[OK] Killed $killed wakelock holders"
 }
 
-
-# ALARM RESTRICTIONS (MAXIMUM ONLY - Safe for system alarms)
 restrict_alarms() {
-  log_deep ""
-  log_deep "━━━ Alarm Restrictions ━━━"
-  
+  log_deep "Restricting alarms..."
   local count=0
-  
   for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
     [ -z "$pkg" ] && continue
     is_whitelisted "$pkg" && continue
-    
     appops set "$pkg" SCHEDULE_EXACT_ALARM deny 2>/dev/null
     appops set "$pkg" USE_EXACT_ALARM deny 2>/dev/null
-    
     count=$((count + 1))
   done
-  
-  log_deep "[OK]   Alarm restrictions applied to $count apps"
-  log_deep "[INFO] System alarm apps are protected via whitelist"
+  log_deep "[OK] Alarms restricted for $count apps"
 }
 
 unrestrict_alarms() {
-  log_deep ""
-  log_deep "━━━ Removing Alarm Restrictions ━━━"
-  
+  log_deep "Removing alarm restrictions..."
   for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
     [ -z "$pkg" ] && continue
-    
     appops set "$pkg" SCHEDULE_EXACT_ALARM allow 2>/dev/null
     appops set "$pkg" USE_EXACT_ALARM allow 2>/dev/null
   done
-  
-  log_deep "[OK]   Alarm restrictions removed"
+  log_deep "[OK] Alarms unrestricted"
 }
 
+stop_screen_monitor() {
+  if [ -f "$MONITOR_PID_FILE" ]; then
+    local pid=$(cat "$MONITOR_PID_FILE")
+    kill "$pid" 2>/dev/null
+    rm -f "$MONITOR_PID_FILE"
+    log_deep "[OK] Screen monitor stopped (PID $pid)"
+  fi
+}
 
-# FREEZE - Enable Deep Doze
+start_screen_monitor() {
+  stop_screen_monitor
+  log_deep "Starting screen-off monitor (5min delay)..."
+  (
+    while true; do
+      # Wait for screen off
+      while dumpsys display 2>/dev/null | grep -q "mScreenState=ON"; do
+        sleep 30
+      done
+
+      log_deep "Screen off, waiting 5 minutes..."
+      sleep 300
+
+      # Verify still off, then force idle
+      if ! dumpsys display 2>/dev/null | grep -q "mScreenState=ON"; then
+        dumpsys deviceidle force-idle deep 2>/dev/null
+        log_deep "[OK] Forced deep idle"
+      else
+        log_deep "Screen back on, skipping"
+      fi
+
+      # Wait for screen on before next cycle
+      while ! dumpsys display 2>/dev/null | grep -q "mScreenState=ON"; do
+        sleep 60
+      done
+      log_deep "Screen on, monitor re-armed"
+    done
+  ) &
+  echo $! > "$MONITOR_PID_FILE"
+  log_deep "[OK] Monitor started (PID $!)"
+}
+
 freeze_deep_doze() {
-  echo "═════════════════════════════════════" > "$DEEP_DOZE_LOG"
-  echo "🔋 FROSTY Deep Doze Log - FREEZE Operation" >> "$DEEP_DOZE_LOG"
-  echo "Started: $(date '+%Y-%m-%d %H:%M:%S')" >> "$DEEP_DOZE_LOG"
-  echo "Level: $DEEP_DOZE_LEVEL" >> "$DEEP_DOZE_LOG"
-  echo "═════════════════════════════════════" >> "$DEEP_DOZE_LOG"
-  echo "" >> "$DEEP_DOZE_LOG"
-  
+  echo "Frosty Deep Doze - FREEZE $(date '+%Y-%m-%d %H:%M:%S')" > "$DEEP_DOZE_LOG"
+
   if [ "$ENABLE_DEEP_DOZE" != "1" ]; then
-    log_deep "[SKIP] Deep Doze disabled by user preference"
-    echo ""
-    echo "  🔋 Deep Doze: SKIPPED (disabled in config)"
-    echo ""
+    log_deep "[SKIP] Deep Doze disabled"
+    echo "  🔋 Deep Doze: SKIPPED"
     return 0
   fi
-  
-  log_deep "[INFO] Enabling Deep Doze ($DEEP_DOZE_LEVEL mode)..."
-  
-  # Generate whitelist if needed
+
+  log_deep "Enabling Deep Doze ($DEEP_DOZE_LEVEL)..."
   generate_whitelist
-  
-  # Always apply (both levels)
   apply_doze_constants
-  
-  # Level-specific restrictions
+
   case "$DEEP_DOZE_LEVEL" in
     maximum)
       restrict_apps_maximum
-      network_lockdown
-      freeze_sensors
       kill_wakelocks
       restrict_alarms
       ;;
-    moderate|*)
+    *)
       restrict_apps_moderate
       ;;
   esac
-  
-  # Force deep doze immediately
-  dumpsys deviceidle force-idle deep 2>/dev/null
-  log_deep "[OK]   Forced deep idle"
-  
-  # Summary
-  log_deep ""
-  log_deep "═════════════════════════════════════"
-  log_deep "SUMMARY"
-  log_deep "═════════════════════════════════════"
-  log_deep "  Level: $DEEP_DOZE_LEVEL"
-  log_deep "  Doze constants: AGGRESSIVE"
-  log_deep "  App restrictions: ENABLED"
-  if [ "$DEEP_DOZE_LEVEL" = "maximum" ]; then
-    log_deep "  Wakelock deny: YES"
-    log_deep "  Network lockdown: YES"
-    log_deep "  Sensor freeze: YES"
-    log_deep "  Alarm restrictions: YES"
-  else
-    log_deep "  Wakelock deny: NO"
-    log_deep "  Network lockdown: NO"
-    log_deep "  Sensor freeze: NO"
-    log_deep "  Alarm restrictions: NO"
-  fi
-  log_deep ""
-  log_deep "Completed: $(date '+%Y-%m-%d %H:%M:%S')"
-  log_deep "═════════════════════════════════════"
-  
+
+  start_screen_monitor
+
   echo ""
-  echo "═════════════════════════════════════════════"
   echo "  🔋 DEEP DOZE: ENABLED ($DEEP_DOZE_LEVEL)"
-  echo ""
-  echo "  All third-party apps restricted"
-  echo "  Aggressive doze constants applied"
-  if [ "$DEEP_DOZE_LEVEL" = "maximum" ]; then
-    echo "  Network lockdown: ACTIVE"
-    echo "  Wakelock killer: ACTIVE"
-  fi
-  echo ""
-  echo "  📄 Details: $DEEP_DOZE_LOG"
-  echo "═════════════════════════════════════════════"
+  echo "  Screen-off monitor active (5min delay)"
   echo ""
 }
 
-
-# STOCK - Disable Deep Doze
 stock_deep_doze() {
-  echo "═════════════════════════════════════" > "$DEEP_DOZE_LOG"
-  echo "🔥 FROSTY Deep Doze Log - STOCK Operation" >> "$DEEP_DOZE_LOG"
-  echo "Started: $(date '+%Y-%m-%d %H:%M:%S')" >> "$DEEP_DOZE_LOG"
-  echo "═════════════════════════════════════" >> "$DEEP_DOZE_LOG"
-  echo "" >> "$DEEP_DOZE_LOG"
-  
-  log_deep "[INFO] Disabling Deep Doze (restoring stock)..."
-  
-  # Revert all
+  echo "Frosty Deep Doze - STOCK $(date '+%Y-%m-%d %H:%M:%S')" > "$DEEP_DOZE_LOG"
+  log_deep "Disabling Deep Doze..."
+
   revert_doze_constants
   unrestrict_apps
-  network_restore
-  unfreeze_sensors
   unrestrict_alarms
-  
-  # Exit forced doze
+  stop_screen_monitor
+
   dumpsys deviceidle unforce 2>/dev/null
-  log_deep "[OK]   Unforced device idle"
-  
-  # Summary
-  log_deep ""
-  log_deep "═════════════════════════════════════"
-  log_deep "SUMMARY"
-  log_deep "═════════════════════════════════════"
-  log_deep "  Doze constants: DEFAULT"
-  log_deep "  App restrictions: REMOVED"
-  log_deep "  Network: RESTORED"
-  log_deep "  Sensors: UNFROZEN"
-  log_deep ""
-  log_deep "Completed: $(date '+%Y-%m-%d %H:%M:%S')"
-  log_deep "═════════════════════════════════════"
-  
+  log_deep "[OK] Device idle unforced"
+
   echo ""
-  echo "═════════════════════════════════════"
-  echo "  🔥 DEEP DOZE: DISABLED (Stock Mode)"
-  echo ""
-  echo "  All apps unrestricted"
-  echo "  Doze constants reverted"
-  echo "  Network settings restored"
-  echo ""
-  echo "  📄 Details: $DEEP_DOZE_LOG"
-  echo "═════════════════════════════════════"
+  echo "  🔥 DEEP DOZE: DISABLED"
   echo ""
 }
 
-
-# STATUS
 status() {
-  # Check current doze state
   local doze_state=$(dumpsys deviceidle 2>/dev/null | grep -m1 "mState=" | cut -d= -f2)
-  
-  # Count restricted apps
-  local restricted_count=0
+  local restricted=0
   for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
-    local state=$(appops get "$pkg" RUN_IN_BACKGROUND 2>/dev/null | grep -o "deny")
-    [ "$state" = "deny" ] && restricted_count=$((restricted_count + 1))
+    appops get "$pkg" RUN_IN_BACKGROUND 2>/dev/null | grep -q "deny" && restricted=$((restricted + 1))
   done
-  
+  local monitor_running="NO"
+  [ -f "$MONITOR_PID_FILE" ] && kill -0 $(cat "$MONITOR_PID_FILE") 2>/dev/null && monitor_running="YES"
+
   echo ""
-  echo "═════════════════════════════════════"
   echo "  🔋 Deep Doze Status"
-  echo "═════════════════════════════════════"
-  echo ""
-  echo "  Enabled in config: $([ "$ENABLE_DEEP_DOZE" = "1" ] && echo "YES" || echo "NO")"
+  echo "  Enabled: $([ "$ENABLE_DEEP_DOZE" = "1" ] && echo "YES" || echo "NO")"
   echo "  Level: $DEEP_DOZE_LEVEL"
   echo "  Doze state: $doze_state"
-  echo "  Apps restricted: $restricted_count"
-  echo ""
-  echo "  📄 Log: $DEEP_DOZE_LOG"
-  echo "  📝 Whitelist: $WHITELIST_FILE"
-  echo "═════════════════════════════════════"
+  echo "  Apps restricted: $restricted"
+  echo "  Screen monitor: $monitor_running"
   echo ""
 }
 
-# MAIN
 case "$1" in
-  freeze)
-    freeze_deep_doze
-    ;;
-  stock)
-    stock_deep_doze
-    ;;
-  status)
-    status
-    ;;
-  *)
-    echo "Usage: deep_doze.sh [freeze|stock|status]"
-    ;;
+  freeze) freeze_deep_doze ;;
+  stock) stock_deep_doze ;;
+  status) status ;;
+  *) echo "Usage: deep_doze.sh [freeze|stock|status]" ;;
 esac
 
 exit 0

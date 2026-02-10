@@ -1,10 +1,25 @@
 # 🧊 FROSTY - GMS Freezer / Battery Saver
 # Author: Drsexo (GitHub)
 
-# Variables
+
 TIMEOUT=30
 
-# UI Functions
+COLS=$(stty size 2>/dev/null | awk '{print $2}')
+case "$COLS" in ''|*[!0-9]*) COLS=40 ;; esac
+[ "$COLS" -gt 54 ] && COLS=54
+[ "$COLS" -lt 20 ] && COLS=40
+
+_iw=$((COLS - 4))
+LINE="" _i=0
+while [ $_i -lt $_iw ]; do
+  LINE="${LINE}─"
+  _i=$((_i + 1))
+done
+SEP="  $LINE"
+BOX_TOP="  ┌${LINE}┐"
+BOX_BOT="  └${LINE}┘"
+unset _i _iw
+
 print_banner() {
   ui_print ""
   ui_print "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣤⡀⠀⣠⡆⠀⠀⠀⠀⠀⠀⠀⠀⣤⠀⠀⠀⠀⠀⠀"
@@ -34,25 +49,10 @@ print_banner() {
 }
 
 print_section() {
-  local title="$1"
-  local top="┌────────────────────────────────────────────┐"
-  local bot="└────────────────────────────────────────────┘"
-  local pad=0
-  case "$title" in
-    "⚙️  System Tweaks")           pad=19 ;;
-    "💤  GMS Doze")                pad=21 ;;
-    "🔋  Deep Doze")               pad=21 ;;
-    "🧊  GMS Service Categories")  pad=15 ;;
-    "💾  Saving Configuration")    pad=16 ;;
-    "📋  Summary")                 pad=21 ;;
-    "✅  Installation Complete")   pad=16 ;;
-    "❆  Stay Frosty!  ❆")         pad=18 ;;
-    *)                            pad=15 ;;
-  esac
   ui_print ""
-  ui_print "$top"
-  ui_print "$(printf '%*s' "$pad" '')${title}"
-  ui_print "$bot"
+  ui_print "$BOX_TOP"
+  ui_print "    $1"
+  ui_print "$BOX_BOT"
 }
 
 choose_tweak() {
@@ -128,11 +128,11 @@ choose_gms() {
   local default="$4"
 
   ui_print ""
-  ui_print "  ────────────────────────────────────────────"
+  ui_print "$SEP"
   ui_print "  $category"
   ui_print "  $description"
   [ -n "$warning" ] && ui_print "  $warning"
-  ui_print "  ────────────────────────────────────────────"
+  ui_print "$SEP"
 
   while :; do
     event=$(timeout "$TIMEOUT" getevent -qlc 1 2>/dev/null)
@@ -160,7 +160,7 @@ choose_gms() {
   done
 }
 
-# Set Permissions
+# Permissions
 set_perm_recursive "$MODPATH" 0 0 0755 0644
 set_perm "$MODPATH/service.sh" 0 0 0755
 set_perm "$MODPATH/post-fs-data.sh" 0 0 0755
@@ -175,10 +175,9 @@ fi
 mkdir -p "$MODPATH/config"
 mkdir -p "$MODPATH/logs"
 
-# Show Banner
 print_banner
 
-# SYSTEM TWEAKS SECTION
+# System Tweaks
 print_section "⚙️  System Tweaks"
 ui_print ""
 ui_print "  ⬆️ Vol UP = YES  |  ⬇️ Vol DOWN = NO"
@@ -191,10 +190,9 @@ ENABLE_BLUR_DISABLE=$?
 choose_tweak "📝 Kill Log Processes? (logcat, logd, traced, etc.)" "YES"
 ENABLE_LOG_KILLING=$?
 
-# GMS DOZE SECTION
+# GMS Doze
 print_section "💤  GMS Doze"
 ui_print ""
-ui_print "  Based on Universal GMS Doze by gloeyisk"
 ui_print "  Patches system XMLs to allow GMS battery optimization"
 ui_print ""
 ui_print "  ⬆️ Vol UP = YES  |  ⬇️ Vol DOWN = NO"
@@ -203,29 +201,30 @@ ui_print ""
 choose_tweak "💤 Enable GMS Doze?" "YES"
 ENABLE_GMS_DOZE=$?
 
-# GMS Doze XML Patching
 if [ "$ENABLE_GMS_DOZE" -eq 1 ]; then
   ui_print ""
   ui_print "  Patching system XML files..."
 
   GMS0="\"com.google.android.gms\""
-  STR1="allow-in-power-save package=$GMS0"
-  STR2="allow-in-data-usage-save package=$GMS0"
-  STR3="allow-unthrottled-location package=$GMS0"
-  STR4="allow-ignore-location-settings package=$GMS0"
+
+  SYS_STR1="allow-in-power-save package=$GMS0"
+  SYS_STR2="allow-in-data-usage-save package=$GMS0"
+
+  MOD_STR1="allow-in-power-save package=$GMS0"
+  MOD_STR2="allow-in-data-usage-save package=$GMS0"
+  MOD_STR3="allow-unthrottled-location package=$GMS0"
+  MOD_STR4="allow-ignore-location-settings package=$GMS0"
 
   PATCHED_COUNT=0
-
   TMPFILE="$MODPATH/found_xmls.tmp"
   : > "$TMPFILE"
 
+  # Search system XMLs for power-save whitelist entries only
   for DIR in /system /vendor /system_ext /product /odm; do
     [ ! -d "$DIR" ] && continue
     find "$DIR" -type f -iname "*.xml" 2>/dev/null | while read -r FILE; do
-      if grep -q "com.google.android.gms" "$FILE" 2>/dev/null; then
-        if grep -qE "allow-in-power-save|allow-in-data-usage-save|allow-unthrottled-location|allow-ignore-location-settings" "$FILE" 2>/dev/null; then
-          echo "$FILE" >> "$TMPFILE"
-        fi
+      if grep -qE "$SYS_STR1|$SYS_STR2" "$FILE" 2>/dev/null; then
+        echo "$FILE" >> "$TMPFILE"
       fi
     done
   done
@@ -239,10 +238,8 @@ if [ "$ENABLE_GMS_DOZE" -eq 1 ]; then
       mkdir -p "$(dirname "$OVERLAY")"
       cp -af "$XMLFILE" "$OVERLAY"
 
-      sed -i "/$STR1/d" "$OVERLAY"
-      sed -i "/$STR2/d" "$OVERLAY"
-      sed -i "/$STR3/d" "$OVERLAY"
-      sed -i "/$STR4/d" "$OVERLAY"
+      # Only remove power-save entries, NOT location entries
+      sed -i "/$SYS_STR1/d;/$SYS_STR2/d" "$OVERLAY"
 
       ui_print "    ✓ Patched: $XMLFILE"
       PATCHED_COUNT=$((PATCHED_COUNT + 1))
@@ -251,6 +248,7 @@ if [ "$ENABLE_GMS_DOZE" -eq 1 ]; then
 
   rm -f "$TMPFILE"
 
+  # Merge non-system dirs into system/ for Magisk overlay
   for SUBDIR in product vendor system_ext odm; do
     if [ -d "$MODPATH/$SUBDIR" ]; then
       mkdir -p "$MODPATH/system/$SUBDIR"
@@ -268,6 +266,20 @@ if [ "$ENABLE_GMS_DOZE" -eq 1 ]; then
     ui_print "  ✓ Patched $PATCHED_COUNT XML file(s)"
   fi
 
+  # Patch conflicting module XMLs
+  ui_print ""
+  ui_print "  Checking for conflicting modules..."
+  MOD_PATCHED=0
+  for xml in $(find /data/adb/modules -type f -name "*.xml" 2>/dev/null); do
+    case "$xml" in "$MODPATH"*) continue ;; esac
+    if grep -qE "$MOD_STR1|$MOD_STR2|$MOD_STR3|$MOD_STR4" "$xml" 2>/dev/null; then
+      sed -i "/$MOD_STR1/d;/$MOD_STR2/d;/$MOD_STR3/d;/$MOD_STR4/d" "$xml"
+      MOD_PATCHED=$((MOD_PATCHED + 1))
+    fi
+  done
+  [ "$MOD_PATCHED" -gt 0 ] && ui_print "  ✓ Patched $MOD_PATCHED conflicting module XML(s)"
+
+  # Clear old GMS data (fixes delayed notifications after first install)
   ui_print ""
   ui_print "  Clearing GMS cache..."
   cd /data/data
@@ -275,7 +287,7 @@ if [ "$ENABLE_GMS_DOZE" -eq 1 ]; then
   ui_print "  ✓ GMS cache cleared"
 fi
 
-# DEEP DOZE SECTION
+# Deep Doze
 print_section "🔋  Deep Doze"
 ui_print ""
 ui_print "  Aggressive battery optimization for ALL apps"
@@ -289,14 +301,12 @@ ENABLE_DEEP_DOZE=$?
 DEEP_DOZE_LEVEL="moderate"
 if [ "$ENABLE_DEEP_DOZE" -eq 1 ]; then
   ui_print ""
-  ui_print "  ────────────────────────────────────────────"
+  ui_print "$SEP"
   ui_print "  Choose Aggressiveness Level:"
   ui_print ""
   ui_print "  💀 MAXIMUM (Max savings, may affect some apps)"
   ui_print "     - All Moderate features PLUS:"
   ui_print "     - Deny WAKE_LOCK"
-  ui_print "     - Network lockdown"
-  ui_print "     - Sensor freeze"
   ui_print "     - Wakelock killer"
   ui_print "     - Alarm restrictions"
   ui_print ""
@@ -304,14 +314,14 @@ if [ "$ENABLE_DEEP_DOZE" -eq 1 ]; then
   ui_print "     - Aggressive doze constants"
   ui_print "     - App standby restrictions"
   ui_print "     - Deny RUN_IN_BACKGROUND"
-  ui_print "  ────────────────────────────────────────────"
+  ui_print "$SEP"
 
   choose_level "Select level:"
   DEEP_DOZE_LEVEL="$CHOSEN_LEVEL"
   unset CHOSEN_LEVEL
 fi
 
-# GMS SERVICE CATEGORIES SECTION
+# GMS Categories
 ui_print ""
 print_section "🧊  GMS Service Categories"
 ui_print ""
@@ -325,7 +335,7 @@ choose_gms "📍 LOCATION" "GPS, Geofence, Activity Recognition" "BREAKS: Maps, 
 DISABLE_LOCATION=$?
 choose_gms "📡 CONNECTIVITY" "Cast, Quick Share, Nearby" "BREAKS: Chromecast, Quick Share, Fast Pair!" "FREEZE"
 DISABLE_CONNECTIVITY=$?
-choose_gms "☁️ CLOUD" "Auth, Sync, Backup, Security" "May affect Google Sign-in, Autofill, Backups" "FREEZE"
+choose_gms "☁️ CLOUD" "Auth, Sync, Backup, Check-in, Security" "May affect Google Sign-in, Autofill, Passwords" "FREEZE"
 DISABLE_CLOUD=$?
 choose_gms "💳 PAYMENTS" "Google Pay, Wallet, NFC Payments" "BREAKS: Google Pay, NFC tap-to-pay!" "FREEZE"
 DISABLE_PAYMENTS=$?
@@ -334,21 +344,15 @@ DISABLE_WEARABLES=$?
 choose_gms "🎮 GAMES" "Play Games, Achievements, Cloud Saves" "BREAKS: Play Games achievements, leaderboards!" "FREEZE"
 DISABLE_GAMES=$?
 
-# SAVE CONFIGURATION
+# Save Configuration
 print_section "💾  Saving Configuration"
 cat > "$MODPATH/config/user_prefs" << EOF
-# Frosty User Preferences
-# Generated: $(date)
-# System Tweaks (1=enabled, 0=disabled)
 ENABLE_KERNEL_TWEAKS=$ENABLE_KERNEL_TWEAKS
 ENABLE_BLUR_DISABLE=$ENABLE_BLUR_DISABLE
 ENABLE_LOG_KILLING=$ENABLE_LOG_KILLING
-# GMS Doze (1=enabled, 0=disabled)
 ENABLE_GMS_DOZE=$ENABLE_GMS_DOZE
-# Deep Doze (1=enabled, 0=disabled)
 ENABLE_DEEP_DOZE=$ENABLE_DEEP_DOZE
 DEEP_DOZE_LEVEL=$DEEP_DOZE_LEVEL
-# GMS Categories (1=freeze, 0=keep enabled)
 DISABLE_TELEMETRY=$DISABLE_TELEMETRY
 DISABLE_BACKGROUND=$DISABLE_BACKGROUND
 DISABLE_LOCATION=$DISABLE_LOCATION
@@ -363,7 +367,12 @@ echo "frozen" > "$MODPATH/config/state"
 ui_print ""
 ui_print "  ✓ Configuration saved"
 
-# SUMMARY
+# Only keep empty RC overlays if log killing is enabled
+if [ "$ENABLE_LOG_KILLING" -ne 1 ]; then
+  rm -rf "$MODPATH/system/etc/init"
+fi
+
+# Summary
 print_section "📋  Summary"
 ui_print ""
 ui_print "  System Tweaks:"
@@ -401,7 +410,6 @@ ui_print "  GMS Categories:"
 ui_print ""
 ui_print "  🧊 = Frozen  |  💤 = GMS Dozed  |  🔋 = Deep Dozed"
 
-# FINAL NOTES
 print_section "✅  Installation Complete"
 ui_print ""
 ui_print "  🔄 Reboot to apply changes"
@@ -419,5 +427,4 @@ ui_print ""
 print_section "❆  Stay Frosty!  ❆"
 ui_print ""
 
-# Cleanup repo files
 rm -rf "$MODPATH/README.md" "$MODPATH/LICENSE" "$MODPATH/CHANGELOG.md" "$MODPATH/update.json" "$MODPATH"/.git*

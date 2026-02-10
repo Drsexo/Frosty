@@ -1,12 +1,8 @@
 # 🧊 FROSTY - Complete GMS Services List
-# Format: package/component|category
-# Categories: telemetry, background, location, connectivity, cloud, payments, wearables, games
 
 
-# 📊 TELEMETRY - Ads, Tracking, Analytics, Reporting, Check-in, Stats
-# Safe to disable. Stops Google data collection and ad personalization.
+# TELEMETRY - Ads, Tracking, Analytics, Reporting
 
-# Advertising Services
 com.google.android.gms/com.google.android.gms.ads.identifier.service.AdvertisingIdNotificationService|telemetry
 com.google.android.gms/com.google.android.gms.ads.identifier.service.AdvertisingIdService|telemetry
 com.google.android.gms/com.google.android.gms.ads.AdRequestBrokerService|telemetry
@@ -20,15 +16,11 @@ com.google.android.gms/com.google.android.gms.ads.config.FlagsReceiver|telemetry
 com.google.android.gms/com.google.android.gms.ads.social.GcmSchedulerWakeupService|telemetry
 com.google.android.gms/com.google.android.gms.adsidentity.service.AdServicesExtDataStorageService|telemetry
 com.google.android.gms/com.google.android.gms.nearby.mediums.nearfieldcommunication.NfcAdvertisingService|telemetry
-
-# Analytics Services
 com.google.android.gms/com.google.android.gms.analytics.AnalyticsService|telemetry
 com.google.android.gms/com.google.android.gms.analytics.AnalyticsTaskService|telemetry
 com.google.android.gms/com.google.android.gms.analytics.internal.PlayLogReportingService|telemetry
 com.google.android.gms/com.google.android.gms.analytics.service.AnalyticsService|telemetry
 com.google.android.gms/com.google.android.gms.analytics.AnalyticsReceiver|telemetry
-
-# Stats & Telemetry
 com.google.android.gms/com.google.android.gms.stats.eastworld.EastworldService|telemetry
 com.google.android.gms/com.google.android.gms.stats.service.DropBoxEntryAddedService|telemetry
 com.google.android.gms/com.google.android.gms.stats.service.DropBoxEntryAddedReceiver|telemetry
@@ -36,16 +28,8 @@ com.google.android.gms/com.google.android.gms.stats.PlatformStatsCollectorServic
 com.google.android.gms/com.google.android.gms.common.stats.GmsCoreStatsService|telemetry
 com.google.android.gms/com.google.android.gms.common.stats.StatsUploadService|telemetry
 com.google.android.gms/com.google.android.gms.common.stats.net.NetworkReportService|telemetry
-
-# Check-in & Tron
-com.google.android.gms/com.google.android.gms.checkin.CheckinApiService|telemetry
-com.google.android.gms/com.google.android.gms.checkin.CheckinService|telemetry
-com.google.android.gms/com.google.android.gms.checkin.EventLogService|telemetry
 com.google.android.gms/com.google.android.gms.tron.CollectionService|telemetry
 com.google.android.gms/com.google.android.gms.tron.AlarmReceiver|telemetry
-com.google.android.gms/com.google.android.gms.common.config.PhenotypeCheckinService|telemetry
-
-# Reporting & Feedback
 com.google.android.gms/com.google.android.gms.feedback.FeedbackAsyncService|telemetry
 com.google.android.gms/com.google.android.gms.feedback.LegacyBugReportService|telemetry
 com.google.android.gms/com.google.android.gms.feedback.OfflineReportSendTaskService|telemetry
@@ -53,49 +37,29 @@ com.google.android.gms/com.google.android.gms.googlehelp.metrics.ReportBatchedMe
 com.google.android.gms/com.google.android.gms.presencemanager.service.PresenceManagerPresenceReportService|telemetry
 com.google.android.gms/com.google.android.gms.usagereporting.service.UsageReportingIntentService|telemetry
 com.google.android.gms/com.google.android.gms.crash.service.CrashReportService|telemetry
-
-# Clearcut Logging
 com.google.android.gms/com.google.android.gms.clearcut.service.ClearcutLoggerService|telemetry
 com.google.android.gms/com.google.android.gms.clearcut.debug.ClearcutDebugDumpService|telemetry
-
-# App Measurement
 com.google.android.gms/com.google.android.gms.measurement.AppMeasurementService|telemetry
 com.google.android.gms/com.google.android.gms.measurement.AppMeasurementJobService|telemetry
 com.google.android.gms/com.google.android.gms.measurement.AppMeasurementReceiver|telemetry
 com.google.android.gms/com.google.android.gms.measurement.PackageMeasurementReceiver|telemetry
-
-# Romanesco & Contacts
 com.google.android.gms/com.google.android.gms.romanesco.ContactsLoggerUploadService|telemetry
-
-# Backup Stats
 com.google.android.gms/com.google.android.gms.backup.stats.BackupStatsService|telemetry
 com.google.android.gms/com.google.android.gms.backup.component.FullBackupJobLoggerService|telemetry
-
-# Promo Services
 com.google.android.gms/com.google.android.gms.enpromo.PromoInternalPersistentService|telemetry
 com.google.android.gms/com.google.android.gms.enpromo.PromoInternalService|telemetry
-
-# Debug Services
 com.google.android.gms/com.google.android.gms.nearby.messages.debug.DebugPokeService|telemetry
 com.google.android.gms/com.google.android.gms.chimera.container.logger.ExternalDebugLoggerService|telemetry
 com.google.android.gms/com.google.android.gms.common.appdoctor.LocalAppDoctorReceiver|telemetry
-
-# UDC & GCM
 com.google.android.gms/com.google.android.gms.udc.gcm.GcmBroadcastReceiver|telemetry
-
-# Magic Tether Logging
 com.google.android.gms/com.google.android.gms.magictether.logging.DailyMetricsLoggerService|telemetry
-
-# Work Apps Reporting
 com.google.android.apps.work.clouddpc/com.google.android.apps.work.clouddpc.base.policy.services.ReportingPartialCollectionJobService|telemetry
 com.google.android.apps.work.clouddpc/com.google.android.apps.work.clouddpc.base.policy.services.StatusReportJobService|telemetry
 com.google.android.apps.work.clouddpc/com.google.android.apps.work.clouddpc.vanilla.bugreport.jobs.RemoteBugReportJobService|telemetry
 
 
-# 🔄 BACKGROUND - Background Services, Updates, Chimera, MDM
-# Safe to disable. May delay auto-updates and some background sync.
+# BACKGROUND - Updates, Chimera, MDM
 
-# Chimera Services
 com.google.android.gms/com.google.android.gms.chimera.GmsIntentOperationService|background
 com.google.android.gms/com.google.android.gms.chimera.PersistentBoundBrokerService|background
 com.google.android.gms/com.google.android.gms.chimera.GmsIntentOperationService_AuthAccountIsolated|background
@@ -103,90 +67,55 @@ com.google.android.gms/com.google.android.gms.chimera.GmsIntentOperationService_
 com.google.android.gms/com.google.android.gms.chimera.PersistentApiService_AuthAccountIsolated|background
 com.google.android.gms/com.google.android.gms.chimera.PersistentIntentOperationService_AuthAccountIsolated|background
 com.google.android.gms/com.google.android.gms.chimera.GmsApiService|background
-
-# Update Services
 com.google.android.gms/com.google.android.gms.update.SystemUpdateGcmTaskService|background
 com.google.android.gms/com.google.android.gms.update.SystemUpdateService|background
 com.google.android.gms/com.google.android.gms.update.UpdateFromSdCardService|background
 com.google.android.gms/com.google.android.gms.update.OtaSuggestionSummaryProvider|background
 com.google.android.gms/com.google.android.gms.fonts.update.UpdateSchedulerService|background
-com.google.android.gms/com.google.android.gms.auth.folsom.service.FolsomPublicKeyUpdateService|background
 com.google.android.gms/com.google.android.gms.icing.proxy.IcingInternalCorporaUpdateService|background
-com.google.android.gms/com.google.android.gms.instantapps.routing.DomainFilterUpdateService|background
 com.google.android.gms/com.google.android.gms.mobiledataplan.service.PeriodicUpdaterService|background
 com.google.android.gms/com.google.android.gms.phenotype.service.sync.PackageUpdateTaskService|background
-
-# MDM Services
 com.google.android.gms/com.google.android.gms.mdm.services.MdmPhoneWearableListenerService|background
 com.google.android.gms/com.google.android.gms.mdm.receivers.MdmDeviceAdminReceiver|background
-
-# Compliance & Download
 com.google.android.gms/com.google.android.gms.gmscompliance.service.GmsComplianceService|background
 com.google.android.gms/com.google.android.gms.common.download.DownloadWorkService|background
-
-# Instant Apps
 com.android.vending/com.google.android.finsky.instantapps.InstantAppsLoggingService|background
-com.google.android.gms/com.google.android.gms.instantapps.service.InstantAppsService|background
 com.google.android.gms/com.google.android.finsky.instantapps.InstantAppsLoggingService|background
 
 
-# 📍 LOCATION - Location, Geofence, Places, Activity Recognition
-# BREAKS: Maps, Navigation, Find My Device, Step Counter, Fitness tracking!
+# LOCATION - Location, Geofence, Places, Activity Recognition
 
-# Activity Recognition - HUGE battery drain!
 com.google.android.gms/com.google.android.gms.location.activity.ActivityRecognitionService|location
 com.google.android.gms/com.google.android.location.internal.server.HardwareArProviderService|location
-
-# Core Location Services
 com.google.android.gms/com.google.android.location.fused.FusedLocationService|location
 com.google.android.gms/com.google.android.location.internal.server.GoogleLocationService|location
 com.google.android.gms/com.google.android.location.network.NetworkLocationService|location
 com.google.android.gms/com.google.android.location.persistent.LocationPersistentService|location
 com.google.android.gms/com.google.android.location.internal.GoogleLocationManagerService|location
-
-# Location Reporting & History
 com.google.android.gms/com.google.android.location.reporting.service.ReportingAndroidService|location
 com.google.android.gms/com.google.android.location.reporting.service.ReportingSyncService|location
 com.google.android.gms/com.google.android.location.reporting.service.LocationHistoryInjectorService|location
 com.google.android.gms/com.google.android.location.util.LocationAccuracyInjectorService|location
 com.google.android.gms/com.google.android.gms.locationsharingreporter.service.reporting.periodic.PeriodicReporterMonitoringService|location
 com.google.android.gms/com.google.android.gms.location.reporting.service.GcmBroadcastReceiver|location
-
-# Location Sharing
 com.google.android.gms/com.google.android.gms.locationsharing.service.LocationSharingService|location
 com.google.android.gms/com.google.android.gms.locationsharing.service.LocationSharingSettingInjectorService|location
-
-# Semantic Location
 com.google.android.gms/com.google.android.gms.semanticlocation.service.SemanticLocationService|location
-
-# Geofence
 com.google.android.gms/com.google.android.gms.geofence.GeofenceApiService|location
 com.google.android.gms/com.google.android.location.geofencer.service.GeofenceProviderService|location
-
-# Geo Timezone & Geocode
 com.google.android.gms/com.google.android.gms.geotimezone.GeoTimeZoneService|location
 com.google.android.gms/com.google.android.gms.location.geocode.GeocodeService|location
-
-# Places
 com.google.android.gms/com.google.android.gms.places.PlaceDetectionService|location
-
-# Emergency Location
 com.google.android.gms/com.google.android.gms.thunderbird.EmergencyLocationService|location
 com.google.android.gms/com.google.android.gms.thunderbird.EmergencyPersistentService|location
-
-# Device Connection
 com.google.android.gms/com.google.android.gms.deviceconnection.service.DeviceConnectionServiceBroker|location
 com.google.android.gms/com.google.android.gms.persistent.offnetwork.service.OffNetworkService|location
-
-# Wearable Location
 com.google.android.gms/com.google.android.location.wearable.WearableLocationService|location
 com.google.android.gms/com.google.android.location.fused.wearable.GmsWearableListenerService|location
 
 
-# 📡 CONNECTIVITY - Nearby, Cast, Discovery, Quick Share
-# BREAKS: Chromecast, Quick Share, Nearby devices, Fast Pair!
+# CONNECTIVITY - Nearby, Cast, Discovery, Quick Share
 
-# Nearby Services
 com.google.android.gms/com.google.android.gms.nearby.discovery.service.DiscoveryService|connectivity
 com.google.android.gms/com.google.android.gms.nearby.bootstrap.service.NearbyBootstrapService|connectivity
 com.google.android.gms/com.google.android.gms.nearby.connection.service.NearbyConnectionsAndroidService|connectivity
@@ -195,8 +124,6 @@ com.google.android.gms/com.google.location.nearby.direct.service.NearbyDirectSer
 com.google.android.gms/com.google.android.gms.nearby.exposurenotification.service.ExposureNotificationService|connectivity
 com.google.android.gms/com.google.android.gms.nearby.sharing.service.ShareSheetSessionService|connectivity
 com.google.android.gms/com.google.android.gms.nearby.fastpair.service.WearableDataListenerService|connectivity
-
-# Cast Services
 com.google.android.gms/com.google.android.gms.cast.media.CastMediaRoute2ProviderService|connectivity
 com.google.android.gms/com.google.android.gms.cast.media.CastMediaRoute2ProviderService_Isolated|connectivity
 com.google.android.gms/com.google.android.gms.cast.media.CastMediaRoute2ProviderService_Persistent|connectivity
@@ -214,50 +141,39 @@ com.google.android.gms/com.google.android.gms.chimera.CastPersistentBoundBrokerS
 com.google.android.gms/com.google.android.gms.cast.service.CastService|connectivity
 com.google.android.gms/com.google.android.gms.cast.service.media.CastMediaService|connectivity
 com.google.android.gms/com.google.android.gms.cast.service.session.CastSessionService|connectivity
-
-# Discovery & Component Services
 com.google.android.gms/com.google.firebase.components.ComponentDiscoveryService|connectivity
 com.google.android.gms/com.google.mlkit.common.internal.MlKitComponentDiscoveryService|connectivity
 com.google.android.gms/com.google.android.gms.mobiledataplan.service.MobileDataPlanService|connectivity
-
-# FIDO Authentication
 com.google.android.gms/com.google.android.gms.fido.fido2.pollux.CableAuthenticatorService|connectivity
 
 
-# ☁️ CLOUD - Sync, Auth, Backup, Security
-# May affect: Google Sign-in, app backups, password autofill, Smart Lock
+# CLOUD - Auth, Sync, Backup, Security, Check-in
 
-# Auth Services
+com.google.android.gms/com.google.android.gms.checkin.CheckinApiService|cloud
+com.google.android.gms/com.google.android.gms.checkin.CheckinService|cloud
+com.google.android.gms/com.google.android.gms.checkin.EventLogService|cloud
+com.google.android.gms/com.google.android.gms.common.config.PhenotypeCheckinService|cloud
 com.google.android.gms/com.google.android.gms.auth.api.credentials.credentialsapi.service.CredentialsApiService|cloud
 com.google.android.gms/com.google.android.gms.auth.api.identity.service.IdentityService|cloud
 com.google.android.gms/com.google.android.gms.auth.api.phone.service.SmsRetrieverApiService|cloud
 com.google.android.gms/com.google.android.gms.auth.api.signin.RevocationService|cloud
 com.google.android.gms/com.google.android.gms.auth.authzen.api.AuthzenAutofillSyncSetupService|cloud
 com.google.android.gms/com.google.android.gms.auth.cryptauth.cryptauthservice.CryptauthService|cloud
-
-# Trust Agents
 com.google.android.gms/com.google.android.gms.auth.trustagent.GoogleTrustAgent|cloud
 com.google.android.gms/com.google.android.gms.auth.trustagent.ActiveUnlockTrustAgent|cloud
 com.google.android.gms/com.google.android.gms.trustagent.api.bridge.TrustAgentBridgeService|cloud
 com.google.android.gms/com.google.android.gms.trustagent.api.state.TrustAgentState|cloud
-
-# Auth Account Services
 com.google.android.gms/com.google.android.gms.auth.account.be.AccountStatusChecker|cloud
 com.google.android.gms/com.google.android.gms.auth.account.accountstatus.DefaultAccountStatusService|cloud
 com.google.android.gms/com.google.android.gms.auth.be.appcert.AppCertService|cloud
 com.google.android.gms/com.google.android.gms.auth.folsom.service.FolsomService|cloud
+com.google.android.gms/com.google.android.gms.auth.folsom.service.FolsomPublicKeyUpdateService|cloud
 com.google.android.gms/com.google.android.gms.auth.account.authenticator.WorkAccountAuthenticatorService|cloud
-
-# Backup Services
 com.google.android.gms/com.google.android.gms.backup.BackupOrchestrationService|cloud
 com.google.android.gms/com.google.android.gms.backup.component.BackupSnapshotService|cloud
-
-# Sync Services
 com.google.android.gms/com.google.android.gms.chromesync.sync.BackendMeetingPointService|cloud
 com.google.android.gms/com.google.android.gms.fitness.sync.FitnessSyncAdapterService|cloud
 com.google.android.gms/com.google.android.gms.fitness.sync.SyncGcmTaskService|cloud
-
-# Security Services
 com.google.android.gms/com.google.android.gms.security.safebrowsing.SafeBrowsingUpdateTaskService|cloud
 com.google.android.gms/com.google.android.gms.security.verifier.ApkUploadService|cloud
 com.google.android.gms/com.google.android.gms.security.verifier.InternalApkUploadService|cloud
@@ -265,37 +181,28 @@ com.google.android.gms/com.google.android.gms.security.snet.SnetIdleTaskService|
 com.google.android.gms/com.google.android.gms.security.snet.SnetNormalTaskService|cloud
 com.google.android.gms/com.google.android.gms.security.snet.SnetService|cloud
 com.google.android.gms/com.google.android.gms.droidguard.DroidGuardGcmTaskService|cloud
-
-# Instant Apps
 com.google.android.gms/com.google.android.gms.chimera.GmsApiServiceNoInstantApps|cloud
 com.google.android.gms/com.google.android.gms.chimera.PersistentApiServiceNoInstantApps|cloud
 com.google.android.gms/com.google.android.gms.instantapps.service.InstantAppsService|cloud
+com.google.android.gms/com.google.android.gms.instantapps.routing.DomainFilterUpdateService|cloud
 com.google.android.gms/com.google.android.gms.chimera.UiApiServiceNoInstantApps|cloud
-
-# Kids & Safety
 com.google.android.gms/com.google.android.gms.kids.chimera.KidsServiceProxy|cloud
 com.google.android.gms/com.google.android.gms.personalsafety.service.PersonalSafetyService|cloud
 
 
-# 💳 PAYMENTS - Wallet, Google Pay, Tap-and-Pay, NFC
-# BREAKS: Google Pay, NFC payments, Google Wallet!
+# PAYMENTS - Wallet, Google Pay, NFC
 
-# Tap and Pay
 com.google.android.gms/com.google.android.gms.tapandpay.gcmtask.TapAndPayGcmTaskService|payments
 com.google.android.gms/com.google.android.gms.tapandpay.globalactions.QuickAccessWalletService|payments
 com.google.android.gms/com.google.android.gms.tapandpay.globalactions.WalletQuickAccessWalletService|payments
 com.google.android.gms/com.google.android.gms.tapandpay.hce.service.TpHceService|payments
 com.google.android.gms/com.google.android.gms.tapandpay.security.StorageKeyCacheService|payments
 com.google.android.gms/com.google.android.gms.tapandpay.wear.WearProxyService|payments
-
-# Google Pay
 com.google.android.gms/com.google.android.gms.pay.gcmtask.PayGcmTaskService|payments
 com.google.android.gms/com.google.android.gms.pay.hce.service.PayHceService|payments
 com.google.android.gms/com.google.android.gms.pay.notifications.PayNotificationService|payments
 com.google.android.gms/com.google.android.gms.pay.service.PayGrpcUiService|payments
 com.google.android.gms/com.google.android.gms.pay.security.storagekey.service.StorageKeyCacheService|payments
-
-# Wallet
 com.google.android.gms/com.google.android.gms.wallet.service.PaymentService|payments
 com.google.android.gms/com.google.android.gms.wallet.service.PaymentsService|payments
 com.google.android.gms/com.google.android.gms.wallet.service.WalletGcmTaskService|payments
@@ -303,10 +210,8 @@ com.google.android.gms/com.google.android.gms.wallet.service.WalletGoogleService
 com.google.android.gms/com.google.android.gms.wallet.notifications.WalletNotificationsService|payments
 
 
-# ⌚ WEARABLES - Wear OS, Google Fit, Health Tracking
-# BREAKS: Smartwatch sync, Google Fit, health apps!
+# WEARABLES - Wear OS, Google Fit
 
-# Wearable Core
 com.google.android.gms/com.google.android.gms.wearable.service.WearableService|wearables
 com.google.android.gms/com.google.android.gms.wearable.service.WearableControlService|wearables
 com.google.android.gms/com.google.android.gms.wearable.service.ListenerService|wearables
@@ -314,14 +219,10 @@ com.google.android.gms/com.google.android.gms.wearables.settings.WearablesSyncSe
 com.google.android.gms/com.google.android.gms.backup.wear.BackupSettingsListenerService|wearables
 com.google.android.gms/com.google.android.gms.dck.service.DckWearableListenerService|wearables
 com.google.android.gms/com.google.android.gms.trustagent.AuthenticatorService|wearables
-
-# Fitness Core
 com.google.android.gms/com.google.android.gms.fitness.service.FitnessSensorService|wearables
 com.google.android.gms/com.google.android.gms.fitness.GoogleFitnessService|wearables
 com.google.android.gms/com.google.android.gms.fitness.cache.DataUpdateListenerCacheService|wearables
 com.google.android.gms/com.google.android.gms.fitness.sensors.sample.CollectSensorService|wearables
-
-# Fitness Brokers
 com.google.android.gms/com.google.android.gms.fitness.service.ble.FitBleBroker|wearables
 com.google.android.gms/com.google.android.gms.fitness.service.config.FitConfigBroker|wearables
 com.google.android.gms/com.google.android.gms.fitness.service.goals.FitGoalsBroker|wearables
@@ -331,8 +232,6 @@ com.google.android.gms/com.google.android.gms.fitness.service.proxy.FitProxyBrok
 com.google.android.gms/com.google.android.gms.fitness.service.recording.FitRecordingBroker|wearables
 com.google.android.gms/com.google.android.gms.fitness.service.sensors.FitSensorsBroker|wearables
 com.google.android.gms/com.google.android.gms.fitness.service.sessions.FitSessionsBroker|wearables
-
-# Wearable Sync
 com.google.android.gms/com.google.android.gms.fitness.service.wearable.WearableSyncAccountService|wearables
 com.google.android.gms/com.google.android.gms.fitness.service.wearable.WearableSyncConfigService|wearables
 com.google.android.gms/com.google.android.gms.fitness.service.wearable.WearableSyncConnectionService|wearables
@@ -340,8 +239,7 @@ com.google.android.gms/com.google.android.gms.fitness.service.wearable.WearableS
 com.google.android.gms/com.google.android.gms.fitness.wearables.WearableSyncService|wearables
 
 
-# 🎮 GAMES - Play Games, Achievements, Cloud Saves
-# BREAKS: Play Games achievements, leaderboards, cloud saves!
+# GAMES - Play Games
 
 com.google.android.gms/com.google.android.gms.games.chimera.GamesSignInIntentServiceProxy|games
 com.google.android.gms/com.google.android.gms.games.chimera.GamesSyncServiceNotificationProxy|games

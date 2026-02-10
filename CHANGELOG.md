@@ -1,6 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+
+## [2.1] - 2026-02-10
+- Fixed some functions like sync, password manager, GPS not working properly even when their categories were skipped
+- GMS doze now uses proper XML overlay patching
+- Reorganized gms categories for better functionality
+- Removed redundant tweaks
+- Empty RC file overlays are now properly applied when log killing is enabled
+
 ## [2.0] - 2026-02-03
 - Implement system-wide dozing for all apps.
 - Added more props and kernel tweaks.
