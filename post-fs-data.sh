@@ -39,17 +39,6 @@ load_prefs() {
   fi
 }
 
-if [ -f "$MODDIR/replace_gps_conf.sh" ]; then
-  log "Optimizando gps.conf (post-fs-data)..."
-  chmod +x "$MODDIR/replace_gps_conf.sh"
-  if ! "$MODDIR/replace_gps_conf.sh" >> "$POSTFS_LOG" 2>&1; then
-    log_error "Error al optimizar gps.conf en post-fs-data"
-  else
-    log "[OK] gps.conf optimizado en post-fs-data"
-  fi
-fi
-
-
 # --- Resetprop Tweaks ---
 apply_resetprop_tweaks() {
   log "Applying resetprop tweaks..."
@@ -114,11 +103,9 @@ apply_kernel_tweaks() {
 }
 
 # --- Main ---
-check_root
 load_prefs
 apply_resetprop_tweaks
 disable_blur_effects
-disable_gms_battery_exemptions
 apply_kernel_tweaks
 
 log "Post-FS-Data script completed"
