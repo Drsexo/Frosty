@@ -49,6 +49,21 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
+# --- GPS Mode Detection ---
+detect_gps_mode() {
+
+  RUNTIME_FILE="$MODDIR/runtime_mode"
+
+  if grep -q "XTRA_VERSION_CHECK=3" /vendor/etc/gps.conf 2>/dev/null; then
+    echo "overlay" > "$RUNTIME_FILE"
+    log "[GPS] Overlay detectado. No se ejecuta replace."
+  else
+    echo "legacy" > "$RUNTIME_FILE"
+    log "[GPS] Overlay no detectado. Ejecutando fallback."
+    sh "$MODDIR/replace_gps_conf.sh"
+  fi
+}
+
 # --- Función para escribir valores ---
 write_val() {
   local file="$1" value="$2" name="$3"
@@ -160,6 +175,7 @@ check_kernel_optimizations() {
 echo "Frosty Boot - $(date '+%Y-%m-%d %H:%M:%S')" > "$BOOT_LOG"
 echo "Frosty Tweaks - $(date '+%Y-%m-%d %H:%M:%S')" > "$TWEAKS_LOG"
 check_root
+detect_gps_mode
 
 # Log rotation
 for log in "$LOGDIR"/*.log; do
