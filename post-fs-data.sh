@@ -3,7 +3,7 @@
 # Applies system properties, tweaks, and optimizations at boot
 
 MODDIR="${0%/*}"
-[ -z "$MODDIR" ] && MODDIR="/data/adb/modules/Frosty"
+[ -z "$MODDIR" ] && MODDIR="/data/adb/modules/FrostyEnhanced"
 LOGDIR="$MODDIR/logs"
 POSTFS_LOG="$LOGDIR/postfs.log"
 ERROR_LOG="$LOGDIR/postfs_errors.log"
