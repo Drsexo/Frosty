@@ -56,10 +56,10 @@ detect_gps_mode() {
 
   if grep -q "XTRA_VERSION_CHECK=3" /vendor/etc/gps.conf 2>/dev/null; then
     echo "overlay" > "$RUNTIME_FILE"
-    log "[GPS] Overlay detectado. No se ejecuta replace."
+    log_boot "[GPS] Overlay detectado. No se ejecuta replace."
   else
     echo "legacy" > "$RUNTIME_FILE"
-    log "[GPS] Overlay no detectado. Ejecutando fallback."
+    log_boot "[GPS] Overlay no detectado. Ejecutando fallback."
     sh "$MODDIR/replace_gps_conf.sh"
   fi
 }
