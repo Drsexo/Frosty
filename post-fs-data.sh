@@ -21,15 +21,41 @@ command_exists() {
 
 # --- Load User Preferences ---
 load_prefs() {
-  if [ -f "$MODDIR/config/user_prefs" ]; then
-    . "$MODDIR/config/user_prefs"
-    log "User preferences loaded"
-  else
-    log_error "User preferences not found, using defaults"
-    ENABLE_BLUR_DISABLE=0
-    ENABLE_GMS_DOZE=0
-    ENABLE_KERNEL_TWEAKS=1
+  if [ ! -f "$MODDIR/config/user_prefs" ]; then
+    log_error "user_prefs no existe. Creando con valores por defecto..."
+    mkdir -p "$MODDIR/config"
+    cat > "$MODDIR/config/user_prefs" << EOF
+ENABLE_KERNEL_TWEAKS=1
+ENABLE_BLUR_DISABLE=0
+ENABLE_LOG_KILLING=1
+ENABLE_GMS_DOZE=1
+ENABLE_DEEP_DOZE=1
+DEEP_DOZE_LEVEL=moderate
+DISABLE_TELEMETRY=1
+DISABLE_BACKGROUND=1
+DISABLE_LOCATION=0
+DISABLE_CONNECTIVITY=0
+DISABLE_CLOUD=0
+DISABLE_PAYMENTS=0
+DISABLE_WEARABLES=0
+DISABLE_GAMES=0
+EOF
+    chmod 644 "$MODDIR/config/user_prefs"
   fi
+  if ! . "$MODDIR/config/user_prefs"; then
+    log_error "Error al cargar user_prefs. Usando valores por defecto."
+    ENABLE_KERNEL_TWEAKS=1
+    ENABLE_BLUR_DISABLE=0
+    ENABLE_LOG_KILLING=1
+    ENABLE_GMS_DOZE=0
+    DISABLE_LOCATION=0
+  fi
+  log "Preferencias del usuario cargadas:"
+  log "  Kernel Tweaks: $ENABLE_KERNEL_TWEAKS"
+  log "  GMS Doze: $ENABLE_GMS_DOZE"
+  log "  Blur Disable: $ENABLE_BLUR_DISABLE"
+  log "  Location Disabled: $DISABLE_LOCATION"
+  log "  Deep Doze: $ENABLE_DEEP_DOZE ($DEEP_DOZE_LEVEL)"
 }
 
 # --- Resetprop Tweaks ---
