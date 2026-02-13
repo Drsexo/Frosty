@@ -148,10 +148,7 @@ check_kernel_optimizations() {
 
   # Verificar sched_autogroup_enabled
   local autogroup=$(cat /proc/sys/kernel/sched_autogroup_enabled 2>/dev/null)
-  if [ -n "$swappiness" ] && [ "$swappiness" -eq 100 ]; then
-    log_boot "[INFO] sched_autogroup_enabled ya está optimizado ($autogroup)"
-    KERNEL_OPTIMIZED=1
-  fi
+  if [ -n "$autogroup" ] && [ "$autogroup" -eq 1 ]; then
 
   # Verificar printk (depuración)
   local printk=$(cat /proc/sys/kernel/printk 2>/dev/null)
