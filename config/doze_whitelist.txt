@@ -1,0 +1,11 @@
+# Lista blanca de aplicaciones y servicios que no deben ser optimizados
+com.bancomer.mbanking
+com.google.android.gms.location.fused.FusedLocationService
+com.google.android.gms.location.internal.server.GoogleLocationService
+com.google.android.gms.location.reporting.service.ReportingAndroidService
+
+
+# YouTube (evitar bloqueos)
+com.google.android.youtube
+com.google.android.apps.youtube.music
+com.google.android.youtube.tv
