@@ -1,7 +1,6 @@
 #!/system/bin/sh
-# 🧊 FROSTY - Main service handler
-# Handles Frozen/Stock mode toggling with detailed logging
-
+# 🧊 FROSTY - Main Service Handler (Optimized)
+# Handles Frozen/Stock mode toggling with detailed logging, safety checks, and error handling
 
 MODDIR="${0%/*}"
 [ -z "$MODDIR" ] && MODDIR="/data/adb/modules/Frosty"
@@ -9,13 +8,33 @@ MODDIR="${0%/*}"
 LOGDIR="$MODDIR/logs"
 SERVICES_LOG="$LOGDIR/services.log"
 ACTION_LOG="$LOGDIR/action.log"
+ERROR_LOG="$LOGDIR/errors.log"
 STATE_FILE="$MODDIR/config/state"
 GMS_LIST="$MODDIR/config/gms_services.txt"
 USER_PREFS="$MODDIR/config/user_prefs"
+TMP_DIR="$MODDIR/tmp"
+BACKUP_DIR="$MODDIR/backup"
 
-mkdir -p "$LOGDIR" "$MODDIR/config"
+mkdir -p "$LOGDIR" "$MODDIR/config" "$TMP_DIR"
 
-# Dynamic separator width
+# --- Logging Functions ---
+log_service() { echo "$1" >> "$SERVICES_LOG"; }
+log_action() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$ACTION_LOG"; }
+log_error() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: $1" >> "$ERROR_LOG"; log_action "[ERROR] $1"; }
+
+# --- Safety Checks ---
+check_root() {
+  if ! su -c "echo 'root check'" >/dev/null 2>&1; then
+    log_error "No root access. Exiting."
+    exit 1
+  fi
+}
+
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+# --- UI Helpers ---
 COLS=$(stty size 2>/dev/null | awk '{print $2}')
 case "$COLS" in ''|*[!0-9]*) COLS=40 ;; esac
 [ "$COLS" -gt 54 ] && COLS=54
@@ -32,9 +51,11 @@ BOX_TOP="  ┌${LINE}┐"
 BOX_BOT="  └${LINE}┘"
 unset _i _iw
 
-log_service() { echo "$1" >> "$SERVICES_LOG"; }
-log_action() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$ACTION_LOG"; }
+# --- State Management ---
+get_state() { [ -f "$STATE_FILE" ] && cat "$STATE_FILE" || echo "frozen"; }
+set_state() { echo "$1" > "$STATE_FILE"; chmod 644 "$STATE_FILE"; }
 
+# --- User Preferences ---
 load_prefs() {
   if [ -f "$USER_PREFS" ]; then
     . "$USER_PREFS"
@@ -46,40 +67,6 @@ load_prefs() {
     DISABLE_CONNECTIVITY=0; DISABLE_CLOUD=0; DISABLE_PAYMENTS=0
     DISABLE_WEARABLES=0; DISABLE_GAMES=0
   fi
-}
-
-load_prefs
-
-get_state() { [ -f "$STATE_FILE" ] && cat "$STATE_FILE" || echo "frozen"; }
-set_state() { echo "$1" > "$STATE_FILE"; chmod 644 "$STATE_FILE"; }
-
-should_disable_category() {
-  case "$1" in
-    telemetry)    [ "$DISABLE_TELEMETRY" = "1" ] ;;
-    background)   [ "$DISABLE_BACKGROUND" = "1" ] ;;
-    location)     [ "$DISABLE_LOCATION" = "1" ] ;;
-    connectivity) [ "$DISABLE_CONNECTIVITY" = "1" ] ;;
-    cloud)        [ "$DISABLE_CLOUD" = "1" ] ;;
-    payments)     [ "$DISABLE_PAYMENTS" = "1" ] ;;
-    wearables)    [ "$DISABLE_WEARABLES" = "1" ] ;;
-    games)        [ "$DISABLE_GAMES" = "1" ] ;;
-    *) return 1 ;;
-  esac
-}
-
-get_user_choice() {
-  local timeout="${1:-10}"
-  local start=$(date +%s)
-  while true; do
-    local elapsed=$(( $(date +%s) - start ))
-    [ $elapsed -ge $timeout ] && { echo "timeout"; return; }
-    if command -v getevent >/dev/null 2>&1; then
-      local event=$(timeout 1 getevent -qlc 1 2>/dev/null)
-      echo "$event" | grep -q "KEY_VOLUMEUP.*DOWN" && { echo "up"; return; }
-      echo "$event" | grep -q "KEY_VOLUMEDOWN.*DOWN" && { echo "down"; return; }
-    fi
-    sleep 0.1
-  done
 }
 
 save_prefs() {
@@ -103,27 +90,35 @@ EOF
   log_action "Preferences saved"
 }
 
-interactive_menu() {
-  local current=$(get_state)
-  log_action "Menu opened (state: $current)"
-
-  echo ""
-  echo "  🧊 FROSTY - Configuration Menu"
-  echo ""
-  echo "  Current: $([ "$current" = "frozen" ] && echo "🧊 FROZEN" || echo "🔥 STOCK")"
-  echo ""
-  echo "  Vol+ = ⚙️ CUSTOMIZE"
-  echo "  Vol- = 🔥 STOCK (Revert all)"
-  echo ""
-  echo "If it crashes try configuring it during installation"
-  echo ""
-
-  local choice=$(get_user_choice 15)
-  case "$choice" in
-    up) log_action "CUSTOMIZE"; run_customization_wizard ;;
-    down) log_action "STOCK"; stock_services ;;
-    timeout) echo "  ⏱️ Timeout"; echo "" ;;
+# --- Category Management ---
+should_disable_category() {
+  case "$1" in
+    telemetry)    [ "$DISABLE_TELEMETRY" = "1" ] ;;
+    background)   [ "$DISABLE_BACKGROUND" = "1" ] ;;
+    location)     [ "$DISABLE_LOCATION" = "1" ] ;;
+    connectivity) [ "$DISABLE_CONNECTIVITY" = "1" ] ;;
+    cloud)        [ "$DISABLE_CLOUD" = "1" ] ;;
+    payments)     [ "$DISABLE_PAYMENTS" = "1" ] ;;
+    wearables)    [ "$DISABLE_WEARABLES" = "1" ] ;;
+    games)        [ "$DISABLE_GAMES" = "1" ] ;;
+    *) return 1 ;;
   esac
+}
+
+# --- User Input ---
+get_user_choice() {
+  local timeout="${1:-10}"
+  local start=$(date +%s)
+  while true; do
+    local elapsed=$(( $(date +%s) - start ))
+    [ $elapsed -ge $timeout ] && { echo "timeout"; return; }
+    if command_exists getevent; then
+      local event=$(timeout 1 getevent -qlc 1 2>/dev/null)
+      echo "$event" | grep -q "KEY_VOLUMEUP.*DOWN" && { echo "up"; return; }
+      echo "$event" | grep -q "KEY_VOLUMEDOWN.*DOWN" && { echo "down"; return; }
+    fi
+    sleep 0.1
+  done
 }
 
 prompt_toggle() {
@@ -134,10 +129,140 @@ prompt_toggle() {
   echo ""
 }
 
+# --- Service Management ---
+freeze_services() {
+  log_action "FREEZE mode"
+  echo "Frosty Services - FREEZE $(date '+%Y-%m-%d %H:%M:%S')" > "$SERVICES_LOG"
+  log_service "Device: $(getprop ro.product.model) Android $(getprop ro.build.version.release)"
+  log_service ""
+
+  if [ ! -f "$GMS_LIST" ]; then
+    log_error "gms_services.txt not found"
+    echo "ERROR: Service list not found!"
+    return 1
+  fi
+
+  local current_category="" count_ok=0 count_fail=0 count_skip=0
+
+  while IFS='|' read -r service category || [ -n "$service" ]; do
+    case "$service" in \#*|"") continue ;; esac
+    service=$(echo "$service" | tr -d ' ')
+    category=$(echo "$category" | tr -d ' ')
+    [ -z "$category" ] && continue
+
+    if [ "$category" != "$current_category" ]; then
+      current_category="$category"
+      log_service ""
+      log_service "--- $category ---"
+    fi
+
+    if should_disable_category "$category"; then
+      if pm disable "$service" >/dev/null 2>&1; then
+        log_service "[OK] $service"
+        count_ok=$((count_ok + 1))
+      else
+        log_service "[FAIL] $service"
+        count_fail=$((count_fail + 1))
+      fi
+    else
+      log_service "[SKIP] $service"
+      count_skip=$((count_skip + 1))
+    fi
+  done < "$GMS_LIST"
+
+  set_state "frozen"
+  log_action "FROZEN: $count_ok disabled, $count_skip skipped, $count_fail failed"
+
+  echo ""
+  echo "  🧊 FROZEN MODE"
+  echo "  Disabled: $count_ok  Skipped: $count_skip  Failed: $count_fail"
+  echo ""
+
+  if [ "$ENABLE_GMS_DOZE" = "1" ]; then
+    chmod +x "$MODDIR/gms_doze.sh"
+    "$MODDIR/gms_doze.sh" freeze
+  fi
+
+  if [ "$ENABLE_DEEP_DOZE" = "1" ]; then
+    chmod +x "$MODDIR/deep_doze.sh"
+    "$MODDIR/deep_doze.sh" freeze
+  fi
+
+  if [ "$ENABLE_LOG_KILLING" = "1" ]; then
+    for svc in logcat logcatd logd tcpdump cnss_diag statsd traced; do
+      pid=$(pidof "$svc" 2>/dev/null)
+      [ -n "$pid" ] && kill -9 "$pid" 2>/dev/null
+    done
+    echo "  📝 Logs killed"
+  fi
+  echo ""
+}
+
+# --- Función para restaurar valores del kernel ---
+restore_kernel() {
+  if [ -f "$BACKUP_DIR/kernel_backup.txt" ]; then
+    log_action "Restaurando valores originales del kernel..."
+    restore_kernel_values
+  else
+    log_error "No se encontró el backup del kernel. No se pueden restaurar los valores."
+  fi
+}
+
+# --- Modo Stock ---
+stock_services() {
+  log_action "STOCK mode"
+  echo "Frosty Services - STOCK $(date '+%Y-%m-%d %H:%M:%S')" > "$SERVICES_LOG"
+  log_service "Device: $(getprop ro.product.model) Android $(getprop ro.build.version.release)"
+  log_service ""
+
+  # Restaurar valores del kernel
+  restore_kernel
+
+  # Restablecer servicios de GMS
+  if [ -f "$GMS_LIST" ]; then
+    local current_category="" count_ok=0 count_fail=0
+    while IFS='|' read -r service category || [ -n "$service" ]; do
+      case "$service" in \#*|"") continue ;; esac
+      service=$(echo "$service" | tr -d ' ')
+      category=$(echo "$category" | tr -d ' ')
+      [ -z "$category" ] && continue
+
+      if [ "$category" != "$current_category" ]; then
+        current_category="$category"
+        log_service ""
+        log_service "--- $category ---"
+      fi
+
+      if pm enable "$service" >/dev/null 2>&1; then
+        log_service "[OK] $service"
+        count_ok=$((count_ok + 1))
+      else
+        log_service "[FAIL] $service"
+        count_fail=$((count_fail + 1))
+      fi
+    done < "$GMS_LIST"
+
+    set_state "stock"
+    log_action "STOCK: $count_ok enabled, $count_fail failed"
+  fi
+
+  echo ""
+  echo "  🔥 STOCK MODE"
+  echo "  Re-enabled: $count_ok  Failed: $count_fail"
+  echo "  Kernel values restored from backup"
+  echo ""
+
+  chmod +x "$MODDIR/gms_doze.sh"
+  "$MODDIR/gms_doze.sh" stock
+
+  chmod +x "$MODDIR/deep_doze.sh"
+  "$MODDIR/deep_doze.sh" stock
+}
+
+# --- Interactive Menu ---
 run_customization_wizard() {
   echo "  Starting configuration..."
   echo ""
-  sleep 1
 
   prompt_toggle "🔧 Kernel Tweaks" "$([ "$ENABLE_KERNEL_TWEAKS" = "1" ] && echo "✅" || echo "❌")"
   case $(get_user_choice 10) in
@@ -239,123 +364,27 @@ CATEGORIES
   esac
 }
 
-freeze_services() {
-  log_action "FREEZE mode"
-  echo "Frosty Services - FREEZE $(date '+%Y-%m-%d %H:%M:%S')" > "$SERVICES_LOG"
-  log_service "Device: $(getprop ro.product.model) Android $(getprop ro.build.version.release)"
-  log_service ""
-
-  if [ ! -f "$GMS_LIST" ]; then
-    log_action "ERROR: gms_services.txt not found"
-    echo "ERROR: Service list not found!"
-    return 1
-  fi
-
-  local current_category="" count_ok=0 count_fail=0 count_skip=0
-
-  while IFS='|' read -r service category || [ -n "$service" ]; do
-    case "$service" in \#*|"") continue ;; esac
-    service=$(echo "$service" | tr -d ' ')
-    category=$(echo "$category" | tr -d ' ')
-    [ -z "$category" ] && continue
-
-    if [ "$category" != "$current_category" ]; then
-      current_category="$category"
-      log_service ""
-      log_service "--- $category ---"
-    fi
-
-    if should_disable_category "$category"; then
-      if pm disable "$service" >/dev/null 2>&1; then
-        log_service "[OK] $service"
-        count_ok=$((count_ok + 1))
-      else
-        log_service "[FAIL] $service"
-        count_fail=$((count_fail + 1))
-      fi
-    else
-      log_service "[SKIP] $service"
-      count_skip=$((count_skip + 1))
-    fi
-  done < "$GMS_LIST"
-
-  set_state "frozen"
-  log_action "FROZEN: $count_ok disabled, $count_skip skipped, $count_fail failed"
+interactive_menu() {
+  local current=$(get_state)
+  log_action "Menu opened (state: $current)"
 
   echo ""
-  echo "  🧊 FROZEN MODE"
-  echo "  Disabled: $count_ok  Skipped: $count_skip  Failed: $count_fail"
+  echo "  🧊 FROSTY - Configuration Menu"
+  echo ""
+  echo "  Current: $([ "$current" = "frozen" ] && echo "🧊 FROZEN" || echo "🔥 STOCK")"
+  echo ""
+  echo "  Vol+ = ⚙️ CUSTOMIZE"
+  echo "  Vol- = 🔥 STOCK (Revert all)"
+  echo ""
+  echo "If it crashes try configuring it during installation"
   echo ""
 
-  if [ "$ENABLE_GMS_DOZE" = "1" ]; then
-    chmod +x "$MODDIR/gms_doze.sh"
-    "$MODDIR/gms_doze.sh" freeze
-  fi
-
-  if [ "$ENABLE_DEEP_DOZE" = "1" ]; then
-    chmod +x "$MODDIR/deep_doze.sh"
-    "$MODDIR/deep_doze.sh" freeze
-  fi
-
-  if [ "$ENABLE_LOG_KILLING" = "1" ]; then
-    for svc in logcat logcatd logd tcpdump cnss_diag statsd traced; do
-      pid=$(pidof "$svc" 2>/dev/null)
-      [ -n "$pid" ] && kill -9 "$pid" 2>/dev/null
-    done
-    echo "  📝 Logs killed"
-  fi
-  echo ""
-}
-
-stock_services() {
-  log_action "STOCK mode"
-  echo "Frosty Services - STOCK $(date '+%Y-%m-%d %H:%M:%S')" > "$SERVICES_LOG"
-  log_service "Device: $(getprop ro.product.model) Android $(getprop ro.build.version.release)"
-  log_service ""
-
-  if [ ! -f "$GMS_LIST" ]; then
-    log_action "ERROR: gms_services.txt not found"
-    echo "ERROR: Service list not found!"
-    return 1
-  fi
-
-  local current_category="" count_ok=0 count_fail=0
-
-  while IFS='|' read -r service category || [ -n "$service" ]; do
-    case "$service" in \#*|"") continue ;; esac
-    service=$(echo "$service" | tr -d ' ')
-    category=$(echo "$category" | tr -d ' ')
-    [ -z "$category" ] && continue
-
-    if [ "$category" != "$current_category" ]; then
-      current_category="$category"
-      log_service ""
-      log_service "--- $category ---"
-    fi
-
-    if pm enable "$service" >/dev/null 2>&1; then
-      log_service "[OK] $service"
-      count_ok=$((count_ok + 1))
-    else
-      log_service "[FAIL] $service"
-      count_fail=$((count_fail + 1))
-    fi
-  done < "$GMS_LIST"
-
-  set_state "stock"
-  log_action "STOCK: $count_ok enabled, $count_fail failed"
-
-  echo ""
-  echo "  🔥 STOCK MODE"
-  echo "  Re-enabled: $count_ok  Failed: $count_fail"
-  echo "  Kernel tweaks revert on reboot"
-  echo ""
-
-  chmod +x "$MODDIR/gms_doze.sh"
-  "$MODDIR/gms_doze.sh" stock
-
-  chmod +x "$MODDIR/deep_doze.sh"
-  "$MODDIR/deep_doze.sh" stock
+  local choice=$(get_user_choice 15)
+  case "$choice" in
+    up) log_action "CUSTOMIZE"; run_customization_wizard ;;
+    down) log_action "STOCK"; stock_services ;;
+    timeout) echo "  ⏱️ Timeout"; echo "" ;;
+  esac
 }
 
 toggle() {
@@ -385,6 +414,10 @@ status() {
   echo "  Deep Doze: $([ "$ENABLE_DEEP_DOZE" = "1" ] && echo "🔋 $DEEP_DOZE_LEVEL" || echo "❌")"
   echo ""
 }
+
+# --- Main ---
+check_root
+load_prefs
 
 case "$1" in
   freeze) freeze_services ;;
