@@ -15,13 +15,6 @@ log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$POSTFS_LOG"; }
 log_error() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: $1" >> "$ERROR_LOG"; log "[ERROR] $1"; }
 
 # --- Safety Checks ---
-check_root() {
-  if ! su -c "echo 'root check'" >/dev/null 2>&1; then
-    log_error "No root access. Exiting."
-    exit 1
-  fi
-}
-
 command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
@@ -60,27 +53,6 @@ disable_blur_effects() {
     resetprop -n ro.sf.blurs_are_expensive 0 || log_error "Failed to set ro.sf.blurs_are_expensive"
     resetprop -n ro.surface_flinger.supports_background_blur 0 || log_error "Failed to set ro.surface_flinger.supports_background_blur"
     log "[OK] Blur effects disabled"
-  fi
-}
-
-# --- GMS Doze ---
-disable_gms_battery_exemptions() {
-  if [ "$ENABLE_GMS_DOZE" = "1" ]; then
-    log "Disabling GMS battery exemptions..."
-    local GMS0="\"com.google.android.gms\""
-    local STR1="allow-in-power-save package=$GMS0"
-    local STR2="allow-in-data-usage-save package=$GMS0"
-    local STR3="allow-unthrottled-location package=$GMS0"
-    local STR4="allow-ignore-location-settings package=$GMS0"
-
-    find /data/adb/modules -type f -name "*.xml" 2>/dev/null | while IFS= read -r xml; do
-      case "$xml" in "$MODDIR"*) continue ;; esac
-      if grep -qE "$STR1|$STR2|$STR3|$STR4" "$xml" 2>/dev/null; then
-        sed -i "/$STR1/d;/$STR2/d;/$STR3/d;/$STR4/d" "$xml" || log_error "Failed to edit $xml"
-        log "[OK] Cleaned GMS exemptions in $xml"
-      fi
-    done
-    log "[OK] GMS battery exemptions disabled"
   fi
 }
 
