@@ -84,43 +84,43 @@ limit_gms_background() {
 apply_whitelist() {
   log_doze "Aplicando lista blanca..."
 
-  # Asegurar que YouTube esté siempre en la lista blanca
-  local youtube_services=(
-    "com.google.android.youtube"
-    "com.google.android.apps.youtube.music"
-    "com.google.android.youtube.tv"
-  )
-
-  for service in "${youtube_services[@]}"; do
+  # --- YouTube ---
+  for service in \
+    com.google.android.youtube \
+    com.google.android.apps.youtube.music \
+    com.google.android.youtube.tv
+  do
     if ! dumpsys deviceidle whitelist | grep -q "$service"; then
       log_doze "[OK] Añadiendo YouTube a la lista blanca: $service"
-      su -c "dumpsys deviceidle whitelist +$service" >> "$DOZE_LOG" 2>&1
+      dumpsys deviceidle whitelist +"$service" >> "$DOZE_LOG" 2>&1
     fi
   done
 
-  # Asegurar que los servicios de ubicación estén en la lista blanca
-  local critical_location_services=(
-    "com.google.android.gms.location.fused.FusedLocationService"
-    "com.google.android.gms.location.internal.server.GoogleLocationService"
-    "com.google.android.gms.location.reporting.service.ReportingAndroidService"
-    "com.xiaomi.location.fused"
-    "com.miui.location.fused"
-  )
-
-  for service in "${critical_location_services[@]}"; do
+  # --- Servicios críticos de ubicación ---
+  for service in \
+    com.google.android.gms.location.fused.FusedLocationService \
+    com.google.android.gms.location.internal.server.GoogleLocationService \
+    com.google.android.gms.location.reporting.service.ReportingAndroidService \
+    com.xiaomi.location.fused \
+    com.miui.location.fused
+  do
     if ! dumpsys deviceidle whitelist | grep -q "$service"; then
-      log_doze "[OK] Añadiendo servicio crítico de ubicación a la lista blanca: $service"
-      su -c "dumpsys deviceidle whitelist +$service" >> "$DOZE_LOG" 2>&1
+      log_doze "[OK] Añadiendo servicio crítico de ubicación: $service"
+      dumpsys deviceidle whitelist +"$service" >> "$DOZE_LOG" 2>&1
     fi
   done
 
-  # Aplicar la lista blanca del archivo doze_whitelist.txt
+  # --- Archivo externo ---
   if [ -f "$MODDIR/config/doze_whitelist.txt" ]; then
     while IFS= read -r package; do
-      [ -z "$package" ] || [ "${package:0:1}" = "#" ] && continue
+      # Saltar líneas vacías o comentarios
+      case "$package" in
+        ""|\#*) continue ;;
+      esac
+
       if ! dumpsys deviceidle whitelist | grep -q "$package"; then
-        log_doze "[OK] Añadido a la lista blanca: $package"
-        su -c "dumpsys deviceidle whitelist +$package" >> "$DOZE_LOG" 2>&1
+        log_doze "[OK] Añadido desde archivo: $package"
+        dumpsys deviceidle whitelist +"$package" >> "$DOZE_LOG" 2>&1
       fi
     done < "$MODDIR/config/doze_whitelist.txt"
   else
