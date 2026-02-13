@@ -60,9 +60,7 @@ should_disable_location() {
 # --- Funciones para Excluir Servicios de Ubicación ---
 exclude_location_services() {
   for service in \
-    "com.google.android.gms.location.fused.FusedLocationService" \
-    "com.google.android.gms.location.internal.server.GoogleLocationService" \
-    "com.google.android.gms.location.reporting.service.ReportingAndroidService"; do
+    "com.google.android.gms"; do
     if dumpsys deviceidle whitelist +"$service" >/dev/null 2>&1; then
       log_doze "[OK] Excluido de la optimización: $service"
     else
@@ -98,9 +96,7 @@ apply_whitelist() {
 
   # --- Servicios críticos de ubicación ---
   for service in \
-    com.google.android.gms.location.fused.FusedLocationService \
-    com.google.android.gms.location.internal.server.GoogleLocationService \
-    com.google.android.gms.location.reporting.service.ReportingAndroidService \
+    com.google.android.gms \
     com.xiaomi.location.fused \
     com.miui.location.fused
   do
