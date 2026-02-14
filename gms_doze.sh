@@ -3,7 +3,7 @@
 # Handles GMS battery optimization with detailed logging and safety checks
 
 MODDIR="${0%/*}"
-[ -z "$MODDIR" ] && MODDIR="/data/adb/modules/Frosty"
+[ -z "$MODDIR" ] && MODDIR="/data/adb/modules/FrostyEnhanced"
 
 LOGDIR="$MODDIR/logs"
 DOZE_LOG="$LOGDIR/gms_doze.log"

@@ -3,6 +3,7 @@
 # Applies tweaks with backup/restore functionality
 
 MODDIR="${0%/*}"
+[ -z "$MODDIR" ] && MODDIR="/data/adb/modules/FrostyEnhanced"
 LOGDIR="$MODDIR/logs"
 BACKUP_DIR="$MODDIR/backups"
 mkdir -p "$LOGDIR" "$BACKUP_DIR"
@@ -51,15 +52,41 @@ command_exists() {
 
 # --- GPS Mode Detection ---
 detect_gps_mode() {
-
   RUNTIME_FILE="$MODDIR/runtime_mode"
 
-  if grep -q "XTRA_VERSION_CHECK=3" /vendor/etc/gps.conf 2>/dev/null; then
-    echo "overlay" > "$RUNTIME_FILE"
-    log_boot "[GPS] Overlay detectado. No se ejecuta replace."
+  # Verificar si hay un overlay activo (creado por otro módulo)
+  if [ -f "/vendor/etc/gps.conf" ]; then
+    # Verificar si el archivo ya está optimizado
+    if grep -q "XTRA_VERSION_CHECK=3" /vendor/etc/gps.conf 2>/dev/null && \
+       grep -q "SUPL_HOST=supl.google.com" /vendor/etc/gps.conf 2>/dev/null && \
+       grep -q "NTP_SERVER=pool.ntp.org" /vendor/etc/gps.conf 2>/dev/null; then
+      echo "optimized" > "$RUNTIME_FILE"
+      log_boot "[GPS] gps.conf ya está optimizado. No se ejecuta replace."
+    else
+      # Buscar overlays en otros módulos
+      local conflicting_module=""
+      for overlay in $(find /data/adb/modules -not -path "/data/adb/modules/FrostyEnhanced*" -name "gps.conf" 2>/dev/null);
+      do
+        local module_dir=$(dirname "$(dirname "$overlay")")
+        local module_name=$(basename "$module_dir")
+        conflicting_module="$module_name"
+        break  # Solo necesitamos el primer módulo conflicto
+      done
+
+      if [ -n "$conflicting_module" ]; then
+        echo "conflict" > "$RUNTIME_FILE"
+        log_boot "[GPS] Conflicto detectado: El módulo '$conflicting_module' está usando gps.conf."
+        log_boot "[GPS] Desactiva '$conflicting_module' si quieres usar la optimización de Frosty."
+        show_error_notification "Conflicto con $conflicting_module: Desactívalo para optimizar GPS."
+      else
+        echo "legacy" > "$RUNTIME_FILE"
+        log_boot "[GPS] gps.conf NO está optimizado. Ejecutando replace..."
+        sh "$MODDIR/replace_gps_conf.sh"
+      fi
+    fi
   else
     echo "legacy" > "$RUNTIME_FILE"
-    log_boot "[GPS] Overlay no detectado. Ejecutando fallback."
+    log_boot "[GPS] gps.conf no encontrado. Ejecutando replace..."
     sh "$MODDIR/replace_gps_conf.sh"
   fi
 }
@@ -149,6 +176,9 @@ check_kernel_optimizations() {
   # Verificar sched_autogroup_enabled
   local autogroup=$(cat /proc/sys/kernel/sched_autogroup_enabled 2>/dev/null)
   if [ -n "$autogroup" ] && [ "$autogroup" -eq 1 ]; then
+    log_boot "[INFO] sched_autogroup_enabled ya está optimizado ($autogroup)"
+    KERNEL_OPTIMIZED=1
+  fi
 
   # Verificar printk (depuración)
   local printk=$(cat /proc/sys/kernel/printk 2>/dev/null)
@@ -172,6 +202,7 @@ check_kernel_optimizations() {
 echo "Frosty Boot - $(date '+%Y-%m-%d %H:%M:%S')" > "$BOOT_LOG"
 echo "Frosty Tweaks - $(date '+%Y-%m-%d %H:%M:%S')" > "$TWEAKS_LOG"
 check_root
+
 detect_gps_mode
 
 # Log rotation

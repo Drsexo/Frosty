@@ -3,7 +3,7 @@
 # Aggressive battery optimization for ALL apps
 
 MODDIR="${0%/*}"
-[ -z "$MODDIR" ] && MODDIR="/data/adb/modules/Frosty"
+[ -z "$MODDIR" ] && MODDIR="/data/adb/modules/FrostyEnhanced"
 
 LOGDIR="$MODDIR/logs"
 DEEP_DOZE_LOG="$LOGDIR/deep_doze.log"

@@ -3,7 +3,7 @@
 # Handles Frozen/Stock mode toggling with detailed logging, safety checks, and error handling
 
 MODDIR="${0%/*}"
-[ -z "$MODDIR" ] && MODDIR="/data/adb/modules/Frosty"
+[ -z "$MODDIR" ] && MODDIR="/data/adb/modules/FrostyEnhanced"
 
 LOGDIR="$MODDIR/logs"
 SERVICES_LOG="$LOGDIR/services.log"
