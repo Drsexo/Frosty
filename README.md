@@ -69,7 +69,7 @@ Based on [DeepDoze enforcer](https://github.com/Azyrn/DeepDoze-Enforcer) by Azyr
 ### 📱 User Experience
 - **Volume Key Selection** - Easy installation choices
 - **Action Button Toggle** - Switch modes from root manager
-- **Comprehensive Logs** - Detailed logs in `/data/adb/modules/Frosty/logs/`
+- **Comprehensive Logs** - Detailed logs in `/data/adb/modules/FrostyEnhanced/logs/`
 - **Status Report** - Quick status check via terminal
 - **Clean Uninstall** - Complete reversal of all changes
 
@@ -157,7 +157,7 @@ You'll be prompted to configure:
 
 ## 📂 Log Files
 
-All logs are stored in `/data/adb/modules/Frosty/logs/`:
+All logs are stored in `/data/adb/modules/FrostyEnhanced/logs/`:
 
 | File | Contents |
 |------|----------|
@@ -194,3 +194,4 @@ All logs are stored in `/data/adb/modules/Frosty/logs/`:
 - **gloeyisk** - [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze) - GMS Doze implementation
 - **MoZoiD** - [GMS Component Disable Script](https://t.me/MoZoiDStack/137) - Few unique services
 - **Azyrn** - [DeepDoze enforcer](https://github.com/Azyrn/DeepDoze-Enforcer) - Force doze concept
+- **ianhughes74** - [GPS.conf definitive solution](https://xdaforums-com.translate.goog/t/magisk-module-step-by-step-definitive-gps-solution-global.3695769/?_x_tr_sl=auto&_x_tr_tl=es&_x_tr_hl=es-419&_x_tr_pto=tc) - Original GPS.conf configuration
