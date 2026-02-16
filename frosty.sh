@@ -2,7 +2,6 @@
 # 🧊 FROSTY - Main service handler
 # Handles Frozen/Stock mode toggling with detailed logging
 
-
 MODDIR="${0%/*}"
 [ -z "$MODDIR" ] && MODDIR="/data/adb/modules/Frosty"
 
@@ -12,8 +11,14 @@ ACTION_LOG="$LOGDIR/action.log"
 STATE_FILE="$MODDIR/config/state"
 GMS_LIST="$MODDIR/config/gms_services.txt"
 USER_PREFS="$MODDIR/config/user_prefs"
+KERNEL_BACKUP="$MODDIR/backup/kernel_values.txt"
 
 mkdir -p "$LOGDIR" "$MODDIR/config"
+
+# timeout fallback
+if ! command -v timeout >/dev/null 2>&1; then
+  timeout() { shift; "$@"; }
+fi
 
 # Dynamic separator width
 COLS=$(stty size 2>/dev/null | awk '{print $2}')
@@ -68,15 +73,17 @@ should_disable_category() {
 }
 
 get_user_choice() {
-  local timeout="${1:-10}"
+  local timeout_val="${1:-10}"
   local start=$(date +%s)
   while true; do
     local elapsed=$(( $(date +%s) - start ))
-    [ $elapsed -ge $timeout ] && { echo "timeout"; return; }
+    [ $elapsed -ge $timeout_val ] && { echo "timeout"; return; }
     if command -v getevent >/dev/null 2>&1; then
       local event=$(timeout 1 getevent -qlc 1 2>/dev/null)
       echo "$event" | grep -q "KEY_VOLUMEUP.*DOWN" && { echo "up"; return; }
       echo "$event" | grep -q "KEY_VOLUMEDOWN.*DOWN" && { echo "down"; return; }
+    else
+      echo "timeout"; return
     fi
     sleep 0.1
   done
@@ -115,7 +122,7 @@ interactive_menu() {
   echo "  Vol+ = ⚙️ CUSTOMIZE"
   echo "  Vol- = 🔥 STOCK (Revert all)"
   echo ""
-  echo "If it crashes try configuring it during installation"
+  echo "  If it crashes try configuring it during installation"
   echo ""
 
   local choice=$(get_user_choice 15)
@@ -251,7 +258,7 @@ freeze_services() {
     return 1
   fi
 
-  local current_category="" count_ok=0 count_fail=0 count_skip=0
+  local current_category="" count_ok=0 count_fail=0 count_skip=0 count_enabled=0
 
   while IFS='|' read -r service category || [ -n "$service" ]; do
     case "$service" in \#*|"") continue ;; esac
@@ -274,22 +281,28 @@ freeze_services() {
         count_fail=$((count_fail + 1))
       fi
     else
-      log_service "[SKIP] $service"
-      count_skip=$((count_skip + 1))
+      # Re-enable services in kept categories
+      if pm enable "$service" >/dev/null 2>&1; then
+        log_service "[ENABLE] $service"
+        count_enabled=$((count_enabled + 1))
+      else
+        log_service "[SKIP] $service"
+        count_skip=$((count_skip + 1))
+      fi
     fi
   done < "$GMS_LIST"
 
   set_state "frozen"
-  log_action "FROZEN: $count_ok disabled, $count_skip skipped, $count_fail failed"
+  log_action "FROZEN: $count_ok disabled, $count_enabled re-enabled, $count_skip skipped, $count_fail failed"
 
   echo ""
   echo "  🧊 FROZEN MODE"
-  echo "  Disabled: $count_ok  Skipped: $count_skip  Failed: $count_fail"
+  echo "  Disabled: $count_ok  Re-enabled: $count_enabled  Failed: $count_fail"
   echo ""
 
   if [ "$ENABLE_GMS_DOZE" = "1" ]; then
     chmod +x "$MODDIR/gms_doze.sh"
-    "$MODDIR/gms_doze.sh" freeze
+    "$MODDIR/gms_doze.sh" apply
   fi
 
   if [ "$ENABLE_DEEP_DOZE" = "1" ]; then
@@ -348,12 +361,31 @@ stock_services() {
   echo ""
   echo "  🔥 STOCK MODE"
   echo "  Re-enabled: $count_ok  Failed: $count_fail"
-  echo "  Kernel tweaks revert on reboot"
   echo ""
 
-  chmod +x "$MODDIR/gms_doze.sh"
-  "$MODDIR/gms_doze.sh" stock
+  # Restore kernel values
+  if [ -f "$KERNEL_BACKUP" ]; then
+    echo "  Restoring kernel values..."
+    while IFS='=' read -r name val path; do
+      case "$name" in \#*|"") continue ;; esac
+      [ -z "$path" ] && continue
+      if [ -f "$path" ]; then
+        chmod +w "$path" 2>/dev/null
+        echo "$val" > "$path" 2>/dev/null
+      fi
+    done < "$KERNEL_BACKUP"
+    echo "  ✓ Kernel values restored"
+    log_action "Kernel values restored from backup"
+  else
+    echo "  Kernel tweaks revert on reboot"
+  fi
+  echo ""
 
+  # Revert GMS Doze
+  chmod +x "$MODDIR/gms_doze.sh"
+  "$MODDIR/gms_doze.sh" revert
+
+  # Revert Deep Doze
   chmod +x "$MODDIR/deep_doze.sh"
   "$MODDIR/deep_doze.sh" stock
 }

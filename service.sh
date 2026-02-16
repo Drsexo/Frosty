@@ -2,17 +2,24 @@
 # 🧊 FROSTY - Service script
 # Applies kernel tweaks and initializes GMS freezing on boot
 
-
 MODDIR="${0%/*}"
 LOGDIR="$MODDIR/logs"
-mkdir -p "$LOGDIR"
+BACKUP_DIR="$MODDIR/backup"
+mkdir -p "$LOGDIR" "$BACKUP_DIR"
 BOOT_LOG="$LOGDIR/boot.log"
 TWEAKS_LOG="$LOGDIR/tweaks.log"
+KERNEL_BACKUP="$BACKUP_DIR/kernel_values.txt"
 
-# Log rotation
+# timeout fallback
+if ! command -v timeout >/dev/null 2>&1; then
+  timeout() { shift; "$@"; }
+fi
+
+# Log rotation (single .old)
 for log in "$LOGDIR"/*.log; do
   [ -f "$log" ] || continue
-  size=$(stat -c%s "$log" 2>/dev/null || echo 0)
+  size=$(wc -c < "$log" 2>/dev/null)
+  size=${size:-0}
   [ "$size" -gt 102400 ] && mv "$log" "${log}.old"
 done
 
@@ -22,15 +29,11 @@ log_tweak() { echo "$1" >> "$TWEAKS_LOG"; }
 echo "Frosty Boot - $(date '+%Y-%m-%d %H:%M:%S')" > "$BOOT_LOG"
 echo "Frosty Tweaks - $(date '+%Y-%m-%d %H:%M:%S')" > "$TWEAKS_LOG"
 
-# Wait for boot
-timeout=120
-elapsed=0
-while [ "$(getprop sys.boot_completed)" != "1" ]; do
-  sleep 2
-  elapsed=$((elapsed + 2))
-  [ $elapsed -ge $timeout ] && break
+# Wait for boot (same timeout as gloeyisk: 100s)
+until [ "$(getprop sys.boot_completed)" = "1" ] && [ -d /sdcard ]; do
+  sleep 5
 done
-sleep 30
+sleep 10
 log_boot "Boot initialized"
 
 # Wait for GMS
@@ -82,9 +85,64 @@ write_val() {
   fi
 }
 
+# Backup current kernel values before tweaking
+backup_kernel() {
+  log_boot "Backing up kernel values..."
+  echo "# Kernel Backup - $(date '+%Y-%m-%d %H:%M:%S')" > "$KERNEL_BACKUP"
+
+  for pair in \
+    "perf_cpu_time_max_percent:/proc/sys/kernel/perf_cpu_time_max_percent" \
+    "sched_autogroup_enabled:/proc/sys/kernel/sched_autogroup_enabled" \
+    "sched_child_runs_first:/proc/sys/kernel/sched_child_runs_first" \
+    "sched_tunable_scaling:/proc/sys/kernel/sched_tunable_scaling" \
+    "sched_latency_ns:/proc/sys/kernel/sched_latency_ns" \
+    "sched_min_granularity_ns:/proc/sys/kernel/sched_min_granularity_ns" \
+    "sched_wakeup_granularity_ns:/proc/sys/kernel/sched_wakeup_granularity_ns" \
+    "sched_migration_cost_ns:/proc/sys/kernel/sched_migration_cost_ns" \
+    "sched_min_task_util_for_colocation:/proc/sys/kernel/sched_min_task_util_for_colocation" \
+    "sched_nr_migrate:/proc/sys/kernel/sched_nr_migrate" \
+    "sched_schedstats:/proc/sys/kernel/sched_schedstats" \
+    "panic:/proc/sys/kernel/panic" \
+    "panic_on_oops:/proc/sys/kernel/panic_on_oops" \
+    "vm_panic_on_oom:/proc/sys/vm/panic_on_oom" \
+    "timer_migration:/proc/sys/kernel/timer_migration" \
+    "printk_devkmsg:/proc/sys/kernel/printk_devkmsg" \
+    "printk:/proc/sys/kernel/printk" \
+    "dirty_background_ratio:/proc/sys/vm/dirty_background_ratio" \
+    "dirty_ratio:/proc/sys/vm/dirty_ratio" \
+    "dirty_expire_centisecs:/proc/sys/vm/dirty_expire_centisecs" \
+    "dirty_writeback_centisecs:/proc/sys/vm/dirty_writeback_centisecs" \
+    "page_cluster:/proc/sys/vm/page-cluster" \
+    "stat_interval:/proc/sys/vm/stat_interval" \
+    "swappiness:/proc/sys/vm/swappiness" \
+    "vfs_cache_pressure:/proc/sys/vm/vfs_cache_pressure" \
+    "oom_dump_tasks:/proc/sys/vm/oom_dump_tasks" \
+    "block_dump:/proc/sys/vm/block_dump" \
+    "tcp_ecn:/proc/sys/net/ipv4/tcp_ecn" \
+    "tcp_fastopen:/proc/sys/net/ipv4/tcp_fastopen" \
+    "tcp_syncookies:/proc/sys/net/ipv4/tcp_syncookies" \
+    "tcp_no_metrics_save:/proc/sys/net/ipv4/tcp_no_metrics_save" \
+    "exception_trace:/proc/sys/debug/exception-trace" \
+    "read_wakeup_threshold:/proc/sys/kernel/random/read_wakeup_threshold" \
+    "write_wakeup_threshold:/proc/sys/kernel/random/write_wakeup_threshold" \
+    "printk_ratelimit:/proc/sys/kernel/printk_ratelimit" \
+    "printk_ratelimit_burst:/proc/sys/kernel/printk_ratelimit_burst"; do
+
+    name="${pair%%:*}"
+    path="${pair#*:}"
+    if [ -f "$path" ]; then
+      val=$(cat "$path" 2>/dev/null)
+      echo "$name=$val=$path" >> "$KERNEL_BACKUP"
+    fi
+  done
+
+  log_boot "Kernel backup saved"
+}
+
 # Kernel tweaks
 if [ "$ENABLE_KERNEL_TWEAKS" = "1" ]; then
   log_boot "Applying kernel tweaks..."
+  backup_kernel
 
   SCHED_PERIOD="$((5 * 1000 * 1000))"
   SCHED_TASKS="5"
@@ -121,9 +179,7 @@ if [ "$ENABLE_KERNEL_TWEAKS" = "1" ]; then
   write_val /proc/sys/vm/dirty_ratio 5 "dirty_ratio"
   write_val /proc/sys/vm/dirty_expire_centisecs 500 "dirty_expire_centisecs"
   write_val /proc/sys/vm/dirty_writeback_centisecs 500 "dirty_writeback_centisecs"
-  write_val /proc/sys/vm/page-cluster 0 "page-cluster"
   write_val /proc/sys/vm/stat_interval 10 "stat_interval"
-  write_val /proc/sys/vm/swappiness 100 "swappiness"
   write_val /proc/sys/vm/vfs_cache_pressure 100 "vfs_cache_pressure"
   write_val /proc/sys/vm/oom_dump_tasks 0 "oom_dump_tasks"
   write_val /proc/sys/vm/block_dump 0 "block_dump"
@@ -202,7 +258,7 @@ else
   log_boot "Log killing SKIPPED"
 fi
 
-# Apply GMS freezing
+# Apply GMS freezing (includes GMS Doze apply and Deep Doze)
 log_boot "Applying GMS freezing..."
 chmod +x "$MODDIR/frosty.sh"
 "$MODDIR/frosty.sh" freeze

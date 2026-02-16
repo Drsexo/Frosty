@@ -1,8 +1,6 @@
 #!/system/bin/sh
 # 🧊 FROSTY - Deep Doze Enforcer
 # Aggressive battery optimization for ALL apps
-# Based on DeepDoze Enforcer concepts
-
 
 MODDIR="${0%/*}"
 [ -z "$MODDIR" ] && MODDIR="/data/adb/modules/Frosty"
@@ -110,27 +108,47 @@ is_whitelisted() {
     com.android.providers.*|com.android.inputmethod.*)
       return 0 ;;
   esac
-  [ -f "$WHITELIST_FILE" ] && grep -q "^${pkg}$" "$WHITELIST_FILE" 2>/dev/null && return 0
+
+  if [ -f "$WHITELIST_FILE" ]; then
+    sed 's/#.*//;s/[[:space:]]//g' "$WHITELIST_FILE" | grep -qx "$pkg" 2>/dev/null && return 0
+  fi
   return 1
 }
 
 apply_doze_constants() {
-  log_deep "Applying doze constants..."
-  local constants="light_after_inactive_to=0"
-  constants="$constants,light_pre_idle_to=5000"
-  constants="$constants,light_idle_to=3600000"
-  constants="$constants,light_max_idle_to=43200000"
-  constants="$constants,inactive_to=0"
-  constants="$constants,sensing_to=0"
-  constants="$constants,motion_inactive_to=0"
-  constants="$constants,idle_after_inactive_to=0"
-  constants="$constants,idle_to=21600000"
-  constants="$constants,max_idle_to=172800000"
-  constants="$constants,quick_doze_delay_to=5000"
-  constants="$constants,min_time_to_alarm=300000"
+  log_deep "Applying doze constants ($DEEP_DOZE_LEVEL)..."
+
+  if [ "$DEEP_DOZE_LEVEL" = "maximum" ]; then
+    # Ultra-aggressive: instant doze entry, long idle periods
+    local constants="light_after_inactive_to=0"
+    constants="$constants,light_pre_idle_to=5000"
+    constants="$constants,light_idle_to=3600000"
+    constants="$constants,light_max_idle_to=43200000"
+    constants="$constants,inactive_to=0"
+    constants="$constants,sensing_to=0"
+    constants="$constants,motion_inactive_to=0"
+    constants="$constants,idle_after_inactive_to=0"
+    constants="$constants,idle_to=21600000"
+    constants="$constants,max_idle_to=172800000"
+    constants="$constants,quick_doze_delay_to=5000"
+    constants="$constants,min_time_to_alarm=300000"
+  else
+    # Moderate: reasonable delays, balanced battery/functionality
+    local constants="light_after_inactive_to=300000"
+    constants="$constants,light_pre_idle_to=300000"
+    constants="$constants,light_idle_to=900000"
+    constants="$constants,light_max_idle_to=1800000"
+    constants="$constants,inactive_to=1800000"
+    constants="$constants,sensing_to=0"
+    constants="$constants,motion_inactive_to=0"
+    constants="$constants,idle_after_inactive_to=0"
+    constants="$constants,idle_to=3600000"
+    constants="$constants,max_idle_to=7200000"
+    constants="$constants,quick_doze_delay_to=300000"
+  fi
 
   settings put global device_idle_constants "$constants" 2>/dev/null && \
-    log_deep "[OK] Doze constants applied" || log_deep "[FAIL] Doze constants"
+    log_deep "[OK] Doze constants applied ($DEEP_DOZE_LEVEL)" || log_deep "[FAIL] Doze constants"
 
   dumpsys deviceidle enable all 2>/dev/null
   settings put global app_standby_enabled 1 2>/dev/null
@@ -245,17 +263,27 @@ start_screen_monitor() {
   stop_screen_monitor
   log_deep "Starting screen-off monitor (5min delay)..."
   (
+    trap 'exit 0' TERM INT
     while true; do
-      # Wait for screen off
-      while dumpsys display 2>/dev/null | grep -q "mScreenState=ON"; do
-        sleep 30
-      done
+      # Check screen state with fallback
+      screen_state=$(dumpsys display 2>/dev/null | grep -m1 "mScreenState=" | cut -d= -f2)
+      if [ -z "$screen_state" ]; then
+        sleep 120
+        continue
+      fi
 
-      log_deep "Screen off, waiting 5 minutes..."
+      if [ "$screen_state" = "ON" ]; then
+        sleep 60
+        continue
+      fi
+
+      # Screen is off, wait 5 minutes
+      log_deep "Screen off detected, waiting 5 minutes..."
       sleep 300
 
-      # Verify still off, then force idle
-      if ! dumpsys display 2>/dev/null | grep -q "mScreenState=ON"; then
+      # Re-check before forcing idle
+      screen_state=$(dumpsys display 2>/dev/null | grep -m1 "mScreenState=" | cut -d= -f2)
+      if [ "$screen_state" != "ON" ]; then
         dumpsys deviceidle force-idle deep 2>/dev/null
         log_deep "[OK] Forced deep idle"
       else
@@ -263,8 +291,10 @@ start_screen_monitor() {
       fi
 
       # Wait for screen on before next cycle
-      while ! dumpsys display 2>/dev/null | grep -q "mScreenState=ON"; do
-        sleep 60
+      while true; do
+        screen_state=$(dumpsys display 2>/dev/null | grep -m1 "mScreenState=" | cut -d= -f2)
+        [ "$screen_state" = "ON" ] && break
+        sleep 120
       done
       log_deep "Screen on, monitor re-armed"
     done

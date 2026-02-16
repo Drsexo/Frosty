@@ -1,6 +1,5 @@
 # 🧊 FROSTY - System Properties
-# Maximum logging and debugging disable
-
+# Logging and debugging disable for battery savings
 
 config.disable_rtt=true
 db.log.slow_query_threshold=0
@@ -9,8 +8,6 @@ db.log.slow_query_threshold=0
 debug.egl.profiler=0
 ro.egl.destroy_after_detach=false
 hwui.use_gpu_pixel_buffers=false
-debug.composition.type=gpu
-persist.sys.composition.type=gpu
 
 # SurfaceFlinger
 debug.hwc.otf=0

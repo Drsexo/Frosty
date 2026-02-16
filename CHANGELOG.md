@@ -2,6 +2,19 @@
 All notable changes to this project will be documented in this file.
 
 
+
+## [2.2] - 2026-02-16
+- **GPS fix**: GMS Doze is now location-aware, when Location category is skipped, GMS stays in the deviceidle whitelist so Fused Location Provider can serve GPS to apps. XML patches still reduce battery drain without breaking location. Also fixed action button not re-enabling its services.
+- **Deep Doze protects GMS when location is active**: GMS is automatically whitelisted from background restrictions when user chose not to freeze location.
+- **GMS cache clearing**: Improved behavior. Now only clears GMS's own cache and code_cache directories.
+- **Harmful system.prop entries removed**
+- **XML patching**: Now uses fixed string matching (`grep -F`) instead of fragile regex with embedded quotes.
+- **Whitelist matching**: Comments, trailing whitespace, and inline comments in `doze_whitelist.txt` are now properly stripped before matching.
+- **Doze constants**: Split to two presets: Moderate and Maximum.
+- **Kernel backup/restore**: All kernel values are backed up before tweaking. Stock mode via action button now instantly restores original values instead of requiring a reboot.
+- **Screen monitor hardened**: Falls back to longer sleep intervals when display service is unavailable instead of rapid-cycling. Better clean shutdown.
+- And many more fixes.
+
 ## [2.1] - 2026-02-10
 - Fixed some functions like sync, password manager, GPS not working properly even when their categories were skipped
 - GMS doze now uses proper XML overlay patching
@@ -16,7 +29,6 @@ All notable changes to this project will be documented in this file.
 
 
 ## [1.0] **Initial release** - 2026-02-02
-
 - Added **GMS Doze Integration** based on [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze) by gloeyisk. Patches system XMLs to allow Android Doze to optimize GMS battery usage.
 
 - Reorganized Google services categories:

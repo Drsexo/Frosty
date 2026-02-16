@@ -1,7 +1,6 @@
 # 🧊 FROSTY - GMS Freezer / Battery Saver
 # Author: Drsexo (GitHub)
 
-
 TIMEOUT=30
 
 COLS=$(stty size 2>/dev/null | awk '{print $2}')
@@ -19,6 +18,17 @@ SEP="  $LINE"
 BOX_TOP="  ┌${LINE}┐"
 BOX_BOT="  └${LINE}┘"
 unset _i _iw
+
+# timeout fallback
+if ! command -v timeout >/dev/null 2>&1; then
+  timeout() { shift; "$@"; }
+fi
+
+# getevent check
+HAS_GETEVENT=1
+if ! command -v getevent >/dev/null 2>&1; then
+  HAS_GETEVENT=0
+fi
 
 print_banner() {
   ui_print ""
@@ -49,9 +59,24 @@ print_banner() {
 }
 
 print_section() {
+  local text="$1"
+  local ascii_len=$(printf '%s' "$text" | sed 's/[^[:print:]]//g' | wc -c)
+  local total_bytes=$(printf '%s' "$text" | wc -c)
+  local emoji_bytes=$(( total_bytes - ascii_len ))
+  local emoji_count=$(( emoji_bytes / 3 ))
+  [ "$emoji_count" -lt 0 ] && emoji_count=0
+  local display_width=$(( ascii_len + emoji_count * 2 ))
+
+  local total_pad=$(( COLS - display_width ))
+  [ "$total_pad" -lt 0 ] && total_pad=0
+  local left_pad=$(( total_pad / 2 ))
+
+  local lpad="" _p=0
+  while [ $_p -lt $left_pad ]; do lpad="${lpad} "; _p=$((_p+1)); done
+
   ui_print ""
   ui_print "$BOX_TOP"
-  ui_print "    $1"
+  ui_print "${lpad}${text}"
   ui_print "$BOX_BOT"
 }
 
@@ -61,6 +86,16 @@ choose_tweak() {
 
   ui_print ""
   ui_print "  $prompt"
+
+  if [ "$HAS_GETEVENT" -eq 0 ]; then
+    if [ "$default" = "YES" ]; then
+      ui_print "  → ENABLED ✅ (auto - no getevent)"
+      return 1
+    else
+      ui_print "  → SKIPPED ❌ (auto - no getevent)"
+      return 0
+    fi
+  fi
 
   while :; do
     event=$(timeout "$TIMEOUT" getevent -qlc 1 2>/dev/null)
@@ -96,6 +131,12 @@ choose_level() {
   ui_print "  $prompt"
   ui_print "  ⬆️ Vol UP = Maximum 💀  |  ⬇️ Vol DOWN = Moderate ⚡️"
   ui_print "  ⏱️ ${TIMEOUT}s timeout - defaults to Moderate"
+
+  if [ "$HAS_GETEVENT" -eq 0 ]; then
+    ui_print "  → MODERATE ⚡ (auto - no getevent)"
+    CHOSEN_LEVEL="moderate"
+    return 0
+  fi
 
   while :; do
     event=$(timeout "$TIMEOUT" getevent -qlc 1 2>/dev/null)
@@ -133,6 +174,16 @@ choose_gms() {
   ui_print "  $description"
   [ -n "$warning" ] && ui_print "  $warning"
   ui_print "$SEP"
+
+  if [ "$HAS_GETEVENT" -eq 0 ]; then
+    if [ "$default" = "FREEZE" ]; then
+      ui_print "  → FROZEN 🧊 (auto - no getevent)"
+      return 1
+    else
+      ui_print "  → SKIPPED ❌ (auto - no getevent)"
+      return 0
+    fi
+  fi
 
   while :; do
     event=$(timeout "$TIMEOUT" getevent -qlc 1 2>/dev/null)
@@ -175,6 +226,14 @@ fi
 mkdir -p "$MODPATH/config"
 mkdir -p "$MODPATH/logs"
 
+# GMS check
+if ! pm list packages 2>/dev/null | grep -q "com.google.android.gms"; then
+  ui_print ""
+  ui_print "  ⚠️  Google Play Services not found!"
+  ui_print "  GMS freezing and doze features will not work."
+  ui_print ""
+fi
+
 print_banner
 
 # System Tweaks
@@ -194,6 +253,7 @@ ENABLE_LOG_KILLING=$?
 print_section "💤  GMS Doze"
 ui_print ""
 ui_print "  Patches system XMLs to allow GMS battery optimization"
+ui_print "  ⚠️  May delay notifications"
 ui_print ""
 ui_print "  ⬆️ Vol UP = YES  |  ⬇️ Vol DOWN = NO"
 ui_print "  ⏱️ ${TIMEOUT}s timeout"
@@ -205,25 +265,22 @@ if [ "$ENABLE_GMS_DOZE" -eq 1 ]; then
   ui_print ""
   ui_print "  Patching system XML files..."
 
-  GMS0="\"com.google.android.gms\""
+  SYS_STR1='allow-in-power-save package="com.google.android.gms"'
+  SYS_STR2='allow-in-data-usage-save package="com.google.android.gms"'
 
-  SYS_STR1="allow-in-power-save package=$GMS0"
-  SYS_STR2="allow-in-data-usage-save package=$GMS0"
-
-  MOD_STR1="allow-in-power-save package=$GMS0"
-  MOD_STR2="allow-in-data-usage-save package=$GMS0"
-  MOD_STR3="allow-unthrottled-location package=$GMS0"
-  MOD_STR4="allow-ignore-location-settings package=$GMS0"
+  MOD_STR1='allow-in-power-save package="com.google.android.gms"'
+  MOD_STR2='allow-in-data-usage-save package="com.google.android.gms"'
+  MOD_STR3='allow-unthrottled-location package="com.google.android.gms"'
+  MOD_STR4='allow-ignore-location-settings package="com.google.android.gms"'
 
   PATCHED_COUNT=0
   TMPFILE="$MODPATH/found_xmls.tmp"
   : > "$TMPFILE"
 
-  # Search system XMLs for power-save whitelist entries only
   for DIR in /system /vendor /system_ext /product /odm; do
     [ ! -d "$DIR" ] && continue
     find "$DIR" -type f -iname "*.xml" 2>/dev/null | while read -r FILE; do
-      if grep -qE "$SYS_STR1|$SYS_STR2" "$FILE" 2>/dev/null; then
+      if grep -qF "$SYS_STR1" "$FILE" 2>/dev/null || grep -qF "$SYS_STR2" "$FILE" 2>/dev/null; then
         echo "$FILE" >> "$TMPFILE"
       fi
     done
@@ -236,19 +293,37 @@ if [ "$ENABLE_GMS_DOZE" -eq 1 ]; then
 
       OVERLAY="$MODPATH$XMLFILE"
       mkdir -p "$(dirname "$OVERLAY")"
-      cp -af "$XMLFILE" "$OVERLAY"
+      if ! cp -af "$XMLFILE" "$OVERLAY"; then
+        ui_print "    ✗ Failed to copy: $XMLFILE"
+        continue
+      fi
 
-      # Only remove power-save entries, NOT location entries
+      # Remove power-save and data-usage entries (same as gloeyisk)
       sed -i "/$SYS_STR1/d;/$SYS_STR2/d" "$OVERLAY"
 
-      ui_print "    ✓ Patched: $XMLFILE"
+      # If user kept location, ensure location exemptions exist in the overlay
+      if [ "$DISABLE_LOCATION" -ne 1 ]; then
+        # Re-inject location entries if they existed in original but might have been
+        # on the same line or adjacent to power-save entries
+        # Check if they already exist first
+        if ! grep -qF 'allow-unthrottled-location package="com.google.android.gms"' "$OVERLAY" 2>/dev/null; then
+          if grep -q "</sysconfig>" "$OVERLAY" 2>/dev/null; then
+            sed -i 's|</sysconfig>|    <allow-unthrottled-location package="com.google.android.gms" />\n    <allow-ignore-location-settings package="com.google.android.gms" />\n</sysconfig>|' "$OVERLAY"
+          elif grep -q "</config>" "$OVERLAY" 2>/dev/null; then
+            sed -i 's|</config>|    <allow-unthrottled-location package="com.google.android.gms" />\n    <allow-ignore-location-settings package="com.google.android.gms" />\n</config>|' "$OVERLAY"
+          fi
+        fi
+        ui_print "    ✓ Patched + location preserved: $XMLFILE"
+      else
+        ui_print "    ✓ Patched: $XMLFILE"
+      fi
+
       PATCHED_COUNT=$((PATCHED_COUNT + 1))
     done < "$TMPFILE"
   fi
 
   rm -f "$TMPFILE"
 
-  # Merge non-system dirs into system/ for Magisk overlay
   for SUBDIR in product vendor system_ext odm; do
     if [ -d "$MODPATH/$SUBDIR" ]; then
       mkdir -p "$MODPATH/system/$SUBDIR"
@@ -264,26 +339,31 @@ if [ "$ENABLE_GMS_DOZE" -eq 1 ]; then
   else
     ui_print ""
     ui_print "  ✓ Patched $PATCHED_COUNT XML file(s)"
+    [ "$DISABLE_LOCATION" -ne 1 ] && ui_print "  ✓ Location exemptions preserved in XMLs"
   fi
 
-  # Patch conflicting module XMLs
+  # Patch conflicting module XMLs (same as gloeyisk post-fs-data)
   ui_print ""
   ui_print "  Checking for conflicting modules..."
   MOD_PATCHED=0
   for xml in $(find /data/adb/modules -type f -name "*.xml" 2>/dev/null); do
     case "$xml" in "$MODPATH"*) continue ;; esac
-    if grep -qE "$MOD_STR1|$MOD_STR2|$MOD_STR3|$MOD_STR4" "$xml" 2>/dev/null; then
-      sed -i "/$MOD_STR1/d;/$MOD_STR2/d;/$MOD_STR3/d;/$MOD_STR4/d" "$xml"
+    if grep -qF "$MOD_STR1" "$xml" 2>/dev/null || grep -qF "$MOD_STR2" "$xml" 2>/dev/null || \
+       grep -qF "$MOD_STR3" "$xml" 2>/dev/null || grep -qF "$MOD_STR4" "$xml" 2>/dev/null; then
+      sed -i "/$MOD_STR1/d;/$MOD_STR2/d" "$xml"
+      if [ "$DISABLE_LOCATION" -eq 1 ]; then
+        sed -i "/$MOD_STR3/d;/$MOD_STR4/d" "$xml"
+      fi
       MOD_PATCHED=$((MOD_PATCHED + 1))
     fi
   done
   [ "$MOD_PATCHED" -gt 0 ] && ui_print "  ✓ Patched $MOD_PATCHED conflicting module XML(s)"
 
-  # Clear old GMS data (fixes delayed notifications after first install)
+  # Clear GMS cache safely
   ui_print ""
   ui_print "  Clearing GMS cache..."
-  cd /data/data
-  find . -type f -name '*gms*' -delete 2>/dev/null
+  rm -rf /data/data/com.google.android.gms/cache/* 2>/dev/null
+  rm -rf /data/data/com.google.android.gms/code_cache/* 2>/dev/null
   ui_print "  ✓ GMS cache cleared"
 fi
 

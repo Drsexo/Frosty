@@ -1,7 +1,7 @@
 #!/system/bin/sh
 # 🧊 FROSTY - GMS Doze Handler
-# Handles GMS battery optimization with detailed logging
-
+# Based on Universal GMS Doze by gloeyisk
+# XML patching at install + deviceidle whitelist + device admin disable at boot
 
 MODDIR="${0%/*}"
 [ -z "$MODDIR" ] && MODDIR="/data/adb/modules/Frosty"
@@ -15,36 +15,30 @@ mkdir -p "$LOGDIR"
 log_doze() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$DOZE_LOG"; }
 
 ENABLE_GMS_DOZE=0
+DISABLE_LOCATION=0
 [ -f "$USER_PREFS" ] && . "$USER_PREFS"
 
 GMS_PKG="com.google.android.gms"
 GMS_ADMIN1="$GMS_PKG/$GMS_PKG.auth.managed.admin.DeviceAdminReceiver"
 GMS_ADMIN2="$GMS_PKG/$GMS_PKG.mdm.receivers.MdmDeviceAdminReceiver"
 
-freeze_doze() {
-  echo "Frosty GMS Doze - FREEZE $(date '+%Y-%m-%d %H:%M:%S')" > "$DOZE_LOG"
+apply() {
+  echo "Frosty GMS Doze - APPLY $(date '+%Y-%m-%d %H:%M:%S')" > "$DOZE_LOG"
 
   if [ "$ENABLE_GMS_DOZE" != "1" ]; then
-    log_doze "[SKIP] GMS Doze disabled"
+    log_doze "[SKIP] GMS Doze disabled by user"
     echo "  💤 GMS Doze: SKIPPED"
     return 0
   fi
 
-  log_doze "Enabling GMS battery optimization..."
+  log_doze "Applying GMS Doze..."
 
-  # XML overlays are handled at install time and by post-fs-data.sh
-  log_doze "[OK] XML overlays active (applied at install)"
-
-  # Remove from deviceidle whitelist
-  if dumpsys deviceidle whitelist -$GMS_PKG >/dev/null 2>&1; then
-    log_doze "[OK] Removed $GMS_PKG from deviceidle whitelist"
-  else
-    log_doze "[FAIL] Could not modify deviceidle whitelist"
-  fi
+  # XML overlays handled at install time, conflicting modules patched by post-fs-data.sh
+  log_doze "[OK] XML overlays active"
 
   # Disable device admin receivers per user
   admin_count=0
-  for user_id in $(pm list users 2>/dev/null | grep -oE 'UserInfo\{[0-9]+' | grep -oE '[0-9]+'); do
+  for user_id in $(ls /data/user 2>/dev/null); do
     for admin in "$GMS_ADMIN1" "$GMS_ADMIN2"; do
       if pm disable --user "$user_id" "$admin" >/dev/null 2>&1; then
         log_doze "[OK] Disabled: $admin (user $user_id)"
@@ -54,10 +48,14 @@ freeze_doze() {
   done
   log_doze "Disabled $admin_count device admin receiver(s)"
 
+  # Remove GMS from deviceidle whitelist
+  dumpsys deviceidle whitelist -$GMS_PKG >/dev/null 2>&1
+  log_doze "[OK] Removed $GMS_PKG from deviceidle whitelist"
+
   # Verify
   whitelist_check=$(dumpsys deviceidle whitelist 2>/dev/null | grep "$GMS_PKG")
   if [ -z "$whitelist_check" ]; then
-    log_doze "[OK] GMS NOT in whitelist (verified)"
+    log_doze "[OK] GMS optimized (not in whitelist)"
     is_optimized="YES"
   else
     log_doze "[WARN] GMS still in whitelist"
@@ -65,27 +63,24 @@ freeze_doze() {
   fi
 
   echo ""
-  echo "  💤 GMS DOZE: ENABLED"
+  echo "  💤 GMS DOZE: APPLIED"
   echo "  Device admins disabled: $admin_count"
   echo "  GMS optimized: $is_optimized"
   echo ""
 }
 
-stock_doze() {
-  echo "Frosty GMS Doze - STOCK $(date '+%Y-%m-%d %H:%M:%S')" > "$DOZE_LOG"
+revert() {
+  echo "Frosty GMS Doze - REVERT $(date '+%Y-%m-%d %H:%M:%S')" > "$DOZE_LOG"
 
-  log_doze "Disabling GMS battery optimization..."
+  log_doze "Reverting GMS Doze..."
 
   # Re-add to whitelist
-  if dumpsys deviceidle whitelist +$GMS_PKG >/dev/null 2>&1; then
-    log_doze "[OK] Added $GMS_PKG to deviceidle whitelist"
-  else
-    log_doze "[FAIL] Could not modify deviceidle whitelist"
-  fi
+  dumpsys deviceidle whitelist +$GMS_PKG >/dev/null 2>&1
+  log_doze "[OK] Added $GMS_PKG to deviceidle whitelist"
 
   # Re-enable device admin receivers
   admin_count=0
-  for user_id in $(pm list users 2>/dev/null | grep -oE 'UserInfo\{[0-9]+' | grep -oE '[0-9]+'); do
+  for user_id in $(ls /data/user 2>/dev/null); do
     for admin in "$GMS_ADMIN1" "$GMS_ADMIN2"; do
       if pm enable --user "$user_id" "$admin" >/dev/null 2>&1; then
         log_doze "[OK] Enabled: $admin (user $user_id)"
@@ -93,14 +88,13 @@ stock_doze() {
       fi
     done
   done
-
   log_doze "Re-enabled $admin_count device admin receiver(s)"
-  log_doze "Reboot recommended for XML overlay removal"
+  log_doze "Reboot recommended for full XML overlay removal"
 
   echo ""
-  echo "  🔥 GMS DOZE: DISABLED"
+  echo "  🔥 GMS DOZE: REVERTED"
   echo "  Device admins re-enabled: $admin_count"
-  echo "  Reboot recommended for full effect"
+  echo "  Reboot to fully remove XML patches"
   echo ""
 }
 
@@ -112,16 +106,16 @@ status() {
   echo ""
   echo "  💤 GMS Doze Status"
   echo "  Enabled: $([ "$ENABLE_GMS_DOZE" = "1" ] && echo "YES" || echo "NO")"
-  echo "  Optimized: $is_optimized"
+  echo "  GMS optimized: $is_optimized"
   echo "  Patched XMLs: $xml_count"
   echo ""
 }
 
 case "$1" in
-  freeze) freeze_doze ;;
-  stock) stock_doze ;;
+  apply|freeze) apply ;;
+  revert|stock) revert ;;
   status) status ;;
-  *) echo "Usage: gms_doze.sh [freeze|stock|status]" ;;
+  *) echo "Usage: gms_doze.sh [apply|revert|status]" ;;
 esac
 
 exit 0

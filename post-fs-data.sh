@@ -19,18 +19,23 @@ if [ "$ENABLE_BLUR_DISABLE" = "1" ]; then
   resetprop -n ro.surface_flinger.supports_background_blur 0
 fi
 
-# GMS Doze
+# GMS Doze - patch conflicting modules on every boot
 if [ "$ENABLE_GMS_DOZE" = "1" ]; then
-  GMS0="\"com.google.android.gms\""
-  STR1="allow-in-power-save package=$GMS0"
-  STR2="allow-in-data-usage-save package=$GMS0"
-  STR3="allow-unthrottled-location package=$GMS0"
-  STR4="allow-ignore-location-settings package=$GMS0"
+  STR1='allow-in-power-save package="com.google.android.gms"'
+  STR2='allow-in-data-usage-save package="com.google.android.gms"'
+  STR3='allow-unthrottled-location package="com.google.android.gms"'
+  STR4='allow-ignore-location-settings package="com.google.android.gms"'
 
   find /data/adb/modules -type f -name "*.xml" 2>/dev/null | while IFS= read -r xml; do
     case "$xml" in "$MODDIR"*) continue ;; esac
-    if grep -qE "$STR1|$STR2|$STR3|$STR4" "$xml" 2>/dev/null; then
-      sed -i "/$STR1/d;/$STR2/d;/$STR3/d;/$STR4/d" "$xml"
+    if grep -qF "$STR1" "$xml" 2>/dev/null || grep -qF "$STR2" "$xml" 2>/dev/null || \
+       grep -qF "$STR3" "$xml" 2>/dev/null || grep -qF "$STR4" "$xml" 2>/dev/null; then
+      # Always remove power-save entries
+      sed -i "/$STR1/d;/$STR2/d" "$xml"
+      # Only remove location entries if user froze location
+      if [ "$DISABLE_LOCATION" = "1" ]; then
+        sed -i "/$STR3/d;/$STR4/d" "$xml"
+      fi
     fi
   done
 fi
