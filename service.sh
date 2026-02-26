@@ -1,6 +1,5 @@
 #!/system/bin/sh
 # 🧊 FROSTY - Service script
-# Applies kernel tweaks and initializes GMS freezing on boot
 
 MODDIR="${0%/*}"
 LOGDIR="$MODDIR/logs"
@@ -10,12 +9,12 @@ BOOT_LOG="$LOGDIR/boot.log"
 TWEAKS_LOG="$LOGDIR/tweaks.log"
 KERNEL_BACKUP="$BACKUP_DIR/kernel_values.txt"
 
-# timeout fallback
+# Timeout fallback
 if ! command -v timeout >/dev/null 2>&1; then
   timeout() { shift; "$@"; }
 fi
 
-# Log rotation (single .old)
+# Log rotation
 for log in "$LOGDIR"/*.log; do
   [ -f "$log" ] || continue
   size=$(wc -c < "$log" 2>/dev/null)
@@ -29,7 +28,7 @@ log_tweak() { echo "$1" >> "$TWEAKS_LOG"; }
 echo "Frosty Boot - $(date '+%Y-%m-%d %H:%M:%S')" > "$BOOT_LOG"
 echo "Frosty Tweaks - $(date '+%Y-%m-%d %H:%M:%S')" > "$TWEAKS_LOG"
 
-# Wait for boot (same timeout as gloeyisk: 100s)
+# Wait for boot
 until [ "$(getprop sys.boot_completed)" = "1" ] && [ -d /sdcard ]; do
   sleep 5
 done
@@ -41,9 +40,12 @@ gms_wait=0
 while ! pidof com.google.android.gms >/dev/null 2>&1; do
   sleep 2
   gms_wait=$((gms_wait + 2))
-  [ $gms_wait -ge 60 ] && break
+  if [ $gms_wait -ge 60 ]; then
+    log_boot "WARNING: GMS not started after 60s, continuing anyway"
+    break
+  fi
 done
-log_boot "GMS ready"
+[ $gms_wait -lt 60 ] && log_boot "GMS ready (${gms_wait}s)"
 
 # Device info
 log_boot "Device: $(getprop ro.product.model)"
@@ -51,7 +53,7 @@ log_boot "Android: $(getprop ro.build.version.release) SDK$(getprop ro.build.ver
 
 mkdir -p "$MODDIR/config"
 
-# Load preferences
+# Load preferences, create defaults if missing
 if [ ! -f "$MODDIR/config/user_prefs" ]; then
   cat > "$MODDIR/config/user_prefs" << EOF
 ENABLE_KERNEL_TWEAKS=1
@@ -80,12 +82,14 @@ write_val() {
   chmod +w "$file" 2>/dev/null
   if echo "$value" > "$file" 2>/dev/null; then
     log_tweak "[OK] $name = $value"
+    return 0
   else
     log_tweak "[FAIL] $name"
+    return 1
   fi
 }
 
-# Backup current kernel values before tweaking
+# Back up kernel values fresh before tweaking
 backup_kernel() {
   log_boot "Backing up kernel values..."
   echo "# Kernel Backup - $(date '+%Y-%m-%d %H:%M:%S')" > "$KERNEL_BACKUP"
@@ -171,7 +175,7 @@ if [ "$ENABLE_KERNEL_TWEAKS" = "1" ]; then
   log_tweak "TIMER & PRINTK"
   write_val /proc/sys/kernel/timer_migration 0 "timer_migration"
   write_val /proc/sys/kernel/printk_devkmsg off "printk_devkmsg"
-  echo "0 0 0 0" > /proc/sys/kernel/printk 2>/dev/null
+  write_val /proc/sys/kernel/printk "0 0 0 0" "printk"
 
   log_tweak ""
   log_tweak "VM"
@@ -258,10 +262,15 @@ else
   log_boot "Log killing SKIPPED"
 fi
 
-# Apply GMS freezing (includes GMS Doze apply and Deep Doze)
-log_boot "Applying GMS freezing..."
-chmod +x "$MODDIR/frosty.sh"
-"$MODDIR/frosty.sh" freeze
+# Apply GMS freezing only if state is frozen
+current_state=$(cat "$MODDIR/config/state" 2>/dev/null)
+if [ "$current_state" = "frozen" ]; then
+  log_boot "Applying GMS freezing..."
+  chmod +x "$MODDIR/frosty.sh"
+  "$MODDIR/frosty.sh" freeze
+else
+  log_boot "State is '$current_state', skipping GMS freeze"
+fi
 
 log_boot "Boot complete at $(date '+%Y-%m-%d %H:%M:%S')"
 

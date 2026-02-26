@@ -1,8 +1,9 @@
 id=Frosty
 name=Frosty 🧊 - GMS Freezer / Battery Saver
-version=2.2
-versionCode=22
+version=2.3
+versionCode=23
 author=Drsexo
-description=Maximum battery saving and GMS optimization. Freezes GMS services, enables GMS + system doze, nukes logs, applies kernel tweaks. Use Action button to toggle Frozen/Stock mode.
+description=Maximum battery saving and GMS optimization. Freeze GMS services, enable doze, nuke logs, apply kernel tweaks. Use Action/WebUI button to edit settings.
 banner=banner.jpg
 updateJson=https://raw.githubusercontent.com/Drsexo/Frosty/main/update.json
+webui=true

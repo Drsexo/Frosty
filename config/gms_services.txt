@@ -58,15 +58,8 @@ com.google.android.apps.work.clouddpc/com.google.android.apps.work.clouddpc.base
 com.google.android.apps.work.clouddpc/com.google.android.apps.work.clouddpc.vanilla.bugreport.jobs.RemoteBugReportJobService|telemetry
 
 
-# BACKGROUND - Updates, Chimera, MDM
+# BACKGROUND - Updates, Font sync, MDM
 
-com.google.android.gms/com.google.android.gms.chimera.GmsIntentOperationService|background
-com.google.android.gms/com.google.android.gms.chimera.PersistentBoundBrokerService|background
-com.google.android.gms/com.google.android.gms.chimera.GmsIntentOperationService_AuthAccountIsolated|background
-com.google.android.gms/com.google.android.gms.chimera.GmsIntentOperationService_AuthAccountIsolate|background
-com.google.android.gms/com.google.android.gms.chimera.PersistentApiService_AuthAccountIsolated|background
-com.google.android.gms/com.google.android.gms.chimera.PersistentIntentOperationService_AuthAccountIsolated|background
-com.google.android.gms/com.google.android.gms.chimera.GmsApiService|background
 com.google.android.gms/com.google.android.gms.update.SystemUpdateGcmTaskService|background
 com.google.android.gms/com.google.android.gms.update.SystemUpdateService|background
 com.google.android.gms/com.google.android.gms.update.UpdateFromSdCardService|background
@@ -112,7 +105,7 @@ com.google.android.gms/com.google.android.gms.deviceconnection.service.DeviceCon
 com.google.android.gms/com.google.android.gms.persistent.offnetwork.service.OffNetworkService|location
 com.google.android.gms/com.google.android.location.wearable.WearableLocationService|location
 com.google.android.gms/com.google.android.location.fused.wearable.GmsWearableListenerService|location
-
+com.google.android.gms/com.google.android.gms.auth.be.appcert.AppCertService|location
 
 # CONNECTIVITY - Nearby, Cast, Discovery, Quick Share
 
@@ -147,8 +140,15 @@ com.google.android.gms/com.google.android.gms.mobiledataplan.service.MobileDataP
 com.google.android.gms/com.google.android.gms.fido.fido2.pollux.CableAuthenticatorService|connectivity
 
 
-# CLOUD - Auth, Sync, Backup, Security, Check-in
+# CLOUD - Auth, Sync, Backup, Autofill, Security, Check-in
 
+com.google.android.gms/com.google.android.gms.chimera.GmsIntentOperationService|cloud
+com.google.android.gms/com.google.android.gms.chimera.PersistentBoundBrokerService|cloud
+com.google.android.gms/com.google.android.gms.chimera.GmsIntentOperationService_AuthAccountIsolated|cloud
+com.google.android.gms/com.google.android.gms.chimera.GmsIntentOperationService_AuthAccountIsolate|cloud
+com.google.android.gms/com.google.android.gms.chimera.PersistentApiService_AuthAccountIsolated|cloud
+com.google.android.gms/com.google.android.gms.chimera.PersistentIntentOperationService_AuthAccountIsolated|cloud
+com.google.android.gms/com.google.android.gms.chimera.GmsApiService|cloud
 com.google.android.gms/com.google.android.gms.checkin.CheckinApiService|cloud
 com.google.android.gms/com.google.android.gms.checkin.CheckinService|cloud
 com.google.android.gms/com.google.android.gms.checkin.EventLogService|cloud
@@ -165,15 +165,12 @@ com.google.android.gms/com.google.android.gms.trustagent.api.bridge.TrustAgentBr
 com.google.android.gms/com.google.android.gms.trustagent.api.state.TrustAgentState|cloud
 com.google.android.gms/com.google.android.gms.auth.account.be.AccountStatusChecker|cloud
 com.google.android.gms/com.google.android.gms.auth.account.accountstatus.DefaultAccountStatusService|cloud
-com.google.android.gms/com.google.android.gms.auth.be.appcert.AppCertService|cloud
 com.google.android.gms/com.google.android.gms.auth.folsom.service.FolsomService|cloud
 com.google.android.gms/com.google.android.gms.auth.folsom.service.FolsomPublicKeyUpdateService|cloud
 com.google.android.gms/com.google.android.gms.auth.account.authenticator.WorkAccountAuthenticatorService|cloud
 com.google.android.gms/com.google.android.gms.backup.BackupOrchestrationService|cloud
 com.google.android.gms/com.google.android.gms.backup.component.BackupSnapshotService|cloud
 com.google.android.gms/com.google.android.gms.chromesync.sync.BackendMeetingPointService|cloud
-com.google.android.gms/com.google.android.gms.fitness.sync.FitnessSyncAdapterService|cloud
-com.google.android.gms/com.google.android.gms.fitness.sync.SyncGcmTaskService|cloud
 com.google.android.gms/com.google.android.gms.security.safebrowsing.SafeBrowsingUpdateTaskService|cloud
 com.google.android.gms/com.google.android.gms.security.verifier.ApkUploadService|cloud
 com.google.android.gms/com.google.android.gms.security.verifier.InternalApkUploadService|cloud
@@ -237,6 +234,8 @@ com.google.android.gms/com.google.android.gms.fitness.service.wearable.WearableS
 com.google.android.gms/com.google.android.gms.fitness.service.wearable.WearableSyncConnectionService|wearables
 com.google.android.gms/com.google.android.gms.fitness.service.wearable.WearableSyncMessageService|wearables
 com.google.android.gms/com.google.android.gms.fitness.wearables.WearableSyncService|wearables
+com.google.android.gms/com.google.android.gms.fitness.sync.FitnessSyncAdapterService|wearables
+com.google.android.gms/com.google.android.gms.fitness.sync.SyncGcmTaskService|wearables
 
 
 # GAMES - Play Games

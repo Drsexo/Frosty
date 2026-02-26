@@ -19,12 +19,12 @@ BOX_TOP="  ┌${LINE}┐"
 BOX_BOT="  └${LINE}┘"
 unset _i _iw
 
-# timeout fallback
+# Timeout fallback
 if ! command -v timeout >/dev/null 2>&1; then
   timeout() { shift; "$@"; }
 fi
 
-# getevent check
+# Getevent check
 HAS_GETEVENT=1
 if ! command -v getevent >/dev/null 2>&1; then
   HAS_GETEVENT=0
@@ -220,9 +220,6 @@ set_perm "$MODPATH/frosty.sh" 0 0 0755
 set_perm "$MODPATH/gms_doze.sh" 0 0 0755
 set_perm "$MODPATH/deep_doze.sh" 0 0 0755
 set_perm "$MODPATH/uninstall.sh" 0 0 0755
-if [ -d "$MODPATH/system/bin" ]; then
-  set_perm_recursive "$MODPATH/system/bin" 0 0 0755 0755
-fi
 mkdir -p "$MODPATH/config"
 mkdir -p "$MODPATH/logs"
 
@@ -252,7 +249,7 @@ ENABLE_LOG_KILLING=$?
 # GMS Doze
 print_section "💤  GMS Doze"
 ui_print ""
-ui_print "  Patches system XMLs to allow GMS battery optimization"
+ui_print "  Removes GMS from power-save whitelists"
 ui_print "  ⚠️  May delay notifications"
 ui_print ""
 ui_print "  ⬆️ Vol UP = YES  |  ⬇️ Vol DOWN = NO"
@@ -265,13 +262,10 @@ if [ "$ENABLE_GMS_DOZE" -eq 1 ]; then
   ui_print ""
   ui_print "  Patching system XML files..."
 
-  SYS_STR1='allow-in-power-save package="com.google.android.gms"'
-  SYS_STR2='allow-in-data-usage-save package="com.google.android.gms"'
-
-  MOD_STR1='allow-in-power-save package="com.google.android.gms"'
-  MOD_STR2='allow-in-data-usage-save package="com.google.android.gms"'
-  MOD_STR3='allow-unthrottled-location package="com.google.android.gms"'
-  MOD_STR4='allow-ignore-location-settings package="com.google.android.gms"'
+  GMS_STR1='allow-in-power-save package="com.google.android.gms"'
+  GMS_STR2='allow-in-data-usage-save package="com.google.android.gms"'
+  GMS_STR3='allow-unthrottled-location package="com.google.android.gms"'
+  GMS_STR4='allow-ignore-location-settings package="com.google.android.gms"'
 
   PATCHED_COUNT=0
   TMPFILE="$MODPATH/found_xmls.tmp"
@@ -280,7 +274,8 @@ if [ "$ENABLE_GMS_DOZE" -eq 1 ]; then
   for DIR in /system /vendor /system_ext /product /odm; do
     [ ! -d "$DIR" ] && continue
     find "$DIR" -type f -iname "*.xml" 2>/dev/null | while read -r FILE; do
-      if grep -qF "$SYS_STR1" "$FILE" 2>/dev/null || grep -qF "$SYS_STR2" "$FILE" 2>/dev/null; then
+      if grep -qF "$GMS_STR1" "$FILE" 2>/dev/null || grep -qF "$GMS_STR2" "$FILE" 2>/dev/null || \
+         grep -qF "$GMS_STR3" "$FILE" 2>/dev/null || grep -qF "$GMS_STR4" "$FILE" 2>/dev/null; then
         echo "$FILE" >> "$TMPFILE"
       fi
     done
@@ -298,26 +293,12 @@ if [ "$ENABLE_GMS_DOZE" -eq 1 ]; then
         continue
       fi
 
-      # Remove power-save and data-usage entries (same as gloeyisk)
-      sed -i "/$SYS_STR1/d;/$SYS_STR2/d" "$OVERLAY"
+      grep -vF "$GMS_STR1" "$OVERLAY" > "$OVERLAY.tmp" && mv "$OVERLAY.tmp" "$OVERLAY"
+      grep -vF "$GMS_STR2" "$OVERLAY" > "$OVERLAY.tmp" && mv "$OVERLAY.tmp" "$OVERLAY"
+      grep -vF "$GMS_STR3" "$OVERLAY" > "$OVERLAY.tmp" && mv "$OVERLAY.tmp" "$OVERLAY"
+      grep -vF "$GMS_STR4" "$OVERLAY" > "$OVERLAY.tmp" && mv "$OVERLAY.tmp" "$OVERLAY"
 
-      # If user kept location, ensure location exemptions exist in the overlay
-      if [ "$DISABLE_LOCATION" -ne 1 ]; then
-        # Re-inject location entries if they existed in original but might have been
-        # on the same line or adjacent to power-save entries
-        # Check if they already exist first
-        if ! grep -qF 'allow-unthrottled-location package="com.google.android.gms"' "$OVERLAY" 2>/dev/null; then
-          if grep -q "</sysconfig>" "$OVERLAY" 2>/dev/null; then
-            sed -i 's|</sysconfig>|    <allow-unthrottled-location package="com.google.android.gms" />\n    <allow-ignore-location-settings package="com.google.android.gms" />\n</sysconfig>|' "$OVERLAY"
-          elif grep -q "</config>" "$OVERLAY" 2>/dev/null; then
-            sed -i 's|</config>|    <allow-unthrottled-location package="com.google.android.gms" />\n    <allow-ignore-location-settings package="com.google.android.gms" />\n</config>|' "$OVERLAY"
-          fi
-        fi
-        ui_print "    ✓ Patched + location preserved: $XMLFILE"
-      else
-        ui_print "    ✓ Patched: $XMLFILE"
-      fi
-
+      ui_print "    ✓ Patched: $XMLFILE"
       PATCHED_COUNT=$((PATCHED_COUNT + 1))
     done < "$TMPFILE"
   fi
@@ -339,27 +320,26 @@ if [ "$ENABLE_GMS_DOZE" -eq 1 ]; then
   else
     ui_print ""
     ui_print "  ✓ Patched $PATCHED_COUNT XML file(s)"
-    [ "$DISABLE_LOCATION" -ne 1 ] && ui_print "  ✓ Location exemptions preserved in XMLs"
   fi
 
-  # Patch conflicting module XMLs (same as gloeyisk post-fs-data)
+  # Patch conflicting module XMLs
   ui_print ""
   ui_print "  Checking for conflicting modules..."
   MOD_PATCHED=0
   for xml in $(find /data/adb/modules -type f -name "*.xml" 2>/dev/null); do
     case "$xml" in "$MODPATH"*) continue ;; esac
-    if grep -qF "$MOD_STR1" "$xml" 2>/dev/null || grep -qF "$MOD_STR2" "$xml" 2>/dev/null || \
-       grep -qF "$MOD_STR3" "$xml" 2>/dev/null || grep -qF "$MOD_STR4" "$xml" 2>/dev/null; then
-      sed -i "/$MOD_STR1/d;/$MOD_STR2/d" "$xml"
-      if [ "$DISABLE_LOCATION" -eq 1 ]; then
-        sed -i "/$MOD_STR3/d;/$MOD_STR4/d" "$xml"
-      fi
+    if grep -qF "$GMS_STR1" "$xml" 2>/dev/null || grep -qF "$GMS_STR2" "$xml" 2>/dev/null || \
+       grep -qF "$GMS_STR3" "$xml" 2>/dev/null || grep -qF "$GMS_STR4" "$xml" 2>/dev/null; then
+      grep -vF "$GMS_STR1" "$xml" > "$xml.tmp" && mv "$xml.tmp" "$xml"
+      grep -vF "$GMS_STR2" "$xml" > "$xml.tmp" && mv "$xml.tmp" "$xml"
+      grep -vF "$GMS_STR3" "$xml" > "$xml.tmp" && mv "$xml.tmp" "$xml"
+      grep -vF "$GMS_STR4" "$xml" > "$xml.tmp" && mv "$xml.tmp" "$xml"
       MOD_PATCHED=$((MOD_PATCHED + 1))
     fi
   done
   [ "$MOD_PATCHED" -gt 0 ] && ui_print "  ✓ Patched $MOD_PATCHED conflicting module XML(s)"
 
-  # Clear GMS cache safely
+  # Clear GMS cache
   ui_print ""
   ui_print "  Clearing GMS cache..."
   rm -rf /data/data/com.google.android.gms/cache/* 2>/dev/null
@@ -409,13 +389,13 @@ ui_print "  ⬆️ Vol UP = FREEZE  |  ⬇️ Vol DOWN = SKIP"
 ui_print "  ⏱️ ${TIMEOUT}s timeout"
 choose_gms "📊 TELEMETRY" "Ads, Tracking, Analytics" "Safe to disable. Stops Google data collection." "FREEZE"
 DISABLE_TELEMETRY=$?
-choose_gms "🔄 BACKGROUND" "Updates, Background Services" "Safe to disable. May delay auto-updates." "FREEZE"
+choose_gms "🔄 BACKGROUND" "Updates, Font sync, MDM" "Safe to disable. May delay auto-updates." "FREEZE"
 DISABLE_BACKGROUND=$?
 choose_gms "📍 LOCATION" "GPS, Geofence, Activity Recognition" "BREAKS: Maps, Navigation, Find My Device!" "FREEZE"
 DISABLE_LOCATION=$?
 choose_gms "📡 CONNECTIVITY" "Cast, Quick Share, Nearby" "BREAKS: Chromecast, Quick Share, Fast Pair!" "FREEZE"
 DISABLE_CONNECTIVITY=$?
-choose_gms "☁️ CLOUD" "Auth, Sync, Backup, Check-in, Security" "May affect Google Sign-in, Autofill, Passwords" "FREEZE"
+choose_gms "☁️ CLOUD" "Auth, Sync, Backup, Autofill, Security" "BREAKS: Google Sign-in, Autofill, Passwords!" "SKIP"
 DISABLE_CLOUD=$?
 choose_gms "💳 PAYMENTS" "Google Pay, Wallet, NFC Payments" "BREAKS: Google Pay, NFC tap-to-pay!" "FREEZE"
 DISABLE_PAYMENTS=$?
@@ -447,11 +427,6 @@ echo "frozen" > "$MODPATH/config/state"
 ui_print ""
 ui_print "  ✓ Configuration saved"
 
-# Only keep empty RC overlays if log killing is enabled
-if [ "$ENABLE_LOG_KILLING" -ne 1 ]; then
-  rm -rf "$MODPATH/system/etc/init"
-fi
-
 # Summary
 print_section "📋  Summary"
 ui_print ""
@@ -462,7 +437,7 @@ ui_print "  System Tweaks:"
 ui_print ""
 ui_print "  GMS Doze:"
 if [ "$ENABLE_GMS_DOZE" -eq 1 ]; then
-  ui_print "    💤 Enabled (cache cleared)"
+  ui_print "    💤 Enabled"
 else
   ui_print "    ❌ Disabled"
 fi
@@ -494,13 +469,13 @@ print_section "✅  Installation Complete"
 ui_print ""
 ui_print "  🔄 Reboot to apply changes"
 ui_print ""
-ui_print "  💡 Use ACTION BUTTON in root manager to toggle"
-ui_print "     between 🧊 Frozen and 🔥 Stock modes"
+ui_print "  💡 Use Action button or WebUI in root manager"
+ui_print "   to toggle between 🧊 Frozen and 🔥 Stock modes"
 ui_print ""
-ui_print "  📝 Edit whitelist: /data/adb/modules/Frosty/config/"
-ui_print "     doze_whitelist.txt"
+ui_print "  📝 Edit whitelist: /config/doze_whitelist.txt"
+ui_print "     Or using WebUI"
 ui_print ""
-ui_print "  ⚠️  If issues occur → Action Button → Stock"
+ui_print "  ⚠️  If issues occur change to Stock mode"
 ui_print ""
 ui_print "  📄 Logs: /data/adb/modules/Frosty/logs/"
 ui_print ""

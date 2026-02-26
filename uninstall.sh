@@ -1,13 +1,23 @@
 #!/system/bin/sh
 # 🧊 FROSTY - Uninstall Script
-# Reverts ALL changes made by the module
 
 MODDIR="${0%/*}"
 TEMP_DIR="/data/local/tmp/frosty_uninstall"
 mkdir -p "$TEMP_DIR"
 
+# Copy needed files to temp before module dir is removed
 [ -f "$MODDIR/config/gms_services.txt" ] && cp -f "$MODDIR/config/gms_services.txt" "$TEMP_DIR/"
 [ -f "$MODDIR/config/user_prefs" ] && cp -f "$MODDIR/config/user_prefs" "$TEMP_DIR/"
+
+# Kill screen monitor while pidfile is still accessible
+if [ -f "$MODDIR/tmp/screen_monitor.pid" ]; then
+  monitor_pid=$(cat "$MODDIR/tmp/screen_monitor.pid" 2>/dev/null)
+  if [ -n "$monitor_pid" ]; then
+    kill "$monitor_pid" 2>/dev/null
+    # Save pid to temp in case we need to verify later
+    echo "$monitor_pid" > "$TEMP_DIR/monitor_pid"
+  fi
+fi
 
 cat > "/data/adb/frosty_uninstall_runner.sh" << 'UNINSTALL_EOF'
 #!/system/bin/sh
@@ -20,7 +30,7 @@ USER_PREFS="$TEMP_DIR/user_prefs"
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOGFILE"; }
 echo "Frosty uninstall started $(date)" > "$LOGFILE"
 
-# Wait for system and verify temp files
+# Wait for system
 sleep 10
 if [ ! -d "$TEMP_DIR" ]; then
   log "ERROR: Temp files missing, aborting"
@@ -31,11 +41,12 @@ fi
 until [ -d "/sdcard/" ]; do sleep 1; done
 sleep 5
 
-# Revert settings
-log "Reverting settings..."
-settings delete global phenotype__debug_bypass_phenotype 2>/dev/null
-settings delete global phenotype_boot_count 2>/dev/null
-settings delete global phenotype_flags 2>/dev/null
+# Verify screen monitor is dead
+if [ -f "$TEMP_DIR/monitor_pid" ]; then
+  pid=$(cat "$TEMP_DIR/monitor_pid")
+  kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null
+  log "Screen monitor killed (PID $pid)"
+fi
 
 # Revert resetprop
 log "Reverting resetprop..."
@@ -51,23 +62,22 @@ ENABLE_DEEP_DOZE=0
 [ -f "$USER_PREFS" ] && . "$USER_PREFS"
 
 # Revert GMS Doze
-if [ "$ENABLE_GMS_DOZE" = "1" ]; then
   log "Reverting GMS Doze..."
   GMS_PKG="com.google.android.gms"
 
-  # Re-add to whitelist
   dumpsys deviceidle whitelist +$GMS_PKG >/dev/null 2>&1
 
-  # Re-enable device admin receivers
-  for user_id in $(ls /data/user 2>/dev/null); do
+  # Use pm list users for proper user enumeration
+  user_ids=$(pm list users 2>/dev/null | grep -oE 'UserInfo\{[0-9]+' | grep -oE '[0-9]+')
+  [ -z "$user_ids" ] && user_ids=$(ls /data/user 2>/dev/null)
+
+  for user_id in $user_ids; do
     pm enable --user "$user_id" "$GMS_PKG/$GMS_PKG.auth.managed.admin.DeviceAdminReceiver" >/dev/null 2>&1
     pm enable --user "$user_id" "$GMS_PKG/$GMS_PKG.mdm.receivers.MdmDeviceAdminReceiver" >/dev/null 2>&1
   done
   log "GMS Doze reverted"
-fi
 
 # Revert Deep Doze
-if [ "$ENABLE_DEEP_DOZE" = "1" ]; then
   log "Reverting Deep Doze..."
   settings delete global device_idle_constants 2>/dev/null
   settings put global forced_app_standby_enabled 0 2>/dev/null
@@ -82,12 +92,7 @@ if [ "$ENABLE_DEEP_DOZE" = "1" ]; then
   done
 
   dumpsys deviceidle unforce 2>/dev/null
-
-  for pidfile in /data/adb/modules/Frosty/tmp/screen_monitor.pid; do
-    [ -f "$pidfile" ] && kill $(cat "$pidfile") 2>/dev/null
-  done
   log "Deep Doze reverted"
-fi
 
 # Re-enable GMS services
 if [ -f "$GMS_LIST" ]; then

@@ -1,7 +1,5 @@
 #!/system/bin/sh
 # 🧊 FROSTY - GMS Doze Handler
-# Based on Universal GMS Doze by gloeyisk
-# XML patching at install + deviceidle whitelist + device admin disable at boot
 
 MODDIR="${0%/*}"
 [ -z "$MODDIR" ] && MODDIR="/data/adb/modules/Frosty"
@@ -22,6 +20,11 @@ GMS_PKG="com.google.android.gms"
 GMS_ADMIN1="$GMS_PKG/$GMS_PKG.auth.managed.admin.DeviceAdminReceiver"
 GMS_ADMIN2="$GMS_PKG/$GMS_PKG.mdm.receivers.MdmDeviceAdminReceiver"
 
+get_user_ids() {
+  # Use pm list users, fallback to ls /data/user
+  pm list users 2>/dev/null | grep -oE 'UserInfo\{[0-9]+' | grep -oE '[0-9]+' || ls /data/user 2>/dev/null
+}
+
 apply() {
   echo "Frosty GMS Doze - APPLY $(date '+%Y-%m-%d %H:%M:%S')" > "$DOZE_LOG"
 
@@ -32,13 +35,11 @@ apply() {
   fi
 
   log_doze "Applying GMS Doze..."
-
-  # XML overlays handled at install time, conflicting modules patched by post-fs-data.sh
   log_doze "[OK] XML overlays active"
 
   # Disable device admin receivers per user
   admin_count=0
-  for user_id in $(ls /data/user 2>/dev/null); do
+  for user_id in $(get_user_ids); do
     for admin in "$GMS_ADMIN1" "$GMS_ADMIN2"; do
       if pm disable --user "$user_id" "$admin" >/dev/null 2>&1; then
         log_doze "[OK] Disabled: $admin (user $user_id)"
@@ -74,13 +75,11 @@ revert() {
 
   log_doze "Reverting GMS Doze..."
 
-  # Re-add to whitelist
   dumpsys deviceidle whitelist +$GMS_PKG >/dev/null 2>&1
   log_doze "[OK] Added $GMS_PKG to deviceidle whitelist"
 
-  # Re-enable device admin receivers
   admin_count=0
-  for user_id in $(ls /data/user 2>/dev/null); do
+  for user_id in $(get_user_ids); do
     for admin in "$GMS_ADMIN1" "$GMS_ADMIN2"; do
       if pm enable --user "$user_id" "$admin" >/dev/null 2>&1; then
         log_doze "[OK] Enabled: $admin (user $user_id)"

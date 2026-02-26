@@ -1,6 +1,5 @@
 #!/system/bin/sh
 # 🧊 FROSTY - Main service handler
-# Handles Frozen/Stock mode toggling with detailed logging
 
 MODDIR="${0%/*}"
 [ -z "$MODDIR" ] && MODDIR="/data/adb/modules/Frosty"
@@ -15,7 +14,7 @@ KERNEL_BACKUP="$MODDIR/backup/kernel_values.txt"
 
 mkdir -p "$LOGDIR" "$MODDIR/config"
 
-# timeout fallback
+# Timeout fallback
 if ! command -v timeout >/dev/null 2>&1; then
   timeout() { shift; "$@"; }
 fi
@@ -46,7 +45,7 @@ load_prefs() {
   else
     log_action "WARNING: User preferences not found, using defaults"
     ENABLE_KERNEL_TWEAKS=1; ENABLE_BLUR_DISABLE=0; ENABLE_LOG_KILLING=1
-    ENABLE_GMS_DOZE=0; ENABLE_DEEP_DOZE=0; DEEP_DOZE_LEVEL="moderate"
+    ENABLE_GMS_DOZE=1; ENABLE_DEEP_DOZE=1; DEEP_DOZE_LEVEL="moderate"
     DISABLE_TELEMETRY=1; DISABLE_BACKGROUND=1; DISABLE_LOCATION=0
     DISABLE_CONNECTIVITY=0; DISABLE_CLOUD=0; DISABLE_PAYMENTS=0
     DISABLE_WEARABLES=0; DISABLE_GAMES=0
@@ -213,10 +212,10 @@ run_customization_wizard() {
     sleep 0.5; echo ""
   done << 'CATEGORIES'
 1:📊 TELEMETRY (Ads, Analytics):DISABLE_TELEMETRY
-2:🔄 BACKGROUND (Updates, MDM):DISABLE_BACKGROUND
+2:🔄 BACKGROUND (Updates, Font sync, MDM):DISABLE_BACKGROUND
 3:📍 LOCATION (GPS - BREAKS Maps!):DISABLE_LOCATION
 4:📡 CONNECTIVITY (Cast, Quick Share):DISABLE_CONNECTIVITY
-5:☁️  CLOUD (Auth - BREAKS Sign-in!):DISABLE_CLOUD
+5:☁️  CLOUD (Auth, Autofill - BREAKS Sign-in!):DISABLE_CLOUD
 6:💳 PAYMENTS (Google Pay):DISABLE_PAYMENTS
 7:⌚ WEARABLES (Wear OS, Fit):DISABLE_WEARABLES
 8:🎮 GAMES (Play Games):DISABLE_GAMES
@@ -281,7 +280,6 @@ freeze_services() {
         count_fail=$((count_fail + 1))
       fi
     else
-      # Re-enable services in kept categories
       if pm enable "$service" >/dev/null 2>&1; then
         log_service "[ENABLE] $service"
         count_enabled=$((count_enabled + 1))
@@ -366,20 +364,23 @@ stock_services() {
   # Restore kernel values
   if [ -f "$KERNEL_BACKUP" ]; then
     echo "  Restoring kernel values..."
-    while IFS='=' read -r name val path; do
-      case "$name" in \#*|"") continue ;; esac
+    local kcount=0
+    while IFS= read -r line; do
+      case "$line" in \#*|"") continue ;; esac
+      name=$(echo "$line" | cut -d= -f1)
+      val=$(echo "$line" | cut -d= -f2)
+      path=$(echo "$line" | cut -d= -f3-)
       [ -z "$path" ] && continue
       if [ -f "$path" ]; then
         chmod +w "$path" 2>/dev/null
-        echo "$val" > "$path" 2>/dev/null
+        echo "$val" > "$path" 2>/dev/null && kcount=$((kcount + 1))
       fi
     done < "$KERNEL_BACKUP"
-    echo "  ✓ Kernel values restored"
-    log_action "Kernel values restored from backup"
+    echo "  ✓ Kernel values restored ($kcount)"
+    log_action "Kernel values restored from backup ($kcount values)"
   else
     echo "  Kernel tweaks revert on reboot"
   fi
-  echo ""
 
   # Revert GMS Doze
   chmod +x "$MODDIR/gms_doze.sh"

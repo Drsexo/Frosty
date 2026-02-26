@@ -1,6 +1,5 @@
 #!/system/bin/sh
 # 🧊 FROSTY - Deep Doze Enforcer
-# Aggressive battery optimization for ALL apps
 
 MODDIR="${0%/*}"
 [ -z "$MODDIR" ] && MODDIR="/data/adb/modules/Frosty"
@@ -21,91 +20,77 @@ DEEP_DOZE_LEVEL="moderate"
 
 generate_whitelist() {
   [ -f "$WHITELIST_FILE" ] && return
-  cat > "$WHITELIST_FILE" << 'EOF'
+  cat > "$WHITELIST_FILE" << 'HEADER'
 # Frosty Deep Doze Whitelist
 # One package per line, # for comments
+# Only installed packages are added below
+HEADER
 
-# System Critical
-android
-com.android.systemui
-com.android.settings
-com.android.shell
-com.android.providers.settings
-com.android.providers.contacts
-com.android.providers.telephony
-com.android.providers.calendar
-com.android.providers.downloads
-com.android.providers.media
-com.android.keychain
-com.android.packageinstaller
-com.android.permissioncontroller
-com.android.networkstack
-com.android.captiveportallogin
-
-# Phone & Dialer
-com.android.phone
-com.android.server.telecom
-com.android.dialer
-com.google.android.dialer
-com.samsung.android.dialer
-com.samsung.android.incallui
-com.sec.android.app.telephonyui
-com.oneplus.dialer
-com.miui.phone
-com.miui.voip
-com.oppo.dialer
-com.coloros.phonemanager
-com.huawei.dialer
-
-# SMS & Messaging
-com.android.mms
-com.android.messaging
-com.google.android.apps.messaging
-com.samsung.android.messaging
-com.oneplus.mms
-com.miui.mms
-com.oppo.mms
-com.huawei.mms
-
-# Alarm & Clock
-com.android.deskclock
-com.google.android.deskclock
-com.sec.android.app.clockpackage
-com.samsung.android.app.clockpackage
-com.samsung.android.alarm
-com.oneplus.deskclock
-com.miui.clock
-com.oppo.clock
-com.huawei.deskclock
-
-# Contacts
-com.android.contacts
-com.google.android.contacts
-com.samsung.android.contacts
-
-# Keyboards
-com.android.inputmethod.latin
-com.google.android.inputmethod.latin
-com.samsung.android.honeyboard
-com.touchtype.swiftkey
-
-# Emergency
-com.android.emergency
-com.google.android.apps.safetyhub
-
-# User Apps - Add your important apps below
-# com.whatsapp
-# org.telegram.messenger
-EOF
-  log_deep "Created default whitelist"
+  for pkg in \
+    android \
+    com.android.systemui \
+    com.android.settings \
+    com.android.shell \
+    com.android.providers.settings \
+    com.android.providers.contacts \
+    com.android.providers.telephony \
+    com.android.providers.calendar \
+    com.android.providers.downloads \
+    com.android.providers.media \
+    com.android.keychain \
+    com.android.packageinstaller \
+    com.android.permissioncontroller \
+    com.android.networkstack \
+    com.android.captiveportallogin \
+    com.android.phone \
+    com.android.server.telecom \
+    com.android.dialer \
+    com.google.android.dialer \
+    com.samsung.android.dialer \
+    com.samsung.android.incallui \
+    com.sec.android.app.telephonyui \
+    com.oneplus.dialer \
+    com.miui.phone \
+    com.miui.voip \
+    com.oppo.dialer \
+    com.coloros.phonemanager \
+    com.huawei.dialer \
+    com.android.mms \
+    com.android.messaging \
+    com.google.android.apps.messaging \
+    com.samsung.android.messaging \
+    com.oneplus.mms \
+    com.miui.mms \
+    com.oppo.mms \
+    com.huawei.mms \
+    com.android.deskclock \
+    com.google.android.deskclock \
+    com.sec.android.app.clockpackage \
+    com.samsung.android.app.clockpackage \
+    com.samsung.android.alarm \
+    com.oneplus.deskclock \
+    com.miui.clock \
+    com.oppo.clock \
+    com.huawei.deskclock \
+    com.android.contacts \
+    com.google.android.contacts \
+    com.samsung.android.contacts \
+    com.android.inputmethod.latin \
+    com.google.android.inputmethod.latin \
+    com.samsung.android.honeyboard \
+    com.touchtype.swiftkey \
+    com.android.emergency \
+    com.google.android.apps.safetyhub; do
+    pm list packages 2>/dev/null | grep -q "package:${pkg}$" && echo "$pkg" >> "$WHITELIST_FILE"
+  done
+  log_deep "Created whitelist (installed packages only)"
 }
 
 is_whitelisted() {
   local pkg="$1"
+  # Hardcoded safety net for critical system packages
   case "$pkg" in
     android|com.android.systemui|com.android.phone|com.android.settings|com.android.shell)
-      return 0 ;;
-    com.android.providers.*|com.android.inputmethod.*)
       return 0 ;;
   esac
 
@@ -119,7 +104,6 @@ apply_doze_constants() {
   log_deep "Applying doze constants ($DEEP_DOZE_LEVEL)..."
 
   if [ "$DEEP_DOZE_LEVEL" = "maximum" ]; then
-    # Ultra-aggressive: instant doze entry, long idle periods
     local constants="light_after_inactive_to=0"
     constants="$constants,light_pre_idle_to=5000"
     constants="$constants,light_idle_to=3600000"
@@ -133,7 +117,6 @@ apply_doze_constants() {
     constants="$constants,quick_doze_delay_to=5000"
     constants="$constants,min_time_to_alarm=300000"
   else
-    # Moderate: reasonable delays, balanced battery/functionality
     local constants="light_after_inactive_to=300000"
     constants="$constants,light_pre_idle_to=300000"
     constants="$constants,light_idle_to=900000"
@@ -221,6 +204,17 @@ kill_wakelocks() {
     local pkg=$(echo "$line" | grep -oE "packageName=[^ ]+" | cut -d= -f2 | tr -d ',')
     [ -z "$pkg" ] && continue
     is_whitelisted "$pkg" && continue
+
+    # Skip packages with a foreground activity
+    local proc_state
+    proc_state=$(dumpsys activity processes 2>/dev/null | grep -A2 "packageList=.*$pkg" | grep -oE "procState=[A-Z_]+" | head -1 | cut -d= -f2)
+    case "$proc_state" in
+      TOP|BOUND_TOP|BOUND_FG_SERVICE|FG_SERVICE)
+        log_deep "[SKIP wakelock] $pkg (foreground: $proc_state)"
+        continue
+        ;;
+    esac
+
     am force-stop "$pkg" 2>/dev/null && killed=$((killed + 1))
   done < "$tmpfile"
   rm -f "$tmpfile"
@@ -259,21 +253,42 @@ stop_screen_monitor() {
   fi
 }
 
+# Get screen state with fallback across Android versions
+get_screen_state() {
+  local state
+
+  # Primary: dumpsys display (most ROMs)
+  state=$(dumpsys display 2>/dev/null | grep -m1 "mScreenState=" | cut -d= -f2)
+  [ -n "$state" ] && { echo "$state"; return; }
+
+  # Fallback 1: display power state line
+  state=$(dumpsys display 2>/dev/null | grep -m1 "Display Power: state=" | sed 's/.*state=//;s/ .*//')
+  [ -n "$state" ] && { echo "$state"; return; }
+
+  # Fallback 2: power wakefulness
+  local wake
+  wake=$(dumpsys power 2>/dev/null | grep -m1 "mWakefulness=" | cut -d= -f2 | tr -d ' ')
+  case "$wake" in
+    Awake) echo "ON" ;;
+    Asleep|Dozing|Dreaming) echo "OFF" ;;
+    *) echo "" ;;
+  esac
+}
+
 start_screen_monitor() {
   stop_screen_monitor
   log_deep "Starting screen-off monitor (5min delay)..."
   (
     trap 'exit 0' TERM INT
     while true; do
-      # Check screen state with fallback
-      screen_state=$(dumpsys display 2>/dev/null | grep -m1 "mScreenState=" | cut -d= -f2)
+      screen_state=$(get_screen_state)
       if [ -z "$screen_state" ]; then
-        sleep 120
+        sleep 180
         continue
       fi
 
       if [ "$screen_state" = "ON" ]; then
-        sleep 60
+        sleep 90
         continue
       fi
 
@@ -282,7 +297,7 @@ start_screen_monitor() {
       sleep 300
 
       # Re-check before forcing idle
-      screen_state=$(dumpsys display 2>/dev/null | grep -m1 "mScreenState=" | cut -d= -f2)
+      screen_state=$(get_screen_state)
       if [ "$screen_state" != "ON" ]; then
         dumpsys deviceidle force-idle deep 2>/dev/null
         log_deep "[OK] Forced deep idle"
@@ -292,9 +307,9 @@ start_screen_monitor() {
 
       # Wait for screen on before next cycle
       while true; do
-        screen_state=$(dumpsys display 2>/dev/null | grep -m1 "mScreenState=" | cut -d= -f2)
+        screen_state=$(get_screen_state)
         [ "$screen_state" = "ON" ] && break
-        sleep 120
+        sleep 180
       done
       log_deep "Screen on, monitor re-armed"
     done

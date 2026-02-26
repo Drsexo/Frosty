@@ -1,7 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-
+## [2.3] - 2026-02-26
+- **Added KSU v3 WebUI**: Full configuration interface with live toggles, immediate apply/revert for all settings, Deep Doze whitelist editor with session activity log. Magisk users can use [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases).
+- **Cloud category adjustment**: Now holds all the critical API broker services that can affect Autofill, Smart Lock, and Google Sign-in. Defaulting to FREEZE for more overall usability.
+- **Background and Wearables categories fixes**: moved some services where they logically belong.
+- **Screen monitor polling intervals increased**: 90s when screen on (was 60s), 180s for fallback/waiting (was 120s). Reduces CPU wakeups.
+- Wakelock killer now checks process state before force stopping them, to avoid disrupting foreground apps like music, navigation. With better fallback for other roms.
+- Moved RC overlays and bin stubs to `post-fs-data.sh` for more robust early-stage work. They are now created following user's choice, log killing is easily reverted on reboot.
+- Kernel values are backed up on every boot instead of being skipped if a backup already exists, ensuring restore always reflects pre-tweak values from the current session.
+- **Reworked `system.prop` tweaks**.
+- **Many more fixes and adjustments to improve overall functionality**.
 
 ## [2.2] - 2026-02-16
 - **GPS fix**: GMS Doze is now location-aware, when Location category is skipped, GMS stays in the deviceidle whitelist so Fused Location Provider can serve GPS to apps. XML patches still reduce battery drain without breaking location. Also fixed action button not re-enabling its services.

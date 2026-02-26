@@ -1,20 +1,15 @@
 # 🧊 FROSTY - System Properties
 # Logging and debugging disable for battery savings
 
-config.disable_rtt=true
-db.log.slow_query_threshold=0
 
 # EGL & Graphics
 debug.egl.profiler=0
-ro.egl.destroy_after_detach=false
-hwui.use_gpu_pixel_buffers=false
 
 # SurfaceFlinger
 debug.hwc.otf=0
 debug.hwc_dump_en=0
 debug.sf.dump=0
 debug.sf.ddms=0
-debug.sf.gpu_comp_tiling=0
 debug.sf.disable_backpressure=1
 debug.sf.recomputecrop=0
 debug.sf.showupdates=0
@@ -34,7 +29,6 @@ debug_test=0
 
 # Logcat
 logcat.live=disable
-logcast.live=disable
 live.logcat=disable
 ro.logd.size=0
 log.redirect-stdio=false
@@ -46,22 +40,19 @@ net.ipv4.tcp_no_metrics_save=1
 # Media
 media.stagefright.log-uri=0
 vidc.debug.level=0
-vendor.vidc.enc.disable_bframes=1
-video.disable.ubwc=1
 
 # Profiler
 profiler.debugmonitor=false
 profiler.launch=false
 profiler.hung.dumpdobugreport=false
-profiler.forse_disable_err_rpt=1
-profiler.forse_disable_ulog=1
+profiler.force_disable_err_rpt=1
+profiler.force_disable_ulog=1
 
 # StrictMode
 persist.android.strictmode=0
 
-# KSM & Cache
+# KSM
 ro.config.ksm.support=false
-ro.compcache.default=0
 av.debug.disable.pers.cache=true
 
 # Battery Logging
@@ -109,10 +100,6 @@ pm.sleep_mode=1
 sdm.debug.disable_inline_rotator=1
 sdm.debug.disable_skip_validate=1
 
-# GPU
-sys.games.gt.prof=1
-sys.hwc.gpu_perf_mode=0
-
 # Service Logging
 persist.service.pcsync.enable=0
 persist.service.lgospd.enable=0
@@ -157,3 +144,32 @@ log_surfaceoutput=0
 log_omxmp4=0
 log_ao=0
 log_fps_interval=0
+
+# Checkin & Profiler Reporting
+ro.config.nocheckin=1
+profiler.force_disable_err_rpt=1
+profiler.force_disable_ulog=1
+
+# JNI checks
+ro.kernel.android.checkjni=0
+ro.kernel.checkjni=0
+dalvik.vm.checkjni=false
+
+# RIL / Modem power saving
+ro.ril.disable.power.collapse=0
+ro.ril.power_collapse=1
+ro.config.hw_fast_dormancy=1
+ro.config.hw_power_saving=1
+
+# Misc
+config.disable_rtt=true
+db.log.slow_query_threshold=0
+ro.config.small_battery=true
+
+# Samsung Knox / TIMA
+ro.config.tima=0
+ro.config.knox=0
+
+# MediaTek MDPP security framework
+security.mdpp=None
+security.mdpp.result=None
