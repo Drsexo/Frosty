@@ -1,14 +1,16 @@
-// 🧊 FROSTY - KSU WebUI API Layer
+// FROSTY - KSU WebUI API Layer
 
 var API = (function () {
   'use strict';
 
-  var MODDIR = '/data/adb/modules/Frosty';
-  var PREFS = MODDIR + '/config/user_prefs';
-  var STATE = MODDIR + '/config/state';
-  var GMS_LIST = MODDIR + '/config/gms_services.txt';
-  var WHITELIST = MODDIR + '/config/doze_whitelist.txt';
-  var LOG_DIR = MODDIR + '/logs';
+  var MODDIR      = '/data/adb/modules/Frosty';
+  var PREFS       = MODDIR + '/config/user_prefs';
+  var STATE       = MODDIR + '/config/state';
+  var GMS_LIST    = MODDIR + '/config/gms_services.txt';
+  var WHITELIST   = MODDIR + '/config/doze_whitelist.txt';
+  var LOG_DIR     = MODDIR + '/logs';
+  var SYSPROP     = MODDIR + '/system.prop';
+  var SYSPROP_OLD = MODDIR + '/system.prop.old';
 
   var cbCounter = 0;
 
@@ -57,6 +59,7 @@ var API = (function () {
 
   var PREF_MAP = {
     kernel_tweaks:   'ENABLE_KERNEL_TWEAKS',
+    system_props:    'ENABLE_SYSTEM_PROPS',
     blur_disable:    'ENABLE_BLUR_DISABLE',
     log_killing:     'ENABLE_LOG_KILLING',
     gms_doze:        'ENABLE_GMS_DOZE',
@@ -75,7 +78,7 @@ var API = (function () {
   };
 
   async function getPrefs() {
-    var prefRaw = await run('cat ' + PREFS + ' 2>/dev/null');
+    var prefRaw  = await run('cat ' + PREFS + ' 2>/dev/null');
     var stateRaw = await run('cat ' + STATE + ' 2>/dev/null');
 
     var vals = {};
@@ -138,16 +141,16 @@ var API = (function () {
       return {
         status: 'ok',
         disabled: m ? parseInt(m[1]) : 0,
-        enabled: m ? parseInt(m[2]) : 0,
-        failed: m ? parseInt(m[3]) : 0,
+        enabled:  m ? parseInt(m[2]) : 0,
+        failed:   m ? parseInt(m[3]) : 0,
         raw: raw
       };
     } else {
       var m2 = raw.match(/Re-enabled:\s*(\d+).*?Failed:\s*(\d+)/);
       return {
-        status: 'ok',
+        status:  'ok',
         enabled: m2 ? parseInt(m2[1]) : 0,
-        failed: m2 ? parseInt(m2[2]) : 0,
+        failed:  m2 ? parseInt(m2[2]) : 0,
         raw: raw
       };
     }
@@ -208,7 +211,6 @@ var API = (function () {
   async function applyTweaks() {
     var backup = MODDIR + '/backup/kernel_values.txt';
 
-    // Create backup of current values if none exists
     await run(
       'mkdir -p "' + MODDIR + '/backup"; ' +
       'if [ ! -f "' + backup + '" ]; then ' +
@@ -229,7 +231,6 @@ var API = (function () {
       '"panic_on_oops:/proc/sys/kernel/panic_on_oops" ' +
       '"vm_panic_on_oom:/proc/sys/vm/panic_on_oom" ' +
       '"timer_migration:/proc/sys/kernel/timer_migration" ' +
-      '"printk_devkmsg:/proc/sys/kernel/printk_devkmsg" ' +
       '"printk:/proc/sys/kernel/printk" ' +
       '"dirty_background_ratio:/proc/sys/vm/dirty_background_ratio" ' +
       '"dirty_ratio:/proc/sys/vm/dirty_ratio" ' +
@@ -253,7 +254,6 @@ var API = (function () {
       'done; fi'
     );
 
-    // Apply tweaks
     var cmd = 'count=0; fail=0; ' +
       'w() { [ ! -f "$1" ] && return; chmod +w "$1" 2>/dev/null; echo "$2" > "$1" 2>/dev/null && count=$((count+1)) || fail=$((fail+1)); }; ' +
       'SP=$((5*1000*1000)); ' +
@@ -340,30 +340,31 @@ var API = (function () {
     return await runJSON(cmd);
   }
 
-  // ── Regenerate system files (.rc overlays) ──
+  // ── System Props toggle ──
 
-  async function regenerateSystemFiles() {
-    var cmd = '. "' + PREFS + '"; ' +
-      'INITDIR="' + MODDIR + '/system/etc/init"; ' +
-      'BINDIR="' + MODDIR + '/system/bin"; ' +
-      'if [ "$ENABLE_LOG_KILLING" = "1" ]; then ' +
-      '  mkdir -p "$INITDIR"; ' +
-      '  for rc in atrace atrace_userdebug bugreport debuggerd debuggerd64 dmesgd dumpstate logcat logcatd logd logtagd lpdumpd tombstoned traced_perf traced_probes traceur; do ' +
-      '    [ ! -f "$INITDIR/${rc}.rc" ] && : > "$INITDIR/${rc}.rc"; ' +
-      '  done; ' +
-      '  mkdir -p "$BINDIR"; ' +
-      '  for bin in atrace bugreport bugreport_procdump bugreportz crash_dump32 crash_dump64 debuggerd diag_socket_log dmabuf_dump dmesg dmesgd dumpstate i2cdump log logcat logcatd logd logger logname logpersist.cat logpersist.start logpersist.stop logwrapper lpdump lpdumpd notify_traceur.sh tcpdump tombstoned traced traced_perf traced_probes tracepath tracepath6 traceroute6; do ' +
-      '    [ ! -f "$BINDIR/$bin" ] && : > "$BINDIR/$bin" && chmod 755 "$BINDIR/$bin"; ' +
-      '  done; ' +
-      '  echo "{\\"status\\":\\"ok\\",\\"action\\":\\"created\\",\\"reboot\\":true}"; ' +
-      'else ' +
-      '  rm -f "$INITDIR"/*.rc 2>/dev/null; ' +
-      '  rmdir "$INITDIR" 2>/dev/null; ' +
-      '  rm -f "$BINDIR"/* 2>/dev/null; ' +
-      '  rmdir "$BINDIR" 2>/dev/null; ' +
-      '  rmdir "' + MODDIR + '/system/etc" 2>/dev/null; ' +
-      '  echo "{\\"status\\":\\"ok\\",\\"action\\":\\"removed\\",\\"reboot\\":true}"; ' +
-      'fi';
+  async function toggleSystemProps(enable) {
+    var cmd;
+    if (enable) {
+      cmd =
+        'if [ -f "' + SYSPROP_OLD + '" ]; then ' +
+        '  rm -f "' + SYSPROP_OLD + '"; ' +
+        '  echo "{\\"status\\":\\"ok\\",\\"action\\":\\"deleted .old — module system.prop active\\"}"; ' +
+        'elif [ -f "' + SYSPROP + '" ]; then ' +
+        '  echo "{\\"status\\":\\"ok\\",\\"action\\":\\"already active\\"}"; ' +
+        'else ' +
+        '  echo "{\\"status\\":\\"error\\",\\"message\\":\\"system.prop missing\\"}"; ' +
+        'fi';
+    } else {
+      cmd =
+        'if [ -f "' + SYSPROP + '" ]; then ' +
+        '  mv "' + SYSPROP + '" "' + SYSPROP_OLD + '"; ' +
+        '  echo "{\\"status\\":\\"ok\\",\\"action\\":\\"renamed to .old\\"}"; ' +
+        'elif [ -f "' + SYSPROP_OLD + '" ]; then ' +
+        '  echo "{\\"status\\":\\"ok\\",\\"action\\":\\"already disabled\\"}"; ' +
+        'else ' +
+        '  echo "{\\"status\\":\\"error\\",\\"message\\":\\"system.prop missing\\"}"; ' +
+        'fi';
+    }
     return await runJSON(cmd);
   }
 
@@ -423,28 +424,29 @@ var API = (function () {
   }
 
   return {
-    available: available,
-    exec: exec,
-    run: run,
-    getPrefs: getPrefs,
-    setPref: setPref,
-    applyFreeze: applyFreeze,
-    applyStock: applyStock,
-    freezeCategory: freezeCategory,
-    unfreezeCategory: unfreezeCategory,
-    applyGmsDoze: applyGmsDoze,
-    revertGmsDoze: revertGmsDoze,
-    applyDeepDoze: applyDeepDoze,
-    revertDeepDoze: revertDeepDoze,
-    applyTweaks: applyTweaks,
-    revertTweaks: revertTweaks,
-    applyBlur: applyBlur,
-    killLogs: killLogs,
-    getWhitelist: getWhitelist,
-    addWhitelist: addWhitelist,
-    removeWhitelist: removeWhitelist,
-    appendLog: appendLog,
-    nativeListPackages: nativeListPackages,
+    available:             available,
+    exec:                  exec,
+    run:                   run,
+    getPrefs:              getPrefs,
+    setPref:               setPref,
+    applyFreeze:           applyFreeze,
+    applyStock:            applyStock,
+    freezeCategory:        freezeCategory,
+    unfreezeCategory:      unfreezeCategory,
+    applyGmsDoze:          applyGmsDoze,
+    revertGmsDoze:         revertGmsDoze,
+    applyDeepDoze:         applyDeepDoze,
+    revertDeepDoze:        revertDeepDoze,
+    applyTweaks:           applyTweaks,
+    revertTweaks:          revertTweaks,
+    applyBlur:             applyBlur,
+    killLogs:              killLogs,
+    toggleSystemProps:     toggleSystemProps,
+    getWhitelist:          getWhitelist,
+    addWhitelist:          addWhitelist,
+    removeWhitelist:       removeWhitelist,
+    appendLog:             appendLog,
+    nativeListPackages:    nativeListPackages,
     nativeGetPackagesInfo: nativeGetPackagesInfo
   };
 })();

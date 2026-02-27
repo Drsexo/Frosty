@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# 🧊 FROSTY - Service script
+# FROSTY - Service script
 
 MODDIR="${0%/*}"
 LOGDIR="$MODDIR/logs"
@@ -7,6 +7,7 @@ BACKUP_DIR="$MODDIR/backup"
 mkdir -p "$LOGDIR" "$BACKUP_DIR"
 BOOT_LOG="$LOGDIR/boot.log"
 TWEAKS_LOG="$LOGDIR/tweaks.log"
+PROPS_LOG="$LOGDIR/props.log"
 KERNEL_BACKUP="$BACKUP_DIR/kernel_values.txt"
 
 # Timeout fallback
@@ -22,11 +23,13 @@ for log in "$LOGDIR"/*.log; do
   [ "$size" -gt 102400 ] && mv "$log" "${log}.old"
 done
 
-log_boot() { echo "[$(date '+%H:%M:%S')] $1" >> "$BOOT_LOG"; }
+log_boot()  { echo "[$(date '+%H:%M:%S')] $1" >> "$BOOT_LOG"; }
 log_tweak() { echo "$1" >> "$TWEAKS_LOG"; }
+log_props() { echo "[$(date '+%H:%M:%S')] $1" >> "$PROPS_LOG"; }
 
 echo "Frosty Boot - $(date '+%Y-%m-%d %H:%M:%S')" > "$BOOT_LOG"
 echo "Frosty Tweaks - $(date '+%Y-%m-%d %H:%M:%S')" > "$TWEAKS_LOG"
+echo "Frosty Props - $(date '+%Y-%m-%d %H:%M:%S')" > "$PROPS_LOG"
 
 # Wait for boot
 until [ "$(getprop sys.boot_completed)" = "1" ] && [ -d /sdcard ]; do
@@ -57,6 +60,7 @@ mkdir -p "$MODDIR/config"
 if [ ! -f "$MODDIR/config/user_prefs" ]; then
   cat > "$MODDIR/config/user_prefs" << EOF
 ENABLE_KERNEL_TWEAKS=1
+ENABLE_SYSTEM_PROPS=1
 ENABLE_BLUR_DISABLE=0
 ENABLE_LOG_KILLING=1
 ENABLE_GMS_DOZE=1
@@ -75,6 +79,34 @@ fi
 . "$MODDIR/config/user_prefs"
 
 [ ! -f "$MODDIR/config/state" ] && echo "frozen" > "$MODDIR/config/state"
+
+# System props status
+SYSPROP="$MODDIR/system.prop"
+SYSPROP_OLD="$MODDIR/system.prop.old"
+
+log_props "Device: $(getprop ro.product.model) Android $(getprop ro.build.version.release)"
+log_props ""
+
+if [ "$ENABLE_SYSTEM_PROPS" = "1" ]; then
+  if [ -f "$SYSPROP" ]; then
+    PROP_COUNT=$(grep -c '^[^#]' "$SYSPROP" 2>/dev/null || echo "0")
+    log_props "[OK] system.prop is ACTIVE — $PROP_COUNT props loaded at boot"
+    log_boot "System props: ACTIVE ($PROP_COUNT props)"
+  else
+    log_props "[WARN] ENABLE_SYSTEM_PROPS=1 but system.prop is missing"
+    log_boot "System props: WARNING — file missing despite being enabled"
+  fi
+else
+  if [ -f "$SYSPROP_OLD" ]; then
+    log_props "[OFF] system.prop is DISABLED (system.prop.old present)"
+    log_boot "System props: DISABLED (.old present)"
+  else
+    log_props "[OFF] system.prop is DISABLED (no .old file found)"
+    log_boot "System props: DISABLED"
+  fi
+fi
+
+log_props ""
 
 write_val() {
   local file="$1" value="$2" name="$3"

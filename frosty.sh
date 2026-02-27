@@ -11,6 +11,8 @@ STATE_FILE="$MODDIR/config/state"
 GMS_LIST="$MODDIR/config/gms_services.txt"
 USER_PREFS="$MODDIR/config/user_prefs"
 KERNEL_BACKUP="$MODDIR/backup/kernel_values.txt"
+SYSPROP="$MODDIR/system.prop"
+SYSPROP_OLD="$MODDIR/system.prop.old"
 
 mkdir -p "$LOGDIR" "$MODDIR/config"
 
@@ -37,7 +39,7 @@ BOX_BOT="  └${LINE}┘"
 unset _i _iw
 
 log_service() { echo "$1" >> "$SERVICES_LOG"; }
-log_action() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$ACTION_LOG"; }
+log_action()  { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$ACTION_LOG"; }
 
 load_prefs() {
   if [ -f "$USER_PREFS" ]; then
@@ -45,6 +47,7 @@ load_prefs() {
   else
     log_action "WARNING: User preferences not found, using defaults"
     ENABLE_KERNEL_TWEAKS=1; ENABLE_BLUR_DISABLE=0; ENABLE_LOG_KILLING=1
+    ENABLE_SYSTEM_PROPS=1
     ENABLE_GMS_DOZE=1; ENABLE_DEEP_DOZE=1; DEEP_DOZE_LEVEL="moderate"
     DISABLE_TELEMETRY=1; DISABLE_BACKGROUND=1; DISABLE_LOCATION=0
     DISABLE_CONNECTIVITY=0; DISABLE_CLOUD=0; DISABLE_PAYMENTS=0
@@ -55,7 +58,7 @@ load_prefs() {
 load_prefs
 
 get_state() { [ -f "$STATE_FILE" ] && cat "$STATE_FILE" || echo "frozen"; }
-set_state() { echo "$1" > "$STATE_FILE"; chmod 644 "$STATE_FILE"; }
+set_state()  { echo "$1" > "$STATE_FILE"; chmod 644 "$STATE_FILE"; }
 
 should_disable_category() {
   case "$1" in
@@ -79,7 +82,7 @@ get_user_choice() {
     [ $elapsed -ge $timeout_val ] && { echo "timeout"; return; }
     if command -v getevent >/dev/null 2>&1; then
       local event=$(timeout 1 getevent -qlc 1 2>/dev/null)
-      echo "$event" | grep -q "KEY_VOLUMEUP.*DOWN" && { echo "up"; return; }
+      echo "$event" | grep -q "KEY_VOLUMEUP.*DOWN"   && { echo "up";   return; }
       echo "$event" | grep -q "KEY_VOLUMEDOWN.*DOWN" && { echo "down"; return; }
     else
       echo "timeout"; return
@@ -91,6 +94,7 @@ get_user_choice() {
 save_prefs() {
   cat > "$USER_PREFS" << EOF
 ENABLE_KERNEL_TWEAKS=$ENABLE_KERNEL_TWEAKS
+ENABLE_SYSTEM_PROPS=$ENABLE_SYSTEM_PROPS
 ENABLE_BLUR_DISABLE=$ENABLE_BLUR_DISABLE
 ENABLE_LOG_KILLING=$ENABLE_LOG_KILLING
 ENABLE_GMS_DOZE=$ENABLE_GMS_DOZE
@@ -107,6 +111,29 @@ DISABLE_GAMES=$DISABLE_GAMES
 EOF
   chmod 644 "$USER_PREFS"
   log_action "Preferences saved"
+}
+
+# Toggle system.prop
+apply_system_props() {
+  if [ "$ENABLE_SYSTEM_PROPS" = "1" ]; then
+    if [ -f "$SYSPROP_OLD" ]; then
+      rm -f "$SYSPROP_OLD"
+      log_action "System props: deleted .old — module file active on next boot"
+    elif [ -f "$SYSPROP" ]; then
+      log_action "System props: already active"
+    else
+      log_action "System props: WARNING — system.prop not found"
+    fi
+  else
+    if [ -f "$SYSPROP" ]; then
+      mv "$SYSPROP" "$SYSPROP_OLD"
+      log_action "System props: renamed to .old — disabled on next boot"
+    elif [ -f "$SYSPROP_OLD" ]; then
+      log_action "System props: already disabled"
+    else
+      log_action "System props: WARNING — system.prop not found"
+    fi
+  fi
 }
 
 interactive_menu() {
@@ -126,15 +153,16 @@ interactive_menu() {
 
   local choice=$(get_user_choice 15)
   case "$choice" in
-    up) log_action "CUSTOMIZE"; run_customization_wizard ;;
-    down) log_action "STOCK"; stock_services ;;
+    up)      log_action "CUSTOMIZE"; run_customization_wizard ;;
+    down)    log_action "STOCK";     stock_services ;;
     timeout) echo "  ⏱️ Timeout"; echo "" ;;
   esac
 }
 
 prompt_toggle() {
-  local label="$1" current="$2"
+  local label="$1" current="$2" desc="$3"
   echo "  $label"
+  [ -n "$desc" ] && echo "    $desc"
   echo "  Current: $current"
   echo "  Vol+ = ENABLE  |  Vol- = DISABLE"
   echo ""
@@ -145,31 +173,39 @@ run_customization_wizard() {
   echo ""
   sleep 1
 
-  prompt_toggle "🔧 Kernel Tweaks" "$([ "$ENABLE_KERNEL_TWEAKS" = "1" ] && echo "✅" || echo "❌")"
+  prompt_toggle "🔧 Kernel Tweaks" "$([ "$ENABLE_KERNEL_TWEAKS" = "1" ] && echo "✅" || echo "❌")" "Speeds up task switching, reduces CPU wakeups"
   case $(get_user_choice 10) in
-    up) ENABLE_KERNEL_TWEAKS=1; echo "  → ✅" ;;
+    up)   ENABLE_KERNEL_TWEAKS=1; echo "  → ✅" ;;
     down) ENABLE_KERNEL_TWEAKS=0; echo "  → ❌" ;;
-    *) echo "  → Keeping" ;;
+    *)    echo "  → Keeping" ;;
   esac
   sleep 0.5; echo ""
 
-  prompt_toggle "🎨 UI Blur Disable" "$([ "$ENABLE_BLUR_DISABLE" = "1" ] && echo "✅" || echo "❌")"
+  prompt_toggle "⚙️  System Props" "$([ "$ENABLE_SYSTEM_PROPS" = "1" ] && echo "✅" || echo "❌")" "Silences debug logging, saves battery & RAM"
   case $(get_user_choice 10) in
-    up) ENABLE_BLUR_DISABLE=1; echo "  → ✅" ;;
+    up)   ENABLE_SYSTEM_PROPS=1; echo "  → ✅" ;;
+    down) ENABLE_SYSTEM_PROPS=0; echo "  → ❌" ;;
+    *)    echo "  → Keeping" ;;
+  esac
+  sleep 0.5; echo ""
+
+  prompt_toggle "🎨 UI Blur Disable" "$([ "$ENABLE_BLUR_DISABLE" = "1" ] && echo "✅" || echo "❌")" "Reduces GPU load, smoother on weaker devices"
+  case $(get_user_choice 10) in
+    up)   ENABLE_BLUR_DISABLE=1; echo "  → ✅" ;;
     down) ENABLE_BLUR_DISABLE=0; echo "  → ❌" ;;
-    *) echo "  → Keeping" ;;
+    *)    echo "  → Keeping" ;;
   esac
   sleep 0.5; echo ""
 
-  prompt_toggle "📝 Log Process Killing" "$([ "$ENABLE_LOG_KILLING" = "1" ] && echo "✅" || echo "❌")"
+  prompt_toggle "📝 Log Process Killing" "$([ "$ENABLE_LOG_KILLING" = "1" ] && echo "✅" || echo "❌")" "Stops background loggers, frees RAM"
   case $(get_user_choice 10) in
-    up) ENABLE_LOG_KILLING=1; echo "  → ✅" ;;
+    up)   ENABLE_LOG_KILLING=1; echo "  → ✅" ;;
     down) ENABLE_LOG_KILLING=0; echo "  → ❌" ;;
-    *) echo "  → Keeping" ;;
+    *)    echo "  → Keeping" ;;
   esac
   sleep 0.5; echo ""
 
-  prompt_toggle "🔋 Deep Doze" "$([ "$ENABLE_DEEP_DOZE" = "1" ] && echo "✅ $DEEP_DOZE_LEVEL" || echo "❌")"
+  prompt_toggle "🔋 Deep Doze" "$([ "$ENABLE_DEEP_DOZE" = "1" ] && echo "✅ $DEEP_DOZE_LEVEL" || echo "❌")" "Restricts background activity for all apps"
   case $(get_user_choice 10) in
     up)
       ENABLE_DEEP_DOZE=1; echo "  → ✅"
@@ -177,21 +213,21 @@ run_customization_wizard() {
       echo "  Level: Vol+ = MAXIMUM 💀 | Vol- = MODERATE ⚡"
       echo ""
       case $(get_user_choice 10) in
-        up) DEEP_DOZE_LEVEL="maximum"; echo "  → MAXIMUM 💀" ;;
+        up)   DEEP_DOZE_LEVEL="maximum";  echo "  → MAXIMUM 💀" ;;
         down) DEEP_DOZE_LEVEL="moderate"; echo "  → MODERATE ⚡" ;;
-        *) echo "  → Keeping: $DEEP_DOZE_LEVEL" ;;
+        *)    echo "  → Keeping: $DEEP_DOZE_LEVEL" ;;
       esac
       ;;
     down) ENABLE_DEEP_DOZE=0; echo "  → ❌" ;;
-    *) echo "  → Keeping" ;;
+    *)    echo "  → Keeping" ;;
   esac
   sleep 0.5; echo ""
 
-  prompt_toggle "💤 GMS Doze (may delay notifications)" "$([ "$ENABLE_GMS_DOZE" = "1" ] && echo "✅" || echo "❌")"
+  prompt_toggle "💤 GMS Doze" "$([ "$ENABLE_GMS_DOZE" = "1" ] && echo "✅" || echo "❌")" "Lets Android optimize GMS battery usage · May delay notifications"
   case $(get_user_choice 10) in
-    up) ENABLE_GMS_DOZE=1; echo "  → ✅" ;;
+    up)   ENABLE_GMS_DOZE=1; echo "  → ✅" ;;
     down) ENABLE_GMS_DOZE=0; echo "  → ❌" ;;
-    *) echo "  → Keeping" ;;
+    *)    echo "  → Keeping" ;;
   esac
   sleep 0.5; echo ""
 
@@ -205,9 +241,9 @@ run_customization_wizard() {
     echo "  Current: $([ "$current_val" = "1" ] && echo "🧊" || echo "🔥")"
     echo ""
     case $(get_user_choice 10) in
-      up) eval "$cat_var=1"; echo "  → 🧊 FREEZE" ;;
+      up)   eval "$cat_var=1"; echo "  → 🧊 FREEZE" ;;
       down) eval "$cat_var=0"; echo "  → 🔥 KEEP" ;;
-      *) echo "  → Keeping" ;;
+      *)    echo "  → Keeping" ;;
     esac
     sleep 0.5; echo ""
   done << 'CATEGORIES'
@@ -222,7 +258,7 @@ run_customization_wizard() {
 CATEGORIES
 
   echo "  📋 SUMMARY"
-  echo "  Kernel: $([ "$ENABLE_KERNEL_TWEAKS" = "1" ] && echo "✅" || echo "❌")  Blur: $([ "$ENABLE_BLUR_DISABLE" = "1" ] && echo "✅" || echo "❌")  Logs: $([ "$ENABLE_LOG_KILLING" = "1" ] && echo "✅" || echo "❌")"
+  echo "  Kernel: $([ "$ENABLE_KERNEL_TWEAKS" = "1" ] && echo "✅" || echo "❌")  Props: $([ "$ENABLE_SYSTEM_PROPS" = "1" ] && echo "✅" || echo "❌")  Blur: $([ "$ENABLE_BLUR_DISABLE" = "1" ] && echo "✅" || echo "❌")  Logs: $([ "$ENABLE_LOG_KILLING" = "1" ] && echo "✅" || echo "❌")"
   echo "  Deep Doze: $([ "$ENABLE_DEEP_DOZE" = "1" ] && echo "$DEEP_DOZE_LEVEL" || echo "❌")  GMS Doze: $([ "$ENABLE_GMS_DOZE" = "1" ] && echo "💤" || echo "❌")"
   echo "  Telemetry:$([ "$DISABLE_TELEMETRY" = "1" ] && echo "🧊" || echo "🔥") Background:$([ "$DISABLE_BACKGROUND" = "1" ] && echo "🧊" || echo "🔥") Location:$([ "$DISABLE_LOCATION" = "1" ] && echo "🧊" || echo "🔥") Connectivity:$([ "$DISABLE_CONNECTIVITY" = "1" ] && echo "🧊" || echo "🔥")"
   echo "  Cloud:$([ "$DISABLE_CLOUD" = "1" ] && echo "🧊" || echo "🔥") Payments:$([ "$DISABLE_PAYMENTS" = "1" ] && echo "🧊" || echo "🔥") Wearables:$([ "$DISABLE_WEARABLES" = "1" ] && echo "🧊" || echo "🔥") Games:$([ "$DISABLE_GAMES" = "1" ] && echo "🧊" || echo "🔥")"
@@ -234,6 +270,7 @@ CATEGORIES
     up)
       log_action "Applying settings"
       save_prefs
+      apply_system_props
       freeze_services
       ;;
     *)
@@ -315,6 +352,7 @@ freeze_services() {
     done
     echo "  📝 Logs killed"
   fi
+
   echo ""
 }
 
@@ -403,29 +441,40 @@ toggle() {
   echo ""
 
   case $(get_user_choice 10) in
-    up) freeze_services ;;
-    down) stock_services ;;
+    up)      freeze_services ;;
+    down)    stock_services ;;
     timeout) echo "  ⏱️ Timeout"; echo "" ;;
   esac
 }
 
 status() {
   local current=$(get_state)
+  local props_status
+  if [ -f "$SYSPROP" ]; then
+    props_status="✅ active"
+  elif [ -f "$SYSPROP_OLD" ]; then
+    props_status="❌ disabled"
+  else
+    props_status="⚠️  missing"
+  fi
+
   echo ""
   echo "  🧊 FROSTY Status"
-  echo "  State: $([ "$current" = "frozen" ] && echo "🧊 FROZEN" || echo "🔥 STOCK")"
-  echo "  GMS Doze: $([ "$ENABLE_GMS_DOZE" = "1" ] && echo "💤" || echo "❌")"
-  echo "  Deep Doze: $([ "$ENABLE_DEEP_DOZE" = "1" ] && echo "🔋 $DEEP_DOZE_LEVEL" || echo "❌")"
+  echo "  State:      $([ "$current" = "frozen" ] && echo "🧊 FROZEN" || echo "🔥 STOCK")"
+  echo "  GMS Doze:   $([ "$ENABLE_GMS_DOZE" = "1" ]      && echo "💤" || echo "❌")"
+  echo "  Deep Doze:  $([ "$ENABLE_DEEP_DOZE" = "1" ]     && echo "🔋 $DEEP_DOZE_LEVEL" || echo "❌")"
+  echo "  Sys Props:  $props_status"
   echo ""
 }
 
 case "$1" in
-  freeze) freeze_services ;;
-  stock) stock_services ;;
-  toggle) toggle ;;
-  interactive|"") interactive_menu ;;
-  status) status ;;
-  *) echo "Usage: frosty.sh [freeze|stock|toggle|interactive|status]" ;;
+  freeze)           freeze_services ;;
+  stock)            stock_services ;;
+  toggle)           toggle ;;
+  interactive|"")   interactive_menu ;;
+  status)           status ;;
+  apply_sysprops)   apply_system_props ;;
+  *)                echo "Usage: frosty.sh [freeze|stock|toggle|interactive|status|apply_sysprops]" ;;
 esac
 
 exit 0

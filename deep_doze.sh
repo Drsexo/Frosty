@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# 🧊 FROSTY - Deep Doze Enforcer
+# FROSTY - Deep Doze Enforcer
 
 MODDIR="${0%/*}"
 [ -z "$MODDIR" ] && MODDIR="/data/adb/modules/Frosty"

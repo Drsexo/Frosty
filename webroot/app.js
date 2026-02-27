@@ -120,6 +120,7 @@
     setChk('t-kernel', p.kernel_tweaks);
     setChk('t-blur', p.blur_disable);
     setChk('t-logs', p.log_killing);
+    setChk('t-sysprops', p.system_props);
     setChk('t-gms-doze', p.gms_doze);
     setChk('t-deep-doze', p.deep_doze);
 
@@ -183,6 +184,15 @@
           if (rl.status === 'ok') logAction('Killed ' + rl.killed + ' log processes', 'ok');
         }
         log('Reboot needed for log ' + (nv ? 'killing' : 'restore') + ' to take effect', 'warn');
+      } else if (key === 'system_props') {
+        updateLoading((nv ? 'Enabling' : 'Disabling') + ' system props...');
+        var rsp = await API.toggleSystemProps(nv);
+        if (rsp.status === 'ok') {
+          logAction('System props ' + (nv ? 'enabled' : 'disabled') + ' (' + rsp.action + ')', 'ok');
+        } else {
+          logAction('System props toggle failed: ' + (rsp.message || ''), 'err');
+        }
+        log('Reboot required for system prop changes to take effect', 'warn');
       } else if (key === 'gms_doze') {
         if (nv) {
           updateLoading('Applying GMS Doze...');
@@ -298,7 +308,7 @@
     try {
       // Step 1: Turn ON all prefs
       updateLoading('Enabling all toggles...');
-      var allPrefs = ['kernel_tweaks', 'blur_disable', 'log_killing', 'gms_doze', 'deep_doze'];
+      var allPrefs = ['kernel_tweaks', 'system_props', 'blur_disable', 'log_killing', 'gms_doze', 'deep_doze'];
       for (var i = 0; i < allPrefs.length; i++) {
         await API.setPref(allPrefs[i], 1);
       }
@@ -325,22 +335,27 @@
       var rk = await API.applyTweaks();
       if (rk.status === 'ok') logAction('Kernel: ' + rk.applied + ' applied', rk.failed > 0 ? 'warn' : 'ok');
 
-      // Step 5: Disable blur
+      // Step 5: Enable system props (rename .old → system.prop if needed)
+      updateLoading('Enabling system props...');
+      var rsp = await API.toggleSystemProps(1);
+      if (rsp.status === 'ok') logAction('System props: ' + rsp.action, 'ok');
+
+      // Step 6: Disable blur
       updateLoading('Disabling blur...');
       var rb = await API.applyBlur();
       if (rb.status === 'ok') logAction('Blur ' + rb.blur, 'ok');
 
-      // Step 6: Kill logs (RC/bin changes take effect on next reboot via post-fs-data.sh)
+      // Step 7: Kill logs (RC/bin changes take effect on next reboot via post-fs-data.sh)
       updateLoading('Killing log processes...');
       var rl = await API.killLogs();
       if (rl.status === 'ok') logAction('Killed ' + rl.killed + ' log processes', 'ok');
 
-      // Step 7: Apply GMS Doze
+      // Step 8: Apply GMS Doze
       updateLoading('Applying GMS Doze...');
       await API.applyGmsDoze();
       logAction('GMS Doze applied', 'ok');
 
-      // Step 8: Apply Deep Doze
+      // Step 9: Apply Deep Doze
       updateLoading('Applying Deep Doze...');
       await API.applyDeepDoze();
       logAction('Deep Doze applied', 'ok');
@@ -367,7 +382,7 @@
     try {
       // Step 1: Turn OFF all prefs
       updateLoading('Disabling all toggles...');
-      var allPrefs = ['kernel_tweaks', 'blur_disable', 'log_killing', 'gms_doze', 'deep_doze'];
+      var allPrefs = ['kernel_tweaks',  'system_props', 'blur_disable', 'log_killing', 'gms_doze', 'deep_doze'];
       for (var i = 0; i < allPrefs.length; i++) {
         await API.setPref(allPrefs[i], 0);
       }
@@ -381,12 +396,17 @@
       }
       logAction('All GMS categories disabled', 'ok');
 
-      // Step 3: Revert kernel FIRST (before frosty.sh stock which also touches backup)
+      // Step 3: Revert kernel FIRST (before frosty.sh stock backup)
       updateLoading('Restoring kernel values...');
       var rk = await API.revertTweaks();
       if (rk.status === 'ok') logAction('Kernel: ' + rk.restored + ' values restored', rk.restored > 0 ? 'ok' : 'warn');
 
-      // Step 4: Re-enable all GMS services
+      // Step 4: Disable system props (rename system.prop → .old)
+      updateLoading('Disabling system props...');
+      var rsp2 = await API.toggleSystemProps(0);
+      if (rsp2.status === 'ok') logAction('System props: ' + rsp2.action, 'ok');
+
+      // Step 5: Re-enable all GMS services
       updateLoading('Re-enabling GMS services...');
       var res = await API.applyStock();
       if (res.status === 'ok') {
@@ -394,17 +414,17 @@
           res.failed > 0 ? 'warn' : 'ok');
       }
 
-      // Step 5: Revert blur
+      // Step 6: Revert blur
       updateLoading('Restoring blur...');
       await API.applyBlur();
       logAction('Blur restored', 'ok');
 
-      // Step 6: Revert GMS Doze
+      // Step 7: Revert GMS Doze
       updateLoading('Reverting GMS Doze...');
       await API.revertGmsDoze();
       logAction('GMS Doze reverted', 'ok');
 
-      // Step 7: Revert Deep Doze
+      // Step 8: Revert Deep Doze
       updateLoading('Reverting Deep Doze...');
       await API.revertDeepDoze();
       logAction('Deep Doze reverted', 'ok');
@@ -716,10 +736,18 @@
     $('btn-stock').addEventListener('click', applyStock);
 
     $('t-kernel').addEventListener('change', function () { togglePref('kernel_tweaks'); });
+    $('t-sysprops').addEventListener('change', function () { togglePref('system_props'); });
     $('t-blur').addEventListener('change', function () { togglePref('blur_disable'); });
     $('t-logs').addEventListener('change', function () { togglePref('log_killing'); });
     $('t-gms-doze').addEventListener('change', function () { togglePref('gms_doze'); });
     $('t-deep-doze').addEventListener('change', function () { togglePref('deep_doze'); });
+    document.querySelectorAll('.tgl-row, .cat-row').forEach(function (row) {
+      row.addEventListener('click', function (e) {
+        if (e.target.closest('.tgl')) return;
+        var chk = row.querySelector('input[type="checkbox"]');
+        if (chk) chk.click();
+      });
+    });
 
     $('lvl-mod').addEventListener('click', function () { setDozeLevel('moderate'); });
     $('lvl-max').addEventListener('click', function () { setDozeLevel('maximum'); });
@@ -794,5 +822,9 @@
     } catch (e) {}
   }
 
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', function () {
+    // Remove [unresolved] so body fades in cleanly after styles are ready
+    document.body.removeAttribute('unresolved');
+    init();
+  });
 })();

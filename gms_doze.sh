@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# 🧊 FROSTY - GMS Doze Handler
+# FROSTY - GMS Doze Handler
 
 MODDIR="${0%/*}"
 [ -z "$MODDIR" ] && MODDIR="/data/adb/modules/Frosty"

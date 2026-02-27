@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# 🧊 FROSTY - Post-FS-Data
+# FROSTY - Post-FS-Data
 
 MODDIR="${0%/*}"
 

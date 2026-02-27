@@ -1,4 +1,5 @@
-# 🧊 FROSTY - GMS Freezer / Battery Saver
+#!/system/bin/sh
+# FROSTY - GMS Freezer / Battery Saver
 # Author: Drsexo (GitHub)
 
 TIMEOUT=30
@@ -83,9 +84,11 @@ print_section() {
 choose_tweak() {
   local prompt="$1"
   local default="$2"
+  local desc="$3"
 
   ui_print ""
   ui_print "  $prompt"
+  [ -n "$desc" ] && ui_print "    $desc"
 
   if [ "$HAS_GETEVENT" -eq 0 ]; then
     if [ "$default" = "YES" ]; then
@@ -239,11 +242,13 @@ ui_print ""
 ui_print "  ⬆️ Vol UP = YES  |  ⬇️ Vol DOWN = NO"
 ui_print "  ⏱️ ${TIMEOUT}s timeout"
 ui_print ""
-choose_tweak "🔧 Apply Kernel Tweaks? (Scheduler, VM, Network)" "YES"
+choose_tweak "🔧 Apply Kernel Tweaks?" "YES" "Speeds up task switching, reduces CPU wakeups"
 ENABLE_KERNEL_TWEAKS=$?
-choose_tweak "🎨 Disable UI Blur? (Saves GPU, may affect visuals)" "NO"
+choose_tweak "⚙️  Apply System Props?" "YES" "Disables debug logging, saves battery & RAM"
+ENABLE_SYSTEM_PROPS=$?
+choose_tweak "🎨 Disable UI Blur?" "NO" "Reduces GPU load, smoother on weaker devices"
 ENABLE_BLUR_DISABLE=$?
-choose_tweak "📝 Kill Log Processes? (logcat, logd, traced, etc.)" "YES"
+choose_tweak "📝 Kill Log Processes?" "YES" "Stops background loggers, frees RAM"
 ENABLE_LOG_KILLING=$?
 
 # GMS Doze
@@ -408,6 +413,7 @@ DISABLE_GAMES=$?
 print_section "💾  Saving Configuration"
 cat > "$MODPATH/config/user_prefs" << EOF
 ENABLE_KERNEL_TWEAKS=$ENABLE_KERNEL_TWEAKS
+ENABLE_SYSTEM_PROPS=$ENABLE_SYSTEM_PROPS
 ENABLE_BLUR_DISABLE=$ENABLE_BLUR_DISABLE
 ENABLE_LOG_KILLING=$ENABLE_LOG_KILLING
 ENABLE_GMS_DOZE=$ENABLE_GMS_DOZE
@@ -427,13 +433,27 @@ echo "frozen" > "$MODPATH/config/state"
 ui_print ""
 ui_print "  ✓ Configuration saved"
 
+# System.prop update safety
+SYSPROP="$MODPATH/system.prop"
+SYSPROP_OLD="$MODPATH/system.prop.old"
+if [ "$ENABLE_SYSTEM_PROPS" -eq 1 ]; then
+  rm -f "$SYSPROP_OLD" 2>/dev/null
+  ui_print "  ✓ system.prop active"
+else
+  if [ -f "$SYSPROP" ]; then
+    mv "$SYSPROP" "$SYSPROP_OLD"
+    ui_print "  ✓ system.prop disabled (renamed to .old)"
+  fi
+fi
+
 # Summary
 print_section "📋  Summary"
 ui_print ""
 ui_print "  System Tweaks:"
-[ "$ENABLE_KERNEL_TWEAKS" -eq 1 ] && ui_print "    ✅ Kernel Tweaks" || ui_print "    ❌ Kernel Tweaks"
-[ "$ENABLE_BLUR_DISABLE" -eq 1 ] && ui_print "    ✅ Blur Disable" || ui_print "    ❌ Blur Disable"
-[ "$ENABLE_LOG_KILLING" -eq 1 ] && ui_print "    ✅ Log Killing" || ui_print "    ❌ Log Killing"
+[ "$ENABLE_KERNEL_TWEAKS" -eq 1 ] && ui_print "    ✅ Kernel Tweaks"     || ui_print "    ❌ Kernel Tweaks"
+[ "$ENABLE_SYSTEM_PROPS" -eq 1 ]  && ui_print "    ✅ System Props"     || ui_print "    ❌ System Props"
+[ "$ENABLE_BLUR_DISABLE" -eq 1 ]  && ui_print "    ✅ Blur Disable"      || ui_print "    ❌ Blur Disable"
+[ "$ENABLE_LOG_KILLING" -eq 1 ]   && ui_print "    ✅ Log Killing"       || ui_print "    ❌ Log Killing"
 ui_print ""
 ui_print "  GMS Doze:"
 if [ "$ENABLE_GMS_DOZE" -eq 1 ]; then
@@ -469,11 +489,11 @@ print_section "✅  Installation Complete"
 ui_print ""
 ui_print "  🔄 Reboot to apply changes"
 ui_print ""
-ui_print "  💡 Use Action button or WebUI in root manager"
-ui_print "   to toggle between 🧊 Frozen and 🔥 Stock modes"
+ui_print "  💡 Use Action / WebUI button in root manager to"
+ui_print "   toggle between 🧊 Frozen and 🔥 Stock modes"
 ui_print ""
 ui_print "  📝 Edit whitelist: /config/doze_whitelist.txt"
-ui_print "     Or using WebUI"
+ui_print "   Or using WebUI"
 ui_print ""
 ui_print "  ⚠️  If issues occur change to Stock mode"
 ui_print ""

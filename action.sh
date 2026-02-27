@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# 🧊 FROSTY - Action Button Handler
+# FROSTY - Action Button Handler
 
 
 MODDIR="${0%/*}"
