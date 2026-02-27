@@ -433,6 +433,16 @@ echo "frozen" > "$MODPATH/config/state"
 ui_print ""
 ui_print "  ✓ Configuration saved"
 
+# Preserve existing doze whitelist on updates
+WHITELIST="$MODPATH/config/doze_whitelist.txt"
+EXISTING_WHITELIST="/data/adb/modules/Frosty/config/doze_whitelist.txt"
+if [ -f "$EXISTING_WHITELIST" ]; then
+  cp -f "$EXISTING_WHITELIST" "$WHITELIST"
+  ui_print "  ↩ Doze whitelist preserved"
+elif [ ! -f "$WHITELIST" ]; then
+  touch "$WHITELIST"
+fi
+
 # System.prop update safety
 SYSPROP="$MODPATH/system.prop"
 SYSPROP_OLD="$MODPATH/system.prop.old"

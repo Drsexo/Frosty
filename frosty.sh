@@ -181,7 +181,7 @@ run_customization_wizard() {
   esac
   sleep 0.5; echo ""
 
-  prompt_toggle "⚙️  System Props" "$([ "$ENABLE_SYSTEM_PROPS" = "1" ] && echo "✅" || echo "❌")" "Silences debug logging, saves battery & RAM"
+  prompt_toggle "⚙️  System Props" "$([ "$ENABLE_SYSTEM_PROPS" = "1" ] && echo "✅" || echo "❌")" "Disables debug logging, saves battery & RAM"
   case $(get_user_choice 10) in
     up)   ENABLE_SYSTEM_PROPS=1; echo "  → ✅" ;;
     down) ENABLE_SYSTEM_PROPS=0; echo "  → ❌" ;;

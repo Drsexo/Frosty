@@ -28,16 +28,13 @@
 
   // ── Version ──
   function setVersion() {
-    var el = $('version-txt');
-    if(!el) return;
-
-    fetch("../update.json").then(res => res.json()).then(data => {
-      el.textContent = "v" + data.version;
-      el.style.color = 'var(--blue)';
-    }).catch(() => {
-      el.textContent = "v?";
-      el.style.color = 'var(--orange)';
-    })
+    var el = $('version-badge');
+    if (!el) return;
+    API.run('grep "^version=" /data/adb/modules/Frosty/module.prop 2>/dev/null | cut -d= -f2')
+      .then(function (v) {
+        el.textContent = v ? 'v' + v.trim() : '';
+      })
+      .catch(function () { el.textContent = ''; });
   }
 
   // ── Toast ──
@@ -93,6 +90,7 @@
     var o = $('loading-overlay'), t = $('loading-txt');
     if (t) t.textContent = txt || 'Processing...';
     if (o) o.classList.add('on');
+    document.body.style.overflow = 'hidden';
   }
 
   function updateLoading(txt) {
@@ -103,6 +101,7 @@
   function hideLoading() {
     var o = $('loading-overlay');
     if (o) o.classList.remove('on');
+    document.body.style.overflow = '';
   }
 
   // ── Load & Render ──
@@ -803,6 +802,33 @@
       catch (err) { window.open('https://github.com/Drsexo/Frosty', '_blank'); }
     });
 
+    $('log-copy-btn').addEventListener('click', function () {
+      var box = $('log-box');
+      if (!box || !box.children.length) return;
+      var lines = Array.from(box.children).map(function (row) {
+        var ts  = row.querySelector('.log-ts');
+        var msg = row.querySelector('.log-msg');
+        return (ts ? ts.textContent + '  ' : '') + (msg ? msg.textContent : '');
+      });
+      var text = lines.join('\n');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () {
+          toast('Log copied', 'ok');
+        }).catch(function () {
+          toast('Copy failed', 'err');
+        });
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        try { document.execCommand('copy'); toast('Log copied', 'ok'); }
+        catch (e) { toast('Copy failed', 'err'); }
+        document.body.removeChild(ta);
+      }
+    });
+
     // Pause polling when app is backgrounded, resume when foregrounded
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) stopPolling();
@@ -822,10 +848,9 @@
       return;
     }
 
-    setVersion();
-    
     bind();
-    
+
+    setVersion();
     await loadPrefs();
     startPolling();
 
