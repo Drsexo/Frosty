@@ -22,10 +22,12 @@
   --tonal:            var(--tonalSurface,            #2B2930);
 
   /* Green/orange for status - not in MD3 color system, keep custom */
-  --green:        #2dd4a0;
-  --green-dim:    rgba(45,212,160,.12);
-  --orange:       #e5a940;
-  --orange-dim:   rgba(229,169,64,.12);
+  --green:        rgb(45, 212, 160);
+  --green-dim:    rgba(45, 212, 160, .12);
+  --orange:       rgb(229, 169, 64);
+  --orange-dim:   rgba(229, 169, 64, .12);
+  --blue:         rgb(2, 210, 255);
+  --blue-dim:     rgba(2, 210, 255, .12);
 
   --radius:    16px;
   --radius-sm: 12px;
@@ -80,6 +82,20 @@ input[type=text] { font: inherit; color: inherit; }
   pointer-events: none;
 }
 .ripple:active::after { opacity: 0.08; }
+
+/* ── Version ── */
+#hdr-module-version {
+  position: absolute;
+  left: 0;
+  border-radius: var(--radius);
+  padding: 2px 8px;
+  background: var(--blue-dim);
+  color: var(--blue);
+}
+#version-txt {
+  font-size: 1rem;
+  font-weight: 500;
+}
 
 /* ── Toast ── */
 #toast-wrap {

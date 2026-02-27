@@ -26,6 +26,20 @@
     return d.innerHTML;
   }
 
+  // ── Version ──
+  function setVersion() {
+    var el = $('version-txt');
+    if(!el) return;
+
+    fetch("../update.json").then(res => res.json()).then(data => {
+      el.textContent = "v" + data.version;
+      el.style.color = 'var(--blue)';
+    }).catch(() => {
+      el.textContent = "v?";
+      el.style.color = 'var(--orange)';
+    })
+  }
+
   // ── Toast ──
 
   function toast(msg, type) {
@@ -808,8 +822,10 @@
       return;
     }
 
+    setVersion();
+    
     bind();
-
+    
     await loadPrefs();
     startPolling();
 
