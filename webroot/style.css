@@ -176,7 +176,7 @@ input[type=text] { font: inherit; color: inherit; }
 }
 
 /* ── Header ── */
-.hdr { padding: 18px 18px 2px; text-align: center; }
+.hdr { padding: 18px 18px 2px; text-align: center; user-select: none; }
 .hdr-row { display: flex; justify-content: center; align-items: center; gap: 12px; position: relative; }
 .hdr-brand { display: flex; align-items: center; gap: 8px; }
 .brand-ico { font-size: 1.5rem; }
@@ -206,6 +206,7 @@ input[type=text] { font: inherit; color: inherit; }
   justify-content: center;
   gap: 10px;
   padding: 14px 16px 4px;
+  user-select: none;
 }
 .state-label {
   font-size: .75rem;
@@ -272,7 +273,13 @@ input[type=text] { font: inherit; color: inherit; }
   content-visibility: auto;
   contain-intrinsic-size: 0 500px;
 }
-.card-title { font-size: .88rem; font-weight: 700; margin-bottom: 12px; color: var(--on-surface); }
+.card-title { 
+  font-size: .88rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--on-surface);
+  user-select: none;
+}
 
 /* ── Toggle Rows ── */
 .tgl-row, .cat-row {
@@ -284,7 +291,7 @@ input[type=text] { font: inherit; color: inherit; }
   cursor: pointer;
 }
 .tgl-row + .tgl-row, .cat-row + .cat-row { border-top: 1px solid var(--stroke-var); }
-.tgl-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.tgl-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; user-select: none; }
 .tgl-name { font-size: .83rem; font-weight: 600; }
 .tgl-desc { font-size: .7rem; color: var(--on-surface-var); line-height: 1.3; }
 
@@ -332,7 +339,7 @@ input[type=text] { font: inherit; color: inherit; }
 .dd-extras.on { max-height: 130px; opacity: 1; margin-top: 10px; }
 .level-row { display: flex; gap: 8px; margin-bottom: 8px; }
 .lvl-btn {
-  flex: 1; padding: 9px 0; border-radius: var(--radius-xs);
+  flex: 1; padding: 9px 12px; border-radius: var(--radius-xs);
   font-size: .78rem; font-weight: 600;
   background: var(--surface-2);
   border: 1px solid var(--stroke-var);
@@ -364,7 +371,7 @@ input[type=text] { font: inherit; color: inherit; }
 }
 
 /* ── Category Rows ── */
-.cat-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.cat-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;  user-select: none; }
 .cat-ico { font-size: 1.15rem; flex-shrink: 0; }
 .cat-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .cat-name { font-size: .83rem; font-weight: 600; }
