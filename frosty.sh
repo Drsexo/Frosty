@@ -463,6 +463,9 @@ status() {
   echo "  State:      $([ "$current" = "frozen" ] && echo "🧊 FROZEN" || echo "🔥 STOCK")"
   echo "  GMS Doze:   $([ "$ENABLE_GMS_DOZE" = "1" ]      && echo "💤" || echo "❌")"
   echo "  Deep Doze:  $([ "$ENABLE_DEEP_DOZE" = "1" ]     && echo "🔋 $DEEP_DOZE_LEVEL" || echo "❌")"
+  local wl_count=0
+  [ -f "$MODDIR/config/doze_whitelist.txt" ] && wl_count=$(grep -c '^[^#[:space:]]' "$MODDIR/config/doze_whitelist.txt" 2>/dev/null || echo 0)
+  echo "  Whitelist:  $wl_count app(s) protected from Deep Doze"
   echo "  Sys Props:  $props_status"
   echo ""
 }

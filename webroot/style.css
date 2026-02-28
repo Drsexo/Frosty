@@ -93,30 +93,49 @@ input[type=text] { font: inherit; color: inherit; }
   align-items: center;
   gap: 6px;
   pointer-events: none;
-  width: 90%;
-  max-width: 360px;
+  width: auto;
 }
 .toast {
-  padding: 11px 18px;
-  border-radius: var(--radius-xs);
-  font-size: .8rem;
-  font-weight: 500;
-  /* No blur — solid inverse surface like MD3 snackbar */
-  background: var(--on-surface);
-  color: var(--bg);
+  padding: 9px 22px;
+  border-radius: 999px;
+  font-size: .73rem;
+  font-weight: 600;
+  background: var(--surface-2);
+  color: var(--on-surface);
+  border: 1.5px solid var(--stroke-var);
   opacity: 0;
   transform: translateY(-10px) scale(.96);
   transition: opacity .2s ease, transform .2s ease;
   pointer-events: auto;
-  width: 100%;
+  width: fit-content;
+  min-width: 140px;
+  max-width: 85vw;
   text-align: center;
+  white-space: nowrap;
   will-change: transform, opacity;
 }
 .toast.show { opacity: 1; transform: translateY(0) scale(1); }
-/* Color overrides for different types */
-.toast.toast-ok    { background: var(--accent-container); color: var(--on-accent-cont); }
-.toast.toast-err   { background: var(--error-container); color: var(--error); }
-.toast.toast-warn  { background: var(--surface-3); color: var(--orange); }
+.toast.toast-ok   { background: #1a3d30; color: var(--green); border-color: rgba(45,212,160,.5); }
+.toast.toast-err  { background: #3d1a1a; color: var(--error); border-color: rgba(242,184,181,.5); }
+.toast.toast-warn { background: #3d2e0a; color: var(--orange); border-color: rgba(229,169,64,.5); }
+
+/* ── Pull-to-refresh indicator ── */
+#ptr {
+  position: fixed;
+  top: calc(10px + var(--inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9998;
+  opacity: 0;
+  pointer-events: none;
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--stroke-var);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent);
+  box-shadow: 0 2px 8px rgba(0,0,0,.4);
+}
 
 /* ── Loading Overlay ── */
 .loading-overlay {
@@ -405,8 +424,10 @@ input[type=text] { font: inherit; color: inherit; }
 }
 
 /* ── Log Box ── */
+.log-wrap { position: relative; }
 .log-box {
   max-height: 200px; overflow-y: auto;
+  transition: max-height .3s ease;
   background: var(--surface-0);
   border: 1px solid var(--stroke-var);
   border-radius: var(--radius-xs);
@@ -414,6 +435,23 @@ input[type=text] { font: inherit; color: inherit; }
   font-family: 'SF Mono', Monaco, Consolas, monospace;
   font-size: .68rem; line-height: 1.6;
 }
+.log-box.expanded { max-height: 70vh; }
+.log-expand-btn {
+  position: absolute;
+  bottom: 5px; right: 5px;
+  width: 22px; height: 22px;
+  border-radius: 5px;
+  background: var(--surface-2);
+  border: 1px solid var(--stroke-var);
+  color: var(--on-surface-var);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  opacity: .75;
+  transition: opacity .15s, background .15s, color .15s;
+}
+.log-expand-btn:active { opacity: 1; background: var(--accent-container); color: var(--on-accent-cont); }
+.log-expand-btn svg { transition: transform .25s ease; }
+.log-expand-btn.expanded svg { transform: rotate(180deg); }
 .log-box:empty::before {
   content: 'No activity yet';
   color: var(--on-surface-var);
