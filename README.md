@@ -73,7 +73,8 @@ Based on [GhostGMS](https://github.com/kaushikieeee/GhostGMS) by kaushikieeee.
 **After Installation:**
 - **Action Button**: Toggle Frozen ↔ Stock
 - **WebUI**: Live toggles, whitelist editor, activity log
-> Note: Magisk users can use [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases)
+> [!NOTE]
+> **Magisk users can use [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases)**
 
 ## Doze Whitelist
 

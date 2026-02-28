@@ -1,5 +1,18 @@
 # Changelog
-All notable changes to this project will be documented in this file.
+
+## [2.5] - 2026-02-28
+### Installation QoL:
+- **Config detection**: Reinstalling now detects an existing configuration and lets you keep it, skipping the full setup flow.
+- **Whitelist preservation**: Doze whitelist is backed up and restored automatically on update.
+### WebUI Improvements:
+- **Scrollbar removed**: Page scrollbar is now fully hidden for a cleaner look.
+- **Pull to refresh**: Fixed incorrectly triggering while scrolling inside the whitelist editor.
+- **Whitelist icon loading**: Icons now pre-load further ahead and decode off the main thread, significantly reducing blank icons when scrolling fast.
+- **Action buttons**: Freeze All / Revert All redesigned to be more compact with bolder text.
+- **Added version badge**: Header now displays the current installed module version.
+- **Interaction polish**: Text selection disabled on header, icons, and buttons to prevent accidental highlight on tap (thanks again @xizt159 for the fix!). 
+> [!NOTE]
+> **Magisk users can use [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases)**
 
 ## [2.4] - 2026-02-27
 - **WebUI overhaul**: Adopted KSU dynamic color system so the UI now follows your device's Material You wallpaper palette. With much better fluidity now.
