@@ -584,7 +584,7 @@
           wlIconObserver.unobserve(img);
         }
       }
-    }, { root: $('wl-list'), rootMargin: '200px 0px' });
+    }, { root: $('wl-list'), rootMargin: '500px 0px' });
   }
 
   function renderWl() {
@@ -637,6 +637,7 @@
 
       var img = document.createElement('img');
       img.className = 'wl-ico';
+      img.decoding = 'async';
       img.dataset.src = 'ksu://icon/' + app.pkg;
       img.onerror = function () { this.style.visibility = 'hidden'; };
 
@@ -883,18 +884,40 @@
     document.body.appendChild(ptr);
 
     var startY = 0, pulling = false, threshold = 72;
+    var rafId = null, currentDist = 0;
+    var appEl = null;
+
+    function isModalOpen() {
+      var m = document.getElementById('wl-modal');
+      return m && m.classList.contains('open');
+    }
+
+    function applyPtrFrame() {
+      var progress = Math.min(currentDist / threshold, 1);
+      ptr.style.opacity = progress;
+      ptr.style.transform = 'translateX(-50%) translateY(' + Math.min(currentDist * 0.4, 36) + 'px) rotate(' + (progress * 360) + 'deg)';
+      rafId = null;
+    }
 
     document.addEventListener('touchstart', function (e) {
-      if (window.scrollY === 0) { startY = e.touches[0].clientY; pulling = true; }
+      if (isModalOpen()) return;
+      if (!appEl) appEl = document.getElementById('app');
+      if ((appEl ? appEl.scrollTop : window.scrollY) === 0) {
+        startY = e.touches[0].clientY;
+        pulling = true;
+      }
     }, { passive: true });
 
     document.addEventListener('touchmove', function (e) {
       if (!pulling) return;
       var dist = e.touches[0].clientY - startY;
       if (dist > 0) {
-        var progress = Math.min(dist / threshold, 1);
-        ptr.style.opacity = progress;
-        ptr.style.transform = 'translateX(-50%) translateY(' + Math.min(dist * 0.4, 36) + 'px) rotate(' + (progress * 360) + 'deg)';
+        currentDist = dist;
+        if (!rafId) rafId = requestAnimationFrame(applyPtrFrame);
+      } else {
+        pulling = false;
+        ptr.style.opacity = 0;
+        ptr.style.transform = 'translateX(-50%) translateY(0) rotate(0deg)';
       }
     }, { passive: true });
 
@@ -902,6 +925,7 @@
       if (!pulling) return;
       var dist = e.changedTouches[0].clientY - startY;
       pulling = false;
+      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
       ptr.style.opacity = 0;
       ptr.style.transform = 'translateX(-50%) translateY(0) rotate(0deg)';
       if (dist > threshold && !busy) { loadPrefs(); toast('Refreshed', 'ok'); }

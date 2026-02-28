@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="/internal/insets.css">
   <link rel="stylesheet" href="style.css">
 </head>
-<body unresolved>
+<body unresolved style="overflow:hidden;position:fixed;inset:0;">
   <div id="toast-wrap"></div>
 
   <!-- Loading Overlay -->
@@ -42,6 +42,7 @@
   </div>
 
   <!-- Main App -->
+  <div class="scroll-clip">
   <div id="app">
     <header class="hdr">
       <div class="hdr-row">
@@ -197,6 +198,7 @@
     </section>
   </div>
 
+  </div><!-- /.scroll-clip -->
   <script src="api.js"></script>
   <script src="app.js"></script>
 </body>

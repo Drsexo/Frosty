@@ -236,6 +236,73 @@ fi
 
 print_banner
 
+# Existing config detection
+EXISTING_PREFS="/data/adb/modules/Frosty/config/user_prefs"
+SKIP_CONFIG=0
+
+if [ -f "$EXISTING_PREFS" ]; then
+  ui_print ""
+  print_section "     ♻️  Existing configuration detected!"
+  ui_print ""
+
+  # Display current config snapshot
+  . "$EXISTING_PREFS"
+  ui_print "  Current settings:"
+  ui_print ""
+  [ "${ENABLE_KERNEL_TWEAKS:-0}" -eq 1 ] && ui_print "    ✅ Kernel Tweaks"     || ui_print "    ❌ Kernel Tweaks"
+  [ "${ENABLE_SYSTEM_PROPS:-0}" -eq 1 ]  && ui_print "    ✅ System Props"      || ui_print "    ❌ System Props"
+  [ "${ENABLE_BLUR_DISABLE:-0}" -eq 1 ]  && ui_print "    ✅ Blur Disable"      || ui_print "    ❌ Blur Disable"
+  [ "${ENABLE_LOG_KILLING:-0}" -eq 1 ]   && ui_print "    ✅ Log Killing"       || ui_print "    ❌ Log Killing"
+  [ "${ENABLE_GMS_DOZE:-0}" -eq 1 ]      && ui_print "    💤 GMS Doze"         || ui_print "    ❌ GMS Doze"
+  if [ "${ENABLE_DEEP_DOZE:-0}" -eq 1 ]; then
+    ui_print "    🔋 Deep Doze: ${DEEP_DOZE_LEVEL:-moderate}"
+  else
+    ui_print "    ❌ Deep Doze"
+  fi
+  ui_print ""
+  [ "${DISABLE_TELEMETRY:-0}" -eq 1 ]    && ui_print "    🧊 Telemetry"        || ui_print "    ❌ Telemetry"
+  [ "${DISABLE_BACKGROUND:-0}" -eq 1 ]   && ui_print "    🧊 Background"       || ui_print "    ❌ Background"
+  [ "${DISABLE_LOCATION:-0}" -eq 1 ]     && ui_print "    🧊 Location"         || ui_print "    ❌ Location"
+  [ "${DISABLE_CONNECTIVITY:-0}" -eq 1 ] && ui_print "    🧊 Connectivity"     || ui_print "    ❌ Connectivity"
+  [ "${DISABLE_CLOUD:-0}" -eq 1 ]        && ui_print "    🧊 Cloud"            || ui_print "    ❌ Cloud"
+  [ "${DISABLE_PAYMENTS:-0}" -eq 1 ]     && ui_print "    🧊 Payments"         || ui_print "    ❌ Payments"
+  [ "${DISABLE_WEARABLES:-0}" -eq 1 ]    && ui_print "    🧊 Wearables"        || ui_print "    ❌ Wearables"
+  [ "${DISABLE_GAMES:-0}" -eq 1 ]        && ui_print "    🧊 Games"            || ui_print "    ❌ Games"
+  ui_print ""
+  ui_print ""
+  ui_print "  ⬆️ Vol UP = Keep existing config"
+  ui_print "  ⬇️ Vol DOWN = Reconfigure from scratch"
+  ui_print "  ⏱️ ${TIMEOUT}s timeout → keeps existing"
+  ui_print ""
+
+  if [ "$HAS_GETEVENT" -eq 0 ]; then
+    ui_print "  → Keeping existing config (auto - no getevent)"
+    SKIP_CONFIG=1
+  else
+    while :; do
+      event=$(timeout "$TIMEOUT" getevent -qlc 1 2>/dev/null)
+      code=$?
+      if [ "$code" -eq 124 ] || [ "$code" -eq 143 ]; then
+        ui_print "  → Keeping existing config (timeout)"
+        SKIP_CONFIG=1
+        break
+      fi
+      if echo "$event" | grep -q "KEY_VOLUMEUP.*DOWN"; then
+        ui_print "  → Keeping existing config ✅"
+        SKIP_CONFIG=1
+        break
+      fi
+      if echo "$event" | grep -q "KEY_VOLUMEDOWN.*DOWN"; then
+        ui_print "  → Reconfiguring from scratch ⚙️"
+        SKIP_CONFIG=0
+        break
+      fi
+    done
+  fi
+fi
+
+if [ "$SKIP_CONFIG" -eq 0 ]; then
+
 # System Tweaks
 print_section "⚙️  System Tweaks"
 ui_print ""
@@ -408,6 +475,8 @@ choose_gms "⌚ WEARABLES" "Wear OS, Google Fit, Health" "BREAKS: Smartwatch syn
 DISABLE_WEARABLES=$?
 choose_gms "🎮 GAMES" "Play Games, Achievements, Cloud Saves" "BREAKS: Play Games achievements, leaderboards!" "FREEZE"
 DISABLE_GAMES=$?
+
+fi
 
 # Save Configuration
 print_section "💾  Saving Configuration"

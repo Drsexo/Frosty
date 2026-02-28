@@ -44,11 +44,27 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: var(--bg);
   color: var(--on-surface);
-  min-height: 100vh;
+  overflow: hidden;
+  position: fixed;
+  inset: 0;
+  -webkit-font-smoothing: antialiased;
+}
+/* Clips the oversized #app, hiding the scrollbar outside the viewport */
+.scroll-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+#app {
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: calc(100% + 20px);
+  overflow-y: scroll;
   overflow-x: hidden;
   padding-top: var(--inset-top);
-  padding-bottom: var(--safe-bottom);
-  -webkit-font-smoothing: antialiased;
+  padding-bottom: calc(var(--safe-bottom) + 8px);
+  padding-right: 20px;
+  box-sizing: border-box;
 }
 
 /* Hide body until JS resolves — prevents content flash */
@@ -58,10 +74,7 @@ body { transition: opacity 0.18s ease; }
 button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
 input[type=text] { font: inherit; color: inherit; }
 
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--stroke-var); border-radius: 3px; }
+
 
 /* ── Ripple applied to any interactive surface ── */
 .ripple {
@@ -206,10 +219,10 @@ input[type=text] { font: inherit; color: inherit; }
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  font-size: .8rem;
+  font-size: .85rem;
   font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 8px;
+  padding: 6px 8px;
+  border-radius: 12px;
   background: var(--accent-container);
   color: var(--on-accent-cont);
   letter-spacing: .2px;
@@ -257,14 +270,14 @@ input[type=text] { font: inherit; color: inherit; }
 }
 
 /* ── Action Buttons ── */
-.actions { display: flex; gap: 8px; padding: 10px 16px 0; }
+.actions { display: flex; gap: 8px; padding: 10px 16px 0; justify-content: center; }
 .act-btn {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 11px 0;
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-  font-size: .8rem;
+  padding: 12px 30px;
+  border-radius: 15px;
+  font-weight: 1000;
+  font-size: 1rem;
   transition: transform .12s;
 }
 .act-btn:active { transform: scale(.97); }
@@ -530,6 +543,7 @@ input[type=text] { font: inherit; color: inherit; }
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   scroll-behavior: auto;
+  will-change: scroll-position;
 }
 
 /* ── Whitelist Items ── */
@@ -537,12 +551,16 @@ input[type=text] { font: inherit; color: inherit; }
   display: flex; align-items: center; gap: 10px;
   padding: 9px 8px; border-radius: var(--radius-xs);
   cursor: pointer;
+  will-change: transform;
+  transform: translateZ(0);
 }
 .wl-item:active { background: var(--surface-3); }
 .wl-item + .wl-item { border-top: 1px solid var(--stroke-var); }
 .wl-ico {
   width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
   background: var(--surface-3); object-fit: contain;
+  aspect-ratio: 1 / 1;
+  contain: layout paint;
 }
 .wl-app { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .wl-name { font-size: .8rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
