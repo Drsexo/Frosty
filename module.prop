@@ -1,9 +1,9 @@
 id=Frosty
 name=Frosty 🧊 - Battery Saver
-version=2.5
-versionCode=25
+version=3.0
+versionCode=30
 author=DrSexo
-description=Maximum battery saving and GMS optimization. Freeze GMS services, enable doze, nuke logs, apply kernel tweaks. Use Action/WebUI button to edit settings.
+description=Maximum battery saving and GMS optimization. Freeze GMS services, enable doze, nuke logs, apply kernel tweaks. Use WebUI button to edit settings.
 banner=banner.jpg
 updateJson=https://raw.githubusercontent.com/Drsexo/Frosty/main/update.json
 webui=true

@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.0] - 2026-03-03
+### Module Internationalization
+- **14 languages support**: The entire module and WebUI are now fully translated, supporting English, French, German, Polish, Italian, Spanish, Portuguese (BR), Turkish, Indonesian, Russian, Ukrainian, Chinese Simplified, Japanese, and Arabic.
+- **Auto language detection**: The UI detects your device locale during installation and prompts you to use the detected language or stay on English. All subsequent output is printed in the chosen language. A language picker in the WebUI lets you override the detected language at any time from the menu.
+### WebUI New Features and Fixes
+- **Force Reapply Settings button**: Re-applies every currently enabled setting in one tap.
+- **Import / Export**: Back up your current configuration to a JSON file in `/sdcard/Frosty` and restore it later.
+- **About dialog**: Displays module version, description, and credits inline in the WebUI.
+- **system.prop deletion bug**: The System Props toggle was calling `rm` on `system.prop.old` instead of `mv`, permanently destroying the file on enable. Fixed to always use `mv` in both directions so the file is never lost.
+### Misc
+- **No more setup wizard**: The installer no longer prompts you for anything during setup. All 14 volume-key interactions have been removed — 6 feature toggles (Kernel Tweaks, System Props, Blur, Log Killing, GMS Doze, Deep Doze) and 8 GMS category choices (Telemetry, Background, Location, Connectivity, Cloud, Payments, Wearables, Games) are gone. Everything is configured in WebUI after reboot instead.
+- **Kernel tweaks are no longer hardcoded**: They are now stored in `kernel_tweaks.txt` for better maintainability.
+- **Removed `action.sh`**: Configuration is now done through the WebUI. Magisk users can use [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases).
+- And many more internal fixes for a more robust and clean code.
+
 ## [2.5] - 2026-02-28
 ### Installation QoL:
 - **Config detection**: Reinstalling now detects an existing configuration and lets you keep it, skipping the full setup flow.

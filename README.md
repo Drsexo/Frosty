@@ -10,33 +10,55 @@
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
 ![Downloads](https://img.shields.io/github/downloads/Drsexo/Frosty/total)
 
+[Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Categories](#-gms-categories) • [FAQ](#-faq)
+
+---
+
+🇬🇧 English • [🇫🇷 Français](readme/README.fr.md) • [🇩🇪 Deutsch](readme/README.de.md)  
+[🇵🇱 Polski](readme/README.pl.md) • [🇮🇹 Italiano](readme/README.it.md) • [🇪🇸 Español](readme/README.es.md)  
+[🇧🇷 Português](readme/README.pt-BR.md) • [🇹🇷 Türkçe](readme/README.tr.md) • [🇮🇩 Indonesia](readme/README.id.md)  
+[🇷🇺 Русский](readme/README.ru.md) • [🇺🇦 Українська](readme/README.uk.md) • [🇨🇳 中文](readme/README.zh-CN.md)  
+[🇯🇵 日本語](readme/README.ja.md) • [🇸🇦 العربية](readme/README.ar.md)
+
 </div>
 
 ## Overview
 
-Frosty optimizes battery life by selectively freezing Google Mobile Services (GMS) components and applying system-wide doze enhancements. Choose exactly which features to keep or disable.
+Frosty optimizes battery life by selectively freezing Google Mobile Services (GMS) components and applying system-wide doze enhancements. Configure everything through the WebUI after installation.
 
-Based on [GhostGMS](https://github.com/kaushikieeee/GhostGMS) by kaushikieeee.
+## ✨ Features
 
-## Features
+- **GMS Freezing**: Disable GMS services across 8 categories with granular control
+- **GMS Doze**: Remove GMS from power-save whitelists so Android can optimize it
+- **Deep Doze**: Aggressive background restrictions for all apps (Moderate/Maximum)
+- **Kernel Tweaks**: Scheduler, VM, network, and debug optimizations
+- **Log Killing**: Stop battery-draining log/debug processes
+- **System Props**: Disable debug properties to save RAM and battery
+- **Live Configuration**: Full control via WebUI with real-time toggles
 
-- **GMS Freezing**: Disable GMS services across 8 categories with granular control  
-- **GMS Doze**: Remove GMS from power-save whitelists so Android can optimize it  
-- **Deep Doze**: Aggressive background restrictions for all apps (Moderate/Maximum)  
-- **Kernel Tweaks**: Scheduler, VM, network, and debug optimizations  
-- **Log Killing**: Stop battery-draining log/debug processes  
-- **Live Configuration**: Using WebUI or Action button  
-
-## Installation
+## 📦 Installation
 
 **Requirements:** Android 9+, Magisk 20.4+ / KernelSU / APatch, Google Play Services
 
 1. Download from [Releases](https://github.com/Drsexo/Frosty/releases)
-2. Install via root manager
-3. Configure with volume keys during installation
-4. Reboot
+2. Install via your root manager
+3. Reboot
+4. Open WebUI to enable features — everything starts **OFF** by default
 
-## GMS Categories
+> [!NOTE]
+> Magisk users can use [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) to access the WebUI.
+
+## 📖 Usage
+
+Open the WebUI from your root manager. You'll find:
+
+- **System Tweaks** — toggle kernel tweaks, system props, blur disable, log killing
+- **GMS Doze / Deep Doze** — configure doze aggressiveness
+- **GMS Categories** — freeze individual GMS service groups
+- **Whitelist Editor** — protect apps from Deep Doze
+- **Import / Export** — back up and restore your configuration
+
+## 🧊 GMS Categories
 
 #### Safe to Disable
 | Category | Impact |
@@ -54,7 +76,7 @@ Based on [GhostGMS](https://github.com/kaushikieeee/GhostGMS) by kaushikieeee.
 | ⌚ **Wearables** | Wear OS, Google Fit, fitness tracking |
 | 🎮 **Games** | Play Games achievements, leaderboards, cloud saves |
 
-## Deep Doze Levels
+## 🔋 Deep Doze Levels
 
 | Feature | Moderate | Maximum |
 |---------|:--------:|:-------:|
@@ -66,24 +88,23 @@ Based on [GhostGMS](https://github.com/kaushikieeee/GhostGMS) by kaushikieeee.
 | Wakelock Killer | ❌ | ✅ |
 | Alarm Restrictions | ❌ | ✅ |
 
-## Configuring options
+## ❓ FAQ
 
-**During Installation:** Use Vol Up / Vol Down to configure each option.
+**Q: Why are my notifications delayed?**
+A: GMS Doze and Deep Doze restrict background activity. Add your messaging apps to the whitelist.
 
-**After Installation:**
-- **Action Button**: Toggle Frozen ↔ Stock
-- **WebUI**: Live toggles, whitelist editor, activity log
-> [!NOTE]
-> **Magisk users can use [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases)**
+**Q: Does this work without Google Play Services?**
+A: Kernel Tweaks, System Props, Blur Disable, Log Killing, and Deep Doze will work. GMS features require GMS.
 
-## Doze Whitelist
 
-Edit `/config/doze_whitelist.txt` or use the WebUI whitelist editor to exclude apps from Deep Doze restrictions.  
+## 📝 Doze Whitelist
+
+Edit via WebUI or directly at `/data/adb/modules/Frosty/config/doze_whitelist.txt`.  
 Add messaging, banking, and alarm apps to prevent missed notifications.
 
-## Credits
+## 🙏 Credits
 
-- **kaushikieeee** - [GhostGMS](https://github.com/kaushikieeee/GhostGMS)
-- **gloeyisk** - [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze)
-- **Azyrn** - [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
-- **MoZoiD** - [GMS Component Disable Script](https://t.me/MoZoiDStack/137)
+- **kaushikieeee** — [GhostGMS](https://github.com/kaushikieeee/GhostGMS)
+- **gloeyisk** — [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze)
+- **Azyrn** — [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
+- **MoZoiD** — [GMS Component Disable Script](https://t.me/MoZoiDStack/137)

@@ -1,0 +1,109 @@
+<div align="center">
+
+# 🧊 FROSTY
+
+### GMS Freezer & Battery Saver
+
+[![Magisk](https://img.shields.io/badge/Magisk-20.4%2B-00B0FF.svg)](https://github.com/topjohnwu/Magisk)
+[![KernelSU](https://img.shields.io/badge/KernelSU-Supported-green.svg)](https://github.com/tiann/KernelSU)
+[![APatch](https://img.shields.io/badge/APatch-Supported-orange.svg)](https://github.com/bmax121/APatch)
+[![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
+![Downloads](https://img.shields.io/github/downloads/Drsexo/Frosty/total)
+
+[✨ Возможности](#-возможности) •[📦 Установка](#-установка) • [📖 Использование](#-использование) • [🧊 Категории GMS](#-категории-gms) • [❓ FAQ](#-faq)
+
+---
+
+[🇬🇧 English](../README.md) • [🇫🇷 Français](README.fr.md) • [🇩🇪 Deutsch](README.de.md)  
+[🇵🇱 Polski](README.pl.md) • [🇮🇹 Italiano](README.it.md) • [🇪🇸 Español](README.es.md)  
+[🇧🇷 Português (BR)](README.pt-BR.md) • [🇹🇷 Türkçe](README.tr.md) • [🇮🇩 Indonesia](README.id.md)  
+🇷🇺 Русский • [🇺🇦 Українська](README.uk.md) • [🇨🇳 中文](README.zh-CN.md)  
+[🇯🇵 日本語](README.ja.md) • [🇸🇦 العربية](README.ar.md)
+
+</div>
+
+## Обзор
+
+Frosty оптимизирует время работы от батареи, выборочно замораживая компоненты Google Mobile Services (GMS) и применяя системные улучшения режима сна (Doze). Все настройки осуществляются через WebUI после установки модуля.
+
+## ✨ Возможности
+
+- **Заморозка GMS**: Отключение служб GMS в 8 категориях с возможностью детального контроля.
+- **GMS Doze**: Удаление GMS из системных белых списков (Whitelist) энергосбережения.
+- **Deep Doze**: Очень агрессивные фоновые ограничения для всех приложений (Умеренный / Максимальный режим).
+- **Kernel Tweaks**: Оптимизация планировщика, виртуальной памяти (VM) и сети.
+- **Kill Logs**: Остановка фоновых процессов логирования для экономии батареи и оперативной памяти.
+- **System Props**: Отключение отладочных свойств системы для экономии RAM.
+- **Настройка в реальном времени**: Полное управление функциями модуля через WebUI.
+
+## 📦 Установка
+
+**Требования:** Android 9+, актуальный Magisk (20.4+) / KernelSU / APatch, сервисы Google Play.
+
+1. Скачайте модуль со страницы[Releases](https://github.com/Drsexo/Frosty/releases).
+2. Установите архив через ваш root-менеджер.
+3. Перезагрузите устройство.
+4. Откройте WebUI для включения функций — по умолчанию всё **ОТКЛЮЧЕНО**.
+
+> [!NOTE]
+> Пользователи Magisk могут использовать приложение [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) для доступа к интерфейсу модуля.
+
+## 📖 Использование
+
+Откройте WebUI из вашего root-менеджера. Вы найдете:
+
+- **System Tweaks** — Включение твиков ядра, System Props, отключение эффекта размытия (Blur), остановка логов (Kill Logs).
+- **GMS Doze / Deep Doze** — Настройка агрессивности режима сна.
+- **Категории GMS** — Выборочная заморозка групп служб GMS.
+- **Белый список (Whitelist)** — Защита важных приложений от жестких ограничений Deep Doze.
+- **Импорт / Экспорт** — Сохранение и восстановление вашей конфигурации.
+
+## 🧊 Категории GMS
+
+#### Безопасно для отключения
+| Категория | Воздействие |
+|-----------|-------------|
+| 📊 **Телеметрия** | Никакого. Останавливает рекламу, аналитику и отслеживание от Google. |
+| 🔄 **Фон** | Автоматические обновления программ могут приходить с задержкой. |
+
+#### Что перестанет работать
+| Категория | Затрагиваемые функции |
+|-----------|-----------------------|
+| 📍 **Местоположение** | Google Карты, GPS-навигация, функция «Найти устройство». |
+| 📡 **Подключение** | Chromecast, Quick Share, Fast Pair. |
+| ☁️ **Облако** | Вход через Google, автозаполнение паролей, резервное копирование. |
+| 💳 **Платежи** | Google Pay, бесконтактная оплата по NFC. |
+| ⌚ **Носимые устройства**| Wear OS, Google Fit, отслеживание фитнес-активности. |
+| 🎮 **Игры** | Достижения в Google Play Games, таблицы лидеров, облачные сохранения. |
+
+## 🔋 Уровни Deep Doze
+
+| Функция | Умеренный | Максимальный |
+|---------|:---------:|:------------:|
+| Агрессивные константы Doze | ✅ | ✅ |
+| App Standby Buckets | ✅ | ✅ |
+| Блокировать RUN_IN_BACKGROUND | ✅ | ✅ |
+| Deep Idle (При выключенном экране) | ✅ | ✅ |
+| Блокировать WAKE_LOCK | ❌ | ✅ |
+| Wakelock Killer (Убийца вейклоков)| ❌ | ✅ |
+| Строгие ограничения будильников | ❌ | ✅ |
+
+## ❓ FAQ (Частые вопросы)
+
+**В: Почему мои уведомления приходят с задержкой?**
+О: Режимы GMS Doze и Deep Doze сильно ограничивают фоновую активность. Обязательно добавьте ваши мессенджеры в Белый список (Whitelist).
+
+**В: Работает ли этот модуль без сервисов Google Play?**
+О: Да. Kernel Tweaks, System Props, отключение размытия, Kill Logs и Deep Doze будут работать без GMS.
+
+## 📝 Белый список Doze (Whitelist)
+
+Редактируйте список через WebUI или напрямую в файле `/data/adb/modules/Frosty/config/doze_whitelist.txt`.  
+Добавьте сюда ваши мессенджеры, банковские приложения и будильники, чтобы не пропустить важные уведомления.
+
+## 🙏 Кредиты
+
+- **kaushikieeee** —[GhostGMS](https://github.com/kaushikieeee/GhostGMS)
+- **gloeyisk** — [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze)
+- **Azyrn** — [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
+- **MoZoiD** — [GMS Component Disable Script](https://t.me/MoZoiDStack/137)

@@ -9,6 +9,7 @@ BOOT_LOG="$LOGDIR/boot.log"
 TWEAKS_LOG="$LOGDIR/tweaks.log"
 PROPS_LOG="$LOGDIR/props.log"
 KERNEL_BACKUP="$BACKUP_DIR/kernel_values.txt"
+KERNEL_TWEAKS="$MODDIR/config/kernel_tweaks.txt"
 
 # Timeout fallback
 if ! command -v timeout >/dev/null 2>&1; then
@@ -38,47 +39,14 @@ done
 sleep 10
 log_boot "Boot initialized"
 
-# Wait for GMS
-gms_wait=0
-while ! pidof com.google.android.gms >/dev/null 2>&1; do
-  sleep 2
-  gms_wait=$((gms_wait + 2))
-  if [ $gms_wait -ge 60 ]; then
-    log_boot "WARNING: GMS not started after 60s, continuing anyway"
-    break
-  fi
-done
-[ $gms_wait -lt 60 ] && log_boot "GMS ready (${gms_wait}s)"
-
 # Device info
 log_boot "Device: $(getprop ro.product.model)"
 log_boot "Android: $(getprop ro.build.version.release) SDK$(getprop ro.build.version.sdk)"
 
 mkdir -p "$MODDIR/config"
 
-# Load preferences, create defaults if missing
-if [ ! -f "$MODDIR/config/user_prefs" ]; then
-  cat > "$MODDIR/config/user_prefs" << EOF
-ENABLE_KERNEL_TWEAKS=1
-ENABLE_SYSTEM_PROPS=1
-ENABLE_BLUR_DISABLE=0
-ENABLE_LOG_KILLING=1
-ENABLE_GMS_DOZE=1
-ENABLE_DEEP_DOZE=1
-DEEP_DOZE_LEVEL=moderate
-DISABLE_TELEMETRY=1
-DISABLE_BACKGROUND=1
-DISABLE_LOCATION=0
-DISABLE_CONNECTIVITY=0
-DISABLE_CLOUD=0
-DISABLE_PAYMENTS=0
-DISABLE_WEARABLES=0
-DISABLE_GAMES=0
-EOF
-fi
-. "$MODDIR/config/user_prefs"
-
-[ ! -f "$MODDIR/config/state" ] && echo "frozen" > "$MODDIR/config/state"
+# Load preferences (default everything is off)
+. "$MODDIR/config/user_prefs" 2>/dev/null || true
 
 # System props status
 SYSPROP="$MODDIR/system.prop"
@@ -121,157 +89,87 @@ write_val() {
   fi
 }
 
-# Back up kernel values fresh before tweaking
+# Back up current kernel values before tweaking.
 backup_kernel() {
   log_boot "Backing up kernel values..."
   echo "# Kernel Backup - $(date '+%Y-%m-%d %H:%M:%S')" > "$KERNEL_BACKUP"
 
-  for pair in \
-    "perf_cpu_time_max_percent:/proc/sys/kernel/perf_cpu_time_max_percent" \
-    "sched_autogroup_enabled:/proc/sys/kernel/sched_autogroup_enabled" \
-    "sched_child_runs_first:/proc/sys/kernel/sched_child_runs_first" \
-    "sched_tunable_scaling:/proc/sys/kernel/sched_tunable_scaling" \
-    "sched_latency_ns:/proc/sys/kernel/sched_latency_ns" \
-    "sched_min_granularity_ns:/proc/sys/kernel/sched_min_granularity_ns" \
-    "sched_wakeup_granularity_ns:/proc/sys/kernel/sched_wakeup_granularity_ns" \
-    "sched_migration_cost_ns:/proc/sys/kernel/sched_migration_cost_ns" \
-    "sched_min_task_util_for_colocation:/proc/sys/kernel/sched_min_task_util_for_colocation" \
-    "sched_nr_migrate:/proc/sys/kernel/sched_nr_migrate" \
-    "sched_schedstats:/proc/sys/kernel/sched_schedstats" \
-    "panic:/proc/sys/kernel/panic" \
-    "panic_on_oops:/proc/sys/kernel/panic_on_oops" \
-    "vm_panic_on_oom:/proc/sys/vm/panic_on_oom" \
-    "timer_migration:/proc/sys/kernel/timer_migration" \
-    "printk_devkmsg:/proc/sys/kernel/printk_devkmsg" \
-    "printk:/proc/sys/kernel/printk" \
-    "dirty_background_ratio:/proc/sys/vm/dirty_background_ratio" \
-    "dirty_ratio:/proc/sys/vm/dirty_ratio" \
-    "dirty_expire_centisecs:/proc/sys/vm/dirty_expire_centisecs" \
-    "dirty_writeback_centisecs:/proc/sys/vm/dirty_writeback_centisecs" \
-    "page_cluster:/proc/sys/vm/page-cluster" \
-    "stat_interval:/proc/sys/vm/stat_interval" \
-    "swappiness:/proc/sys/vm/swappiness" \
-    "vfs_cache_pressure:/proc/sys/vm/vfs_cache_pressure" \
-    "oom_dump_tasks:/proc/sys/vm/oom_dump_tasks" \
-    "block_dump:/proc/sys/vm/block_dump" \
-    "tcp_ecn:/proc/sys/net/ipv4/tcp_ecn" \
-    "tcp_fastopen:/proc/sys/net/ipv4/tcp_fastopen" \
-    "tcp_syncookies:/proc/sys/net/ipv4/tcp_syncookies" \
-    "tcp_no_metrics_save:/proc/sys/net/ipv4/tcp_no_metrics_save" \
-    "exception_trace:/proc/sys/debug/exception-trace" \
-    "read_wakeup_threshold:/proc/sys/kernel/random/read_wakeup_threshold" \
-    "write_wakeup_threshold:/proc/sys/kernel/random/write_wakeup_threshold" \
-    "printk_ratelimit:/proc/sys/kernel/printk_ratelimit" \
-    "printk_ratelimit_burst:/proc/sys/kernel/printk_ratelimit_burst"; do
+  if [ ! -f "$KERNEL_TWEAKS" ]; then
+    log_boot "WARNING: kernel_tweaks.txt not found, skipping backup"
+    return
+  fi
 
-    name="${pair%%:*}"
-    path="${pair#*:}"
-    if [ -f "$path" ]; then
-      val=$(cat "$path" 2>/dev/null)
-      echo "$name=$val=$path" >> "$KERNEL_BACKUP"
-    fi
-  done
+  while IFS= read -r line; do
+    case "$line" in '#'*|'') continue ;; esac
+    path="${line%%|*}"
+    path=$(echo "$path" | tr -d ' ')
+    [ -z "$path" ] || [ ! -f "$path" ] && continue
+    name=$(basename "$path")
+    val=$(cat "$path" 2>/dev/null)
+    echo "$name=$val=$path" >> "$KERNEL_BACKUP"
+  done < "$KERNEL_TWEAKS"
 
   log_boot "Kernel backup saved"
+}
+
+# Apply all tweaks from kernel_tweaks.txt.
+apply_kernel_tweaks() {
+  if [ ! -f "$KERNEL_TWEAKS" ]; then
+    log_boot "ERROR: kernel_tweaks.txt not found at $KERNEL_TWEAKS, reinstall"
+    return 1
+  fi
+
+  local last_section="" count_ok=0 count_fail=0 count_skip=0
+
+  while IFS= read -r line; do
+    case "$line" in
+      '# ──'*)
+        # Section header comment — print to tweaks log
+        section=$(echo "$line" | sed 's/^# ── *//;s/ *─*$//')
+        if [ "$section" != "$last_section" ]; then
+          last_section="$section"
+          log_tweak ""
+          log_tweak "$section"
+        fi
+        continue
+        ;;
+      '#'*|'') continue ;;
+    esac
+
+    path="${line%%|*}"
+    value="${line#*|}"
+    path=$(echo "$path" | tr -d ' ')
+    [ -z "$path" ] || [ -z "$value" ] && continue
+    name=$(basename "$path")
+
+    if write_val "$path" "$value" "$name"; then
+      count_ok=$((count_ok + 1))
+    else
+      [ ! -f "$path" ] && count_skip=$((count_skip + 1)) || count_fail=$((count_fail + 1))
+    fi
+  done < "$KERNEL_TWEAKS"
+
+  # Dynamic debug masks
+  log_tweak ""
+  log_tweak "DEBUG MASKS (dynamic)"
+  local debug_count=0
+  for pattern in debug_mask log_level debug_level enable_event_log tracing_on; do
+    for dpath in $(find /sys/ -maxdepth 4 -type f -name "*${pattern}*" 2>/dev/null | head -20); do
+      if write_val "$dpath" 0 "$(basename "$dpath")"; then
+        debug_count=$((debug_count + 1))
+      fi
+    done
+  done
+  log_tweak "Disabled $debug_count debug masks"
+
+  log_boot "Kernel tweaks applied (ok=$count_ok skip=$count_skip fail=$count_fail)"
 }
 
 # Kernel tweaks
 if [ "$ENABLE_KERNEL_TWEAKS" = "1" ]; then
   log_boot "Applying kernel tweaks..."
   backup_kernel
-
-  SCHED_PERIOD="$((5 * 1000 * 1000))"
-  SCHED_TASKS="5"
-
-  log_tweak ""
-  log_tweak "SCHEDULER"
-  write_val /proc/sys/kernel/perf_cpu_time_max_percent 2 "perf_cpu_time_max_percent"
-  write_val /proc/sys/kernel/sched_autogroup_enabled 1 "sched_autogroup_enabled"
-  write_val /proc/sys/kernel/sched_child_runs_first 0 "sched_child_runs_first"
-  write_val /proc/sys/kernel/sched_tunable_scaling 0 "sched_tunable_scaling"
-  write_val /proc/sys/kernel/sched_latency_ns "$SCHED_PERIOD" "sched_latency_ns"
-  write_val /proc/sys/kernel/sched_min_granularity_ns "$((SCHED_PERIOD / SCHED_TASKS))" "sched_min_granularity_ns"
-  write_val /proc/sys/kernel/sched_wakeup_granularity_ns "$((SCHED_PERIOD / 2))" "sched_wakeup_granularity_ns"
-  write_val /proc/sys/kernel/sched_migration_cost_ns 5000000 "sched_migration_cost_ns"
-  write_val /proc/sys/kernel/sched_min_task_util_for_colocation 0 "sched_min_task_util_for_colocation"
-  write_val /proc/sys/kernel/sched_nr_migrate 256 "sched_nr_migrate"
-  write_val /proc/sys/kernel/sched_schedstats 0 "sched_schedstats"
-
-  log_tweak ""
-  log_tweak "PANIC"
-  write_val /proc/sys/kernel/panic 0 "kernel.panic"
-  write_val /proc/sys/kernel/panic_on_oops 0 "kernel.panic_on_oops"
-  write_val /proc/sys/vm/panic_on_oom 0 "vm.panic_on_oom"
-
-  log_tweak ""
-  log_tweak "TIMER & PRINTK"
-  write_val /proc/sys/kernel/timer_migration 0 "timer_migration"
-  write_val /proc/sys/kernel/printk_devkmsg off "printk_devkmsg"
-  write_val /proc/sys/kernel/printk "0 0 0 0" "printk"
-
-  log_tweak ""
-  log_tweak "VM"
-  write_val /proc/sys/vm/dirty_background_ratio 2 "dirty_background_ratio"
-  write_val /proc/sys/vm/dirty_ratio 5 "dirty_ratio"
-  write_val /proc/sys/vm/dirty_expire_centisecs 500 "dirty_expire_centisecs"
-  write_val /proc/sys/vm/dirty_writeback_centisecs 500 "dirty_writeback_centisecs"
-  write_val /proc/sys/vm/stat_interval 10 "stat_interval"
-  write_val /proc/sys/vm/vfs_cache_pressure 100 "vfs_cache_pressure"
-  write_val /proc/sys/vm/oom_dump_tasks 0 "oom_dump_tasks"
-  write_val /proc/sys/vm/block_dump 0 "block_dump"
-
-  log_tweak ""
-  log_tweak "NETWORK"
-  write_val /proc/sys/net/ipv4/tcp_ecn 1 "tcp_ecn"
-  write_val /proc/sys/net/ipv4/tcp_fastopen 3 "tcp_fastopen"
-  write_val /proc/sys/net/ipv4/tcp_syncookies 1 "tcp_syncookies"
-  write_val /proc/sys/net/ipv4/tcp_no_metrics_save 1 "tcp_no_metrics_save"
-
-  log_tweak ""
-  log_tweak "DEBUG"
-  write_val /proc/sys/debug/exception-trace 0 "exception-trace"
-
-  log_tweak ""
-  log_tweak "ENTROPY"
-  write_val /proc/sys/kernel/random/read_wakeup_threshold 256 "read_wakeup_threshold"
-  write_val /proc/sys/kernel/random/write_wakeup_threshold 320 "write_wakeup_threshold"
-
-  log_tweak ""
-  log_tweak "PRINTK RATELIMIT"
-  write_val /proc/sys/kernel/printk_ratelimit 1 "printk_ratelimit"
-  write_val /proc/sys/kernel/printk_ratelimit_burst 5 "printk_ratelimit_burst"
-
-  log_tweak ""
-  log_tweak "SCHED FEATURES"
-  if [ -f "/sys/kernel/debug/sched_features" ]; then
-    echo "NEXT_BUDDY" > /sys/kernel/debug/sched_features 2>/dev/null
-    echo "NO_TTWU_QUEUE" > /sys/kernel/debug/sched_features 2>/dev/null
-  fi
-
-  log_tweak ""
-  log_tweak "STUNE"
-  if [ -d "/dev/stune/" ]; then
-    write_val /dev/stune/top-app/schedtune.prefer_idle 0 "top-app.prefer_idle"
-    write_val /dev/stune/top-app/schedtune.boost 0 "top-app.boost"
-  fi
-
-  log_tweak ""
-  log_tweak "RAMDUMPS"
-  write_val /sys/module/subsystem_restart/parameters/enable_mini_ramdumps 0 "mini_ramdumps"
-  write_val /sys/module/subsystem_restart/parameters/enable_ramdumps 0 "ramdumps"
-
-  log_tweak ""
-  log_tweak "DEBUG MASKS"
-  debug_count=0
-  for pattern in debug_mask log_level debug_level enable_event_log tracing_on; do
-    for path in $(find /sys/ -maxdepth 4 -type f -name "*${pattern}*" 2>/dev/null | head -20); do
-      if write_val "$path" 0 "$(basename "$path")"; then
-        debug_count=$((debug_count + 1))
-      fi
-    done
-  done
-  log_tweak "Disabled $debug_count debug masks"
-  log_boot "Kernel tweaks applied"
+  apply_kernel_tweaks
 else
   log_boot "Kernel tweaks SKIPPED"
 fi
@@ -294,14 +192,37 @@ else
   log_boot "Log killing SKIPPED"
 fi
 
-# Apply GMS freezing only if state is frozen
-current_state=$(cat "$MODDIR/config/state" 2>/dev/null)
-if [ "$current_state" = "frozen" ]; then
-  log_boot "Applying GMS freezing..."
+# Apply GMS freezing if any category is enabled
+has_frozen_cats=0
+for _cat in DISABLE_TELEMETRY DISABLE_BACKGROUND DISABLE_LOCATION DISABLE_CONNECTIVITY \
+            DISABLE_CLOUD DISABLE_PAYMENTS DISABLE_WEARABLES DISABLE_GAMES; do
+  eval _val=\$$_cat
+  [ "$_val" = "1" ] && { has_frozen_cats=1; break; }
+done
+if [ "$has_frozen_cats" = "1" ]; then
+  log_boot "GMS categories enabled — applying freeze..."
   chmod +x "$MODDIR/frosty.sh"
   "$MODDIR/frosty.sh" freeze
 else
-  log_boot "State is '$current_state', skipping GMS freeze"
+  log_boot "No GMS categories enabled, skipping GMS freeze"
+fi
+
+# GMS Doze
+if [ "$ENABLE_GMS_DOZE" = "1" ]; then
+  log_boot "Applying GMS Doze..."
+  chmod +x "$MODDIR/gms_doze.sh"
+  "$MODDIR/gms_doze.sh" apply
+else
+  log_boot "GMS Doze SKIPPED"
+fi
+
+# Deep Doze
+if [ "$ENABLE_DEEP_DOZE" = "1" ]; then
+  log_boot "Applying Deep Doze..."
+  chmod +x "$MODDIR/deep_doze.sh"
+  "$MODDIR/deep_doze.sh" freeze
+else
+  log_boot "Deep Doze SKIPPED"
 fi
 
 log_boot "Boot complete at $(date '+%Y-%m-%d %H:%M:%S')"

@@ -15,7 +15,7 @@
   <div class="loading-overlay" id="loading-overlay">
     <div class="loading-box">
       <div class="spinner"></div>
-      <div class="loading-txt" id="loading-txt">Processing...</div>
+      <div class="loading-txt" id="loading-txt" data-i18n="loading_default">Processing...</div>
     </div>
   </div>
 
@@ -23,21 +23,72 @@
   <div class="modal-overlay" id="wl-modal">
     <div class="modal">
       <div class="modal-head">
-        <h3>📋 Doze Whitelist</h3>
+        <h3>📋 <span data-i18n="wl_title">Doze Whitelist</span></h3>
         <button class="modal-x ripple" id="wl-close">✕</button>
       </div>
       <div class="modal-notice">
         <span>ℹ️</span>
-        <span>Whitelisted apps bypass Deep Doze restrictions. Add messaging, banking, and alarm apps here.</span>
+        <span data-i18n="wl_notice">Whitelisted apps bypass Deep Doze restrictions. Add messaging, banking, and alarm apps here.</span>
       </div>
       <div class="modal-controls">
-        <input type="text" class="modal-search" placeholder="Search apps..." id="wl-search">
+        <input type="text" class="modal-search" placeholder="Search apps..." data-i18n-ph="wl_search" id="wl-search">
         <label class="sys-toggle">
           <input type="checkbox" id="wl-sys">
-          <span>System</span>
+          <span data-i18n="wl_system">System</span>
         </label>
       </div>
       <div class="modal-list" id="wl-list"></div>
+    </div>
+  </div>
+
+  <!-- About Modal -->
+  <div class="modal-overlay centered" id="about-modal">
+    <div class="modal about-modal">
+      <div class="about-hero">
+        <button class="about-close-btn ripple" id="about-close">✕</button>
+        <div class="about-hero-ico">🧊</div>
+        <div class="about-hero-name" id="about-name">Frosty</div>
+        <div class="about-hero-tag" id="about-version"></div>
+      </div>
+      <div class="about-body">
+        <div class="about-desc" id="about-desc"></div>
+        <div class="about-author" id="about-author"></div>
+        <a class="about-gh ripple" id="about-gh-btn">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.21 11.39.6.11.79-.26.79-.58v-2.23c-3.34.73-4.03-1.42-4.03-1.42-.55-1.39-1.33-1.76-1.33-1.76-1.09-.74.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49 1 .11-.78.42-1.3.76-1.6-2.67-.31-5.47-1.34-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23.96-.27 1.98-.4 3-.4s2.05.13 3.01.4c2.29-1.55 3.3-1.23 3.3-1.23.66 1.65.24 2.87.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.62-5.48 5.92.43.37.82 1.1.82 2.22v3.29c0 .32.19.69.8.58C20.57 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span data-i18n="about_github">View on GitHub</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import/Export Modal -->
+  <div class="modal-overlay centered" id="io-modal">
+    <div class="modal io-modal">
+      <div class="modal-head">
+        <h3 data-i18n="io_title">Import / Export</h3>
+        <button class="modal-x ripple" id="io-close">✕</button>
+      </div>
+      <div class="io-body">
+        <button class="io-action-btn ripple" id="io-export-btn">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M4 17h16v2H4v-2zm7-9.41V17h2V7.59l3.71 3.7 1.41-1.41L12 3.17 5.88 9.88l1.41 1.41L11 7.59z"/></svg>
+          <span data-i18n="io_export">Export Current Settings</span>
+        </button>
+        <div class="io-sep"><span data-i18n="io_backups">Saved backups</span></div>
+        <div class="io-list" id="io-list">
+          <div class="io-empty" data-i18n="io_empty">No backups found</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Language Picker Modal -->
+  <div class="modal-overlay centered" id="lang-modal">
+    <div class="modal lang-modal">
+      <div class="modal-head">
+        <h3 data-i18n="lang_title">Language</h3>
+        <button class="modal-x ripple" id="lang-close">✕</button>
+      </div>
+      <div class="lang-list" id="lang-list"></div>
     </div>
   </div>
 
@@ -45,64 +96,81 @@
   <div class="scroll-clip">
   <div id="app">
     <header class="hdr">
-      <div class="hdr-row">
-        <div class="hdr-brand">
-          <span class="brand-ico">🧊</span>
-          <span class="brand-txt">FROSTY</span>
+      <div class="hdr-banner">
+        <img src="header.jpg" alt="Frosty" class="hdr-banner-img" draggable="false">
+        <div class="hdr-menu" id="hdr-menu-wrap">
+          <button class="hdr-dots ripple" id="hdr-dots-btn" title="Menu">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+          </button>
+          <div class="hdr-dropdown" id="hdr-dropdown">
+            <button class="hdr-opt ripple" id="menu-io">
+              <span class="hdr-opt-ico">
+                <svg viewBox="0 0 24 24" width="21" height="20" fill="currentColor"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm2 16H5V5h11.17L19 7.83V19zm-7-7a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm-5-5h8v4H7V7z"/></svg>
+              </span>
+              <span data-i18n="menu_io">Import / Export</span>
+            </button>
+            <button class="hdr-opt ripple" id="menu-lang">
+              <span class="hdr-opt-ico hdr-opt-ico--lang">
+                <svg viewBox="0 0 24 24" width="21" height="20" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56a15.65 15.65 0 0 0 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>
+                <span class="hdr-opt-ico-zh">文</span>
+              </span>
+              <span data-i18n="menu_lang">Language</span>
+            </button>
+            <button class="hdr-opt ripple" id="menu-about">
+              <span class="hdr-opt-ico">
+                <svg viewBox="0 0 24 24" width="21" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+              </span>
+              <span data-i18n="menu_about">About</span>
+            </button>
+          </div>
         </div>
-        <a class="gh-link ripple" id="gh-btn" title="GitHub">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.21 11.39.6.11.79-.26.79-.58v-2.23c-3.34.73-4.03-1.42-4.03-1.42-.55-1.39-1.33-1.76-1.33-1.76-1.09-.74.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49 1 .11-.78.42-1.3.76-1.6-2.67-.31-5.47-1.34-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23.96-.27 1.98-.4 3-.4s2.05.13 3.01.4c2.29-1.55 3.3-1.23 3.3-1.23.66 1.65.24 2.87.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.62-5.48 5.92.43.37.82 1.1.82 2.22v3.29c0 .32.19.69.8.58C20.57 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12z"/></svg>
-        </a>
-        <span id="version-badge"></span>
       </div>
-      <div class="hdr-sub">GMS Freezer &amp; Battery Saver</div>
     </header>
-
-    <!-- State Badge -->
-    <div class="state-row">
-      <span class="state-label">Current state</span>
-      <span class="state-badge" id="state-badge">—</span>
-    </div>
 
     <!-- Action Buttons -->
     <div class="actions">
       <button class="act-btn freeze ripple" id="btn-freeze">
-        <span class="act-ico">🧊</span><span>Freeze All</span>
+        <span class="act-ico">🧊</span><span data-i18n="btn_freeze">Enable All</span>
       </button>
       <button class="act-btn stock ripple" id="btn-stock">
-        <span class="act-ico">🔥</span><span>Revert All</span>
+        <span class="act-ico">🔥</span><span data-i18n="btn_revert">Revert All</span>
+      </button>
+    </div>
+    <div class="reapply-row">
+      <button class="act-btn reapply ripple" id="btn-reapply">
+        <span class="act-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span><span data-i18n="btn_reapply">Force Reapply Settings</span>
       </button>
     </div>
 
     <!-- System Tweaks -->
     <section class="card">
-      <h2 class="card-title">⚡ System Tweaks</h2>
+      <h2 class="card-title"><span>⚡ </span><span data-i18n="sec_tweaks">System Tweaks</span></h2>
       <div class="tgl-row ripple" data-key="kernel_tweaks">
         <div class="tgl-info">
-          <span class="tgl-name">Kernel Tweaks</span>
-          <span class="tgl-desc">Speeds up task switching, reduces CPU wakeups</span>
+          <span class="tgl-name" data-i18n="tgl_kernel">Kernel Tweaks</span>
+          <span class="tgl-desc" data-i18n="tgl_kernel_desc">Speeds up task switching, reduces CPU wakeups</span>
         </div>
         <label class="tgl"><input type="checkbox" id="t-kernel"><span class="tgl-sl"></span></label>
       </div>
       <div class="tgl-row ripple" data-key="system_props">
         <div class="tgl-info">
-          <span class="tgl-name">System Props</span>
-          <span class="tgl-desc">Silences debug logging, saves battery & RAM</span>
-          <span class="reboot-tag">⚠ Reboot required</span>
+          <span class="tgl-name" data-i18n="tgl_sysprops">System Props</span>
+          <span class="tgl-desc" data-i18n="tgl_sysprops_desc">Disables debug logging, saves battery & RAM</span>
+          <span class="reboot-tag" data-i18n="reboot_req">⚠ Reboot required</span>
         </div>
         <label class="tgl"><input type="checkbox" id="t-sysprops"><span class="tgl-sl"></span></label>
       </div>
       <div class="tgl-row ripple" data-key="blur_disable">
         <div class="tgl-info">
-          <span class="tgl-name">Disable Blur</span>
-          <span class="tgl-desc">Reduces GPU load, smoother on weaker devices</span>
+          <span class="tgl-name" data-i18n="tgl_blur">Disable Blur</span>
+          <span class="tgl-desc" data-i18n="tgl_blur_desc">Reduces GPU load, smoother on weaker devices</span>
         </div>
         <label class="tgl"><input type="checkbox" id="t-blur"><span class="tgl-sl"></span></label>
       </div>
       <div class="tgl-row ripple" data-key="log_killing">
         <div class="tgl-info">
-          <span class="tgl-name">Kill Logs</span>
-          <span class="tgl-desc">Stops background loggers, frees RAM</span>
+          <span class="tgl-name" data-i18n="tgl_logs">Kill Logs</span>
+          <span class="tgl-desc" data-i18n="tgl_logs_desc">Stops background loggers, frees RAM</span>
           <span class="reboot-tag">⚠ Reboot required</span>
         </div>
         <label class="tgl"><input type="checkbox" id="t-logs"><span class="tgl-sl"></span></label>
@@ -111,29 +179,29 @@
 
     <!-- Doze -->
     <section class="card">
-      <h2 class="card-title">💤 Doze</h2>
+      <h2 class="card-title"><span>💤 </span><span data-i18n="sec_doze">Doze</span></h2>
       <div class="tgl-row ripple" data-key="gms_doze">
         <div class="tgl-info">
-          <span class="tgl-name">GMS Doze</span>
-          <span class="tgl-desc">Lets Android optimize GMS battery · May delay notifications</span>
+          <span class="tgl-name" data-i18n="tgl_gms_doze">GMS Doze</span>
+          <span class="tgl-desc" data-i18n="tgl_gms_doze_desc">Lets Android optimize GMS battery · May delay notifications</span>
         </div>
         <label class="tgl"><input type="checkbox" id="t-gms-doze"><span class="tgl-sl"></span></label>
       </div>
       <div class="divider"></div>
       <div class="tgl-row ripple" data-key="deep_doze">
         <div class="tgl-info">
-          <span class="tgl-name">Deep Doze</span>
-          <span class="tgl-desc">Restricts background activity for all apps</span>
+          <span class="tgl-name" data-i18n="tgl_deep_doze">Deep Doze</span>
+          <span class="tgl-desc" data-i18n="tgl_deep_doze_desc">Restricts background activity for all apps</span>
         </div>
         <label class="tgl"><input type="checkbox" id="t-deep-doze"><span class="tgl-sl"></span></label>
       </div>
       <div class="dd-extras" id="dd-extras">
         <div class="level-row">
-          <button class="lvl-btn ripple" data-level="moderate" id="lvl-mod">⚡ Moderate</button>
-          <button class="lvl-btn ripple" data-level="maximum" id="lvl-max">💀 Maximum</button>
+          <button class="lvl-btn ripple" data-level="moderate" id="lvl-mod" data-i18n="lvl_moderate">⚡ Moderate</button>
+          <button class="lvl-btn ripple" data-level="maximum" id="lvl-max" data-i18n="lvl_maximum">💀 Maximum</button>
         </div>
         <button class="wl-btn ripple" id="wl-open">
-          <span>📋 App Doze Whitelist</span>
+          <span data-i18n="wl_btn">📋 App Doze Whitelist</span>
           <span class="wl-count" id="wl-count">0</span>
         </button>
       </div>
@@ -141,37 +209,37 @@
 
     <!-- GMS Categories -->
     <section class="card">
-      <h2 class="card-title">🧊 GMS Categories</h2>
+      <h2 class="card-title"><span>🧊 </span><span data-i18n="sec_gms">GMS Categories</span></h2>
       <div class="cat-row ripple" data-cat="telemetry">
-        <div class="cat-left"><span class="cat-ico">📊</span><div class="cat-info"><span class="cat-name">Telemetry</span><span class="cat-tag safe">Safe · Ads, analytics</span></div></div>
+        <div class="cat-left"><span class="cat-ico">📊</span><div class="cat-info"><span class="cat-name" data-i18n="cat_telemetry">Telemetry</span><span class="cat-tag safe" data-i18n="cat_telemetry_tag">Safe · Ads, analytics</span></div></div>
         <label class="tgl"><input type="checkbox" id="t-telemetry"><span class="tgl-sl"></span></label>
       </div>
       <div class="cat-row ripple" data-cat="background">
-        <div class="cat-left"><span class="cat-ico">🔄</span><div class="cat-info"><span class="cat-name">Background</span><span class="cat-tag safe">Safe · Updates, MDM</span></div></div>
+        <div class="cat-left"><span class="cat-ico">🔄</span><div class="cat-info"><span class="cat-name" data-i18n="cat_background">Background</span><span class="cat-tag safe" data-i18n="cat_background_tag">Safe · Updates, MDM</span></div></div>
         <label class="tgl"><input type="checkbox" id="t-background"><span class="tgl-sl"></span></label>
       </div>
       <div class="cat-row ripple" data-cat="location">
-        <div class="cat-left"><span class="cat-ico">📍</span><div class="cat-info"><span class="cat-name">Location</span><span class="cat-tag warn">Breaks Maps, GPS</span></div></div>
+        <div class="cat-left"><span class="cat-ico">📍</span><div class="cat-info"><span class="cat-name" data-i18n="cat_location">Location</span><span class="cat-tag warn" data-i18n="cat_location_tag">Breaks Maps, GPS</span></div></div>
         <label class="tgl"><input type="checkbox" id="t-location"><span class="tgl-sl"></span></label>
       </div>
       <div class="cat-row ripple" data-cat="connectivity">
-        <div class="cat-left"><span class="cat-ico">📡</span><div class="cat-info"><span class="cat-name">Connectivity</span><span class="cat-tag warn">Breaks Cast, Quick Share</span></div></div>
+        <div class="cat-left"><span class="cat-ico">📡</span><div class="cat-info"><span class="cat-name" data-i18n="cat_connectivity">Connectivity</span><span class="cat-tag warn" data-i18n="cat_connectivity_tag">Breaks Cast, Quick Share</span></div></div>
         <label class="tgl"><input type="checkbox" id="t-connectivity"><span class="tgl-sl"></span></label>
       </div>
       <div class="cat-row ripple" data-cat="cloud">
-        <div class="cat-left"><span class="cat-ico">☁️</span><div class="cat-info"><span class="cat-name">Cloud</span><span class="cat-tag warn">Breaks Sign-in, Autofill</span></div></div>
+        <div class="cat-left"><span class="cat-ico">☁️</span><div class="cat-info"><span class="cat-name" data-i18n="cat_cloud">Cloud</span><span class="cat-tag warn" data-i18n="cat_cloud_tag">Breaks Sign-in, Autofill</span></div></div>
         <label class="tgl"><input type="checkbox" id="t-cloud"><span class="tgl-sl"></span></label>
       </div>
       <div class="cat-row ripple" data-cat="payments">
-        <div class="cat-left"><span class="cat-ico">💳</span><div class="cat-info"><span class="cat-name">Payments</span><span class="cat-tag warn">Breaks Google Pay</span></div></div>
+        <div class="cat-left"><span class="cat-ico">💳</span><div class="cat-info"><span class="cat-name" data-i18n="cat_payments">Payments</span><span class="cat-tag warn" data-i18n="cat_payments_tag">Breaks Google Pay</span></div></div>
         <label class="tgl"><input type="checkbox" id="t-payments"><span class="tgl-sl"></span></label>
       </div>
       <div class="cat-row ripple" data-cat="wearables">
-        <div class="cat-left"><span class="cat-ico">⌚</span><div class="cat-info"><span class="cat-name">Wearables</span><span class="cat-tag warn">Breaks Wear OS, Fit</span></div></div>
+        <div class="cat-left"><span class="cat-ico">⌚</span><div class="cat-info"><span class="cat-name" data-i18n="cat_wearables">Wearables</span><span class="cat-tag warn" data-i18n="cat_wearables_tag">Breaks Wear OS, Fit</span></div></div>
         <label class="tgl"><input type="checkbox" id="t-wearables"><span class="tgl-sl"></span></label>
       </div>
       <div class="cat-row ripple" data-cat="games">
-        <div class="cat-left"><span class="cat-ico">🎮</span><div class="cat-info"><span class="cat-name">Games</span><span class="cat-tag warn">Breaks Play Games</span></div></div>
+        <div class="cat-left"><span class="cat-ico">🎮</span><div class="cat-info"><span class="cat-name" data-i18n="cat_games">Games</span><span class="cat-tag warn" data-i18n="cat_games_tag">Breaks Play Games</span></div></div>
         <label class="tgl"><input type="checkbox" id="t-games"><span class="tgl-sl"></span></label>
       </div>
     </section>
@@ -179,7 +247,7 @@
     <!-- Activity Log -->
     <section class="card">
       <div class="card-title-row">
-        <h2 class="card-title">📄 Activity Log</h2>
+        <h2 class="card-title"><span>📄 </span><span data-i18n="sec_log">Activity Log</span></h2>
         <div style="display:flex;gap:6px">
           <button class="log-copy-btn ripple" id="log-copy-btn" title="Copy log">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
@@ -190,7 +258,7 @@
         </div>
       </div>
       <div class="log-wrap">
-        <div class="log-box" id="log-box"></div>
+        <div class="log-box" id="log-box" data-i18n-empty="log_empty" data-empty="No activity yet"></div>
         <button class="log-expand-btn" id="log-expand-btn" title="Expand">
           <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
         </button>
@@ -199,7 +267,23 @@
   </div>
 
   </div><!-- /.scroll-clip -->
+  <!-- Language Confirm Modal -->
+  <div class="modal-overlay centered" id="lang-confirm-backdrop">
+    <div class="modal lang-welcome-modal">
+      <div class="lc-flag" id="lc-flag"></div>
+      <div class="lc-header" id="lc-header"></div>
+      <div class="lc-lang-name" id="lc-lang-name"></div>
+      <div class="lc-question" id="lc-question"></div>
+      <div class="lw-btns">
+        <button class="lw-btn lw-btn-keep ripple" id="lc-btn-keep"></button>
+        <button class="lw-btn ripple" id="lc-btn-en">🇬🇧 English</button>
+      </div>
+    </div>
+  </div>
+
   <script src="api.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
+
+

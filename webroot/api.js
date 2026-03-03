@@ -5,7 +5,6 @@ var API = (function () {
 
   var MODDIR      = '/data/adb/modules/Frosty';
   var PREFS       = MODDIR + '/config/user_prefs';
-  var STATE       = MODDIR + '/config/state';
   var GMS_LIST    = MODDIR + '/config/gms_services.txt';
   var WHITELIST   = MODDIR + '/config/doze_whitelist.txt';
   var LOG_DIR     = MODDIR + '/logs';
@@ -79,7 +78,6 @@ var API = (function () {
 
   async function getPrefs() {
     var prefRaw  = await run('cat ' + PREFS + ' 2>/dev/null');
-    var stateRaw = await run('cat ' + STATE + ' 2>/dev/null');
 
     var vals = {};
     if (prefRaw) {
@@ -105,7 +103,7 @@ var API = (function () {
       cats[ck] = parseInt(vals[CAT_MAP[ck]]) || 0;
     }
 
-    return { prefs: prefs, categories: cats, state: stateRaw || 'unknown' };
+    return { prefs: prefs, categories: cats };
   }
 
   async function setPref(key, value) {
@@ -209,87 +207,37 @@ var API = (function () {
   // ── Kernel Tweaks ──
 
   async function applyTweaks() {
-    var backup = MODDIR + '/backup/kernel_values.txt';
+    var backup    = MODDIR + '/backup/kernel_values.txt';
+    var tweaksFile = MODDIR + '/config/kernel_tweaks.txt';
 
+    // Backup current values (only once; skip if backup already exists)
     await run(
       'mkdir -p "' + MODDIR + '/backup"; ' +
-      'if [ ! -f "' + backup + '" ]; then ' +
-      'echo "# Kernel Backup - $(date)" > "' + backup + '"; ' +
-      'for pair in ' +
-      '"perf_cpu_time_max_percent:/proc/sys/kernel/perf_cpu_time_max_percent" ' +
-      '"sched_autogroup_enabled:/proc/sys/kernel/sched_autogroup_enabled" ' +
-      '"sched_child_runs_first:/proc/sys/kernel/sched_child_runs_first" ' +
-      '"sched_tunable_scaling:/proc/sys/kernel/sched_tunable_scaling" ' +
-      '"sched_latency_ns:/proc/sys/kernel/sched_latency_ns" ' +
-      '"sched_min_granularity_ns:/proc/sys/kernel/sched_min_granularity_ns" ' +
-      '"sched_wakeup_granularity_ns:/proc/sys/kernel/sched_wakeup_granularity_ns" ' +
-      '"sched_migration_cost_ns:/proc/sys/kernel/sched_migration_cost_ns" ' +
-      '"sched_min_task_util_for_colocation:/proc/sys/kernel/sched_min_task_util_for_colocation" ' +
-      '"sched_nr_migrate:/proc/sys/kernel/sched_nr_migrate" ' +
-      '"sched_schedstats:/proc/sys/kernel/sched_schedstats" ' +
-      '"panic:/proc/sys/kernel/panic" ' +
-      '"panic_on_oops:/proc/sys/kernel/panic_on_oops" ' +
-      '"vm_panic_on_oom:/proc/sys/vm/panic_on_oom" ' +
-      '"timer_migration:/proc/sys/kernel/timer_migration" ' +
-      '"printk:/proc/sys/kernel/printk" ' +
-      '"dirty_background_ratio:/proc/sys/vm/dirty_background_ratio" ' +
-      '"dirty_ratio:/proc/sys/vm/dirty_ratio" ' +
-      '"dirty_expire_centisecs:/proc/sys/vm/dirty_expire_centisecs" ' +
-      '"dirty_writeback_centisecs:/proc/sys/vm/dirty_writeback_centisecs" ' +
-      '"stat_interval:/proc/sys/vm/stat_interval" ' +
-      '"vfs_cache_pressure:/proc/sys/vm/vfs_cache_pressure" ' +
-      '"oom_dump_tasks:/proc/sys/vm/oom_dump_tasks" ' +
-      '"block_dump:/proc/sys/vm/block_dump" ' +
-      '"tcp_ecn:/proc/sys/net/ipv4/tcp_ecn" ' +
-      '"tcp_fastopen:/proc/sys/net/ipv4/tcp_fastopen" ' +
-      '"tcp_syncookies:/proc/sys/net/ipv4/tcp_syncookies" ' +
-      '"tcp_no_metrics_save:/proc/sys/net/ipv4/tcp_no_metrics_save" ' +
-      '"exception_trace:/proc/sys/debug/exception-trace" ' +
-      '"read_wakeup_threshold:/proc/sys/kernel/random/read_wakeup_threshold" ' +
-      '"write_wakeup_threshold:/proc/sys/kernel/random/write_wakeup_threshold" ' +
-      '"printk_ratelimit:/proc/sys/kernel/printk_ratelimit" ' +
-      '"printk_ratelimit_burst:/proc/sys/kernel/printk_ratelimit_burst"; do ' +
-      'name="${pair%%:*}"; path="${pair#*:}"; ' +
-      '[ -f "$path" ] && echo "$name=$(cat "$path" 2>/dev/null)=$path" >> "' + backup + '"; ' +
-      'done; fi'
+      'if [ ! -f "' + backup + '" ] && [ -f "' + tweaksFile + '" ]; then ' +
+      'printf "# Kernel Backup - $(date)\\n" > "' + backup + '"; ' +
+      'while IFS= read -r _line; do ' +
+      'case "$_line" in \\#*|"") continue;; esac; ' +
+      '_path="${_line%%|*}"; _path=$(echo "$_path" | tr -d " "); ' +
+      '[ -z "$_path" ] || [ ! -f "$_path" ] && continue; ' +
+      '_name=$(basename "$_path"); _val=$(cat "$_path" 2>/dev/null); ' +
+      'printf "%s=%s=%s\\n" "$_name" "$_val" "$_path" >> "' + backup + '"; ' +
+      'done < "' + tweaksFile + '"; fi'
     );
 
-    var cmd = 'count=0; fail=0; ' +
+    // Apply tweaks from kernel_tweaks.txt
+    var cmd =
+      'count=0; fail=0; ' +
+      'if [ ! -f "' + tweaksFile + '" ]; then ' +
+      'echo "{\\"status\\":\\"error\\",\\"message\\":\\"kernel_tweaks.txt not found\\"}"; ' +
+      'exit 0; fi; ' +
       'w() { [ ! -f "$1" ] && return; chmod +w "$1" 2>/dev/null; echo "$2" > "$1" 2>/dev/null && count=$((count+1)) || fail=$((fail+1)); }; ' +
-      'SP=$((5*1000*1000)); ' +
-      'w /proc/sys/kernel/perf_cpu_time_max_percent 2; ' +
-      'w /proc/sys/kernel/sched_autogroup_enabled 1; ' +
-      'w /proc/sys/kernel/sched_child_runs_first 0; ' +
-      'w /proc/sys/kernel/sched_tunable_scaling 0; ' +
-      'w /proc/sys/kernel/sched_latency_ns $SP; ' +
-      'w /proc/sys/kernel/sched_min_granularity_ns $((SP/5)); ' +
-      'w /proc/sys/kernel/sched_wakeup_granularity_ns $((SP/2)); ' +
-      'w /proc/sys/kernel/sched_migration_cost_ns 5000000; ' +
-      'w /proc/sys/kernel/sched_min_task_util_for_colocation 0; ' +
-      'w /proc/sys/kernel/sched_nr_migrate 256; ' +
-      'w /proc/sys/kernel/sched_schedstats 0; ' +
-      'w /proc/sys/kernel/panic 0; ' +
-      'w /proc/sys/kernel/panic_on_oops 0; ' +
-      'w /proc/sys/vm/panic_on_oom 0; ' +
-      'w /proc/sys/kernel/timer_migration 0; ' +
-      'w /proc/sys/kernel/printk "0 0 0 0"; ' +
-      'w /proc/sys/vm/dirty_background_ratio 2; ' +
-      'w /proc/sys/vm/dirty_ratio 5; ' +
-      'w /proc/sys/vm/dirty_expire_centisecs 500; ' +
-      'w /proc/sys/vm/dirty_writeback_centisecs 500; ' +
-      'w /proc/sys/vm/stat_interval 10; ' +
-      'w /proc/sys/vm/vfs_cache_pressure 100; ' +
-      'w /proc/sys/vm/oom_dump_tasks 0; ' +
-      'w /proc/sys/vm/block_dump 0; ' +
-      'w /proc/sys/net/ipv4/tcp_ecn 1; ' +
-      'w /proc/sys/net/ipv4/tcp_fastopen 3; ' +
-      'w /proc/sys/net/ipv4/tcp_syncookies 1; ' +
-      'w /proc/sys/net/ipv4/tcp_no_metrics_save 1; ' +
-      'w /proc/sys/debug/exception-trace 0; ' +
-      'w /proc/sys/kernel/random/read_wakeup_threshold 256; ' +
-      'w /proc/sys/kernel/random/write_wakeup_threshold 320; ' +
-      'w /proc/sys/kernel/printk_ratelimit 1; ' +
-      'w /proc/sys/kernel/printk_ratelimit_burst 5; ' +
+      'while IFS= read -r _line; do ' +
+      'case "$_line" in \\#*|"") continue;; esac; ' +
+      '_path="${_line%%|*}"; _val="${_line#*|}"; ' +
+      '_path=$(echo "$_path" | tr -d " "); _val=$(echo "$_val" | sed "s/^[[:space:]]*//;s/[[:space:]]*$//"); ' +
+      '[ -z "$_path" ] || [ -z "$_val" ] && continue; ' +
+      'w "$_path" "$_val"; ' +
+      'done < "' + tweaksFile + '"; ' +
       'echo "{\\"status\\":\\"ok\\",\\"applied\\":$count,\\"failed\\":$fail}"';
     return await runJSON(cmd);
   }
@@ -347,22 +295,22 @@ var API = (function () {
     if (enable) {
       cmd =
         'if [ -f "' + SYSPROP_OLD + '" ]; then ' +
-        '  rm -f "' + SYSPROP_OLD + '"; ' +
-        '  echo "{\\"status\\":\\"ok\\",\\"action\\":\\"deleted .old — module system.prop active\\"}"; ' +
+        '  mv "' + SYSPROP_OLD + '" "' + SYSPROP + '"; ' +
+        '  echo "{\\"status\\":\\"ok\\",\\"action\\":\\"enabled\\"}"; ' +
         'elif [ -f "' + SYSPROP + '" ]; then ' +
-        '  echo "{\\"status\\":\\"ok\\",\\"action\\":\\"already active\\"}"; ' +
+        '  echo "{\\"status\\":\\"ok\\",\\"action\\":\\"enabled\\"}"; ' +
         'else ' +
-        '  echo "{\\"status\\":\\"error\\",\\"message\\":\\"system.prop missing\\"}"; ' +
+        '  echo "{\\"status\\":\\"error\\",\\"message\\":\\"system.prop and system.prop.old both missing\\"}" ; ' +
         'fi';
     } else {
       cmd =
         'if [ -f "' + SYSPROP + '" ]; then ' +
         '  mv "' + SYSPROP + '" "' + SYSPROP_OLD + '"; ' +
-        '  echo "{\\"status\\":\\"ok\\",\\"action\\":\\"renamed to .old\\"}"; ' +
+        '  echo "{\\"status\\":\\"ok\\",\\"action\\":\\"disabled\\"}"; ' +
         'elif [ -f "' + SYSPROP_OLD + '" ]; then ' +
-        '  echo "{\\"status\\":\\"ok\\",\\"action\\":\\"already disabled\\"}"; ' +
+        '  echo "{\\"status\\":\\"ok\\",\\"action\\":\\"disabled\\"}"; ' +
         'else ' +
-        '  echo "{\\"status\\":\\"error\\",\\"message\\":\\"system.prop missing\\"}"; ' +
+        '  echo "{\\"status\\":\\"error\\",\\"message\\":\\"system.prop and system.prop.old both missing\\"}" ; ' +
         'fi';
     }
     return await runJSON(cmd);
@@ -423,6 +371,25 @@ var API = (function () {
     } catch (e) { return []; }
   }
 
+  async function listBackups() {
+    var raw = await run('sh ' + MODDIR + '/frosty.sh list_backups 2>&1');
+    try { return JSON.parse(raw.trim()); } catch(e) { return []; }
+  }
+
+  async function exportSettings() {
+    var path = await runStrict('sh ' + MODDIR + '/frosty.sh export 2>&1');
+    return path.trim();
+  }
+
+  async function importSettings(filePath) {
+    var result = await run('sh ' + MODDIR + '/frosty.sh import "' + filePath + '" 2>&1');
+    return result.trim() === 'OK';
+  }
+
+  async function shareBackup(filePath) {
+    await run('sh ' + MODDIR + '/frosty.sh share "' + filePath + '" 2>&1');
+  }
+
   return {
     available:             available,
     exec:                  exec,
@@ -447,6 +414,11 @@ var API = (function () {
     removeWhitelist:       removeWhitelist,
     appendLog:             appendLog,
     nativeListPackages:    nativeListPackages,
-    nativeGetPackagesInfo: nativeGetPackagesInfo
+    nativeGetPackagesInfo: nativeGetPackagesInfo,
+    listBackups:           listBackups,
+    exportSettings:        exportSettings,
+    importSettings:        importSettings
   };
 })();
+
+

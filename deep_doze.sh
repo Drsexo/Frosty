@@ -23,67 +23,9 @@ generate_whitelist() {
   cat > "$WHITELIST_FILE" << 'HEADER'
 # Frosty Deep Doze Whitelist
 # One package per line, # for comments
-# Only installed packages are added below
+# Add apps you want to exclude from Deep Doze restrictions here.
 HEADER
-
-  for pkg in \
-    android \
-    com.android.systemui \
-    com.android.settings \
-    com.android.shell \
-    com.android.providers.settings \
-    com.android.providers.contacts \
-    com.android.providers.telephony \
-    com.android.providers.calendar \
-    com.android.providers.downloads \
-    com.android.providers.media \
-    com.android.keychain \
-    com.android.packageinstaller \
-    com.android.permissioncontroller \
-    com.android.networkstack \
-    com.android.captiveportallogin \
-    com.android.phone \
-    com.android.server.telecom \
-    com.android.dialer \
-    com.google.android.dialer \
-    com.samsung.android.dialer \
-    com.samsung.android.incallui \
-    com.sec.android.app.telephonyui \
-    com.oneplus.dialer \
-    com.miui.phone \
-    com.miui.voip \
-    com.oppo.dialer \
-    com.coloros.phonemanager \
-    com.huawei.dialer \
-    com.android.mms \
-    com.android.messaging \
-    com.google.android.apps.messaging \
-    com.samsung.android.messaging \
-    com.oneplus.mms \
-    com.miui.mms \
-    com.oppo.mms \
-    com.huawei.mms \
-    com.android.deskclock \
-    com.google.android.deskclock \
-    com.sec.android.app.clockpackage \
-    com.samsung.android.app.clockpackage \
-    com.samsung.android.alarm \
-    com.oneplus.deskclock \
-    com.miui.clock \
-    com.oppo.clock \
-    com.huawei.deskclock \
-    com.android.contacts \
-    com.google.android.contacts \
-    com.samsung.android.contacts \
-    com.android.inputmethod.latin \
-    com.google.android.inputmethod.latin \
-    com.samsung.android.honeyboard \
-    com.touchtype.swiftkey \
-    com.android.emergency \
-    com.google.android.apps.safetyhub; do
-    pm list packages 2>/dev/null | grep -q "package:${pkg}$" && echo "$pkg" >> "$WHITELIST_FILE"
-  done
-  log_deep "Created whitelist (installed packages only)"
+  log_deep "Created empty whitelist"
 }
 
 is_whitelisted() {
@@ -115,7 +57,6 @@ apply_doze_constants() {
     constants="$constants,idle_to=21600000"
     constants="$constants,max_idle_to=172800000"
     constants="$constants,quick_doze_delay_to=5000"
-    constants="$constants,min_time_to_alarm=300000"
   else
     local constants="light_after_inactive_to=300000"
     constants="$constants,light_pre_idle_to=300000"
@@ -394,3 +335,5 @@ case "$1" in
 esac
 
 exit 0
+
+

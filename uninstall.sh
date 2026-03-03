@@ -18,10 +18,6 @@ if [ -f "$MODDIR/tmp/screen_monitor.pid" ]; then
   fi
 fi
 
-if [ -f "$MODDIR/system.prop.old" ] && [ ! -f "$MODDIR/system.prop" ]; then
-  mv "$MODDIR/system.prop.old" "$MODDIR/system.prop" 2>/dev/null
-fi
-
 cat > "/data/adb/frosty_uninstall_runner.sh" << 'UNINSTALL_EOF'
 #!/system/bin/sh
 
@@ -58,6 +54,13 @@ for prop in tombstoned.max_tombstone_count ro.lmk.debug ro.lmk.log_stats \
   disableBlurs enable_blurs_on_windows ro.launcher.blur.appLaunch \
   ro.sf.blurs_are_expensive ro.surface_flinger.supports_background_blur; do
   resetprop --delete "$prop" 2>/dev/null
+done
+
+# Restore any XML files we modified for GMS Doze
+find /data/adb/modules -type f -name "*.frosty_bak" 2>/dev/null | while IFS= read -r bak; do
+  orig="${bak%.frosty_bak}"
+  mv "$bak" "$orig" 2>/dev/null
+  log "Restored patched XML: $orig"
 done
 
 ENABLE_GMS_DOZE=0

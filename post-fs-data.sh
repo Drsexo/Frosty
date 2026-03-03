@@ -31,11 +31,21 @@ if [ "$ENABLE_GMS_DOZE" = "1" ]; then
     case "$xml" in "$MODDIR"*) continue ;; esac
     if grep -qF "$STR1" "$xml" 2>/dev/null || grep -qF "$STR2" "$xml" 2>/dev/null || \
        grep -qF "$STR3" "$xml" 2>/dev/null || grep -qF "$STR4" "$xml" 2>/dev/null; then
+      
+      # Safely backup before modifying other modules
+      [ ! -f "$xml.frosty_bak" ] && cp "$xml" "$xml.frosty_bak"
+
       grep -vF "$STR1" "$xml" > "$xml.tmp" && mv "$xml.tmp" "$xml"
       grep -vF "$STR2" "$xml" > "$xml.tmp" && mv "$xml.tmp" "$xml"
       grep -vF "$STR3" "$xml" > "$xml.tmp" && mv "$xml.tmp" "$xml"
       grep -vF "$STR4" "$xml" > "$xml.tmp" && mv "$xml.tmp" "$xml"
     fi
+  done
+else
+  # If GMS Doze is off, restore previously modified module XMLs
+  find /data/adb/modules -type f -name "*.frosty_bak" 2>/dev/null | while IFS= read -r bak; do
+    orig="${bak%.frosty_bak}"
+    mv "$bak" "$orig" 2>/dev/null
   done
 fi
 
