@@ -43,7 +43,7 @@ load_prefs() {
     . "$USER_PREFS"
   else
     ENABLE_KERNEL_TWEAKS=0; ENABLE_BLUR_DISABLE=0; ENABLE_LOG_KILLING=0
-    ENABLE_SYSTEM_PROPS=0
+    ENABLE_SYSTEM_PROPS=0; ENABLE_RAM_OPTIMIZER=0
     ENABLE_GMS_DOZE=0; ENABLE_DEEP_DOZE=0; DEEP_DOZE_LEVEL="moderate"
     DISABLE_TELEMETRY=0; DISABLE_BACKGROUND=0; DISABLE_LOCATION=0
     DISABLE_CONNECTIVITY=0; DISABLE_CLOUD=0; DISABLE_PAYMENTS=0
@@ -71,6 +71,7 @@ save_prefs() {
   cat > "$USER_PREFS" << EOF
 ENABLE_KERNEL_TWEAKS=$ENABLE_KERNEL_TWEAKS
 ENABLE_SYSTEM_PROPS=$ENABLE_SYSTEM_PROPS
+ENABLE_RAM_OPTIMIZER=$ENABLE_RAM_OPTIMIZER
 ENABLE_BLUR_DISABLE=$ENABLE_BLUR_DISABLE
 ENABLE_LOG_KILLING=$ENABLE_LOG_KILLING
 ENABLE_GMS_DOZE=$ENABLE_GMS_DOZE
@@ -259,6 +260,7 @@ backup_settings() {
     "ENABLE_KERNEL_TWEAKS": $ENABLE_KERNEL_TWEAKS,
     "ENABLE_SYSTEM_PROPS": $ENABLE_SYSTEM_PROPS,
     "ENABLE_BLUR_DISABLE": $ENABLE_BLUR_DISABLE,
+    "ENABLE_RAM_OPTIMIZER": $ENABLE_RAM_OPTIMIZER,
     "ENABLE_LOG_KILLING": $ENABLE_LOG_KILLING,
     "ENABLE_GMS_DOZE": $ENABLE_GMS_DOZE,
     "ENABLE_DEEP_DOZE": $ENABLE_DEEP_DOZE,
@@ -291,6 +293,7 @@ restore_settings() {
   cat > "$MODDIR/config/user_prefs" << ENDPREFS
 ENABLE_KERNEL_TWEAKS=$(pi ENABLE_KERNEL_TWEAKS)
 ENABLE_SYSTEM_PROPS=$(pi ENABLE_SYSTEM_PROPS)
+ENABLE_RAM_OPTIMIZER=$(pi ENABLE_RAM_OPTIMIZER)
 ENABLE_BLUR_DISABLE=$(pi ENABLE_BLUR_DISABLE)
 ENABLE_LOG_KILLING=$(pi ENABLE_LOG_KILLING)
 ENABLE_GMS_DOZE=$(pi ENABLE_GMS_DOZE)
@@ -348,15 +351,37 @@ share_backup() {
   echo "$pub"
 }
 
+apply_ram_optimizer() {
+  log_service "[RAM] Applying RAM optimizer..."
+  cmd device_config put activity_manager max_cached_processes 10 2>/dev/null && \
+    log_service "[RAM][OK] max_cached_processes = 10" || log_service "[RAM][FAIL] max_cached_processes"
+  settings put global activity_manager_constants "max_cached_processes=10" 2>/dev/null && \
+    log_service "[RAM][OK] activity_manager_constants set" || log_service "[RAM][FAIL] activity_manager_constants"
+  device_config put runtime_native usap_pool_enabled true 2>/dev/null && \
+    log_service "[RAM][OK] usap_pool_enabled = true" || log_service "[RAM][FAIL] usap_pool_enabled"
+  echo "{\"status\":\"ok\"}"
+}
+
+revert_ram_optimizer() {
+  log_service "[RAM] Reverting RAM optimizer..."
+  cmd device_config delete activity_manager max_cached_processes 2>/dev/null
+  settings delete global activity_manager_constants 2>/dev/null
+  device_config put runtime_native usap_pool_enabled false 2>/dev/null
+  log_service "[RAM][OK] RAM optimizer reverted"
+  echo "{\"status\":\"ok\"}"
+}
+
 case "$1" in
   freeze)           freeze_services ;;
   stock)            stock_services ;;
   apply_sysprops)   apply_system_props ;;
+  ram_optimizer)    apply_ram_optimizer ;;
+  ram_restore)      revert_ram_optimizer ;;
   export)           backup_settings ;;
   import)           restore_settings "$2" ;;
   list_backups)     list_backups ;;
   share)            share_backup "$2" ;;
-  *)                echo "Usage: frosty.sh [freeze|stock|apply_sysprops|export|import|list_backups|share]" ;;
+  *)                echo "Usage: frosty.sh [freeze|stock|apply_sysprops|ram_optimizer|ram_restore|export|import|list_backups|share]" ;;
 esac
 
 exit 0

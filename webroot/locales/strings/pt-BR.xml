@@ -146,4 +146,10 @@
   <string name="log_sysprops_disabled">System Props desativados</string>
   <string name="log_reapply_start">Iniciando reaplicação...</string>
   <string name="log_empty">Nenhuma atividade ainda</string>
+  <string name="tgl_ram_optimizer">Otimizador de RAM</string>
+  <string name="tgl_ram_optimizer_desc">Limita o cache de apps em segundo plano e acelera a inicialização a frio dos aplicativos</string>
+  <string name="log_ram_applied">Otimizador de RAM aplicado</string>
+  <string name="log_ram_reverted">Otimizador de RAM revertido</string>
+  <string name="loading_applying_ram">Aplicando otimizador de RAM...</string>
+  <string name="loading_reverting_ram">Revertendo otimizador de RAM...</string>
 </resources>

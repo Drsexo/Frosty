@@ -20,35 +20,6 @@ if [ "$ENABLE_BLUR_DISABLE" = "1" ]; then
   resetprop -n ro.surface_flinger.supports_background_blur 0
 fi
 
-# GMS Doze
-if [ "$ENABLE_GMS_DOZE" = "1" ]; then
-  STR1='allow-in-power-save package="com.google.android.gms"'
-  STR2='allow-in-data-usage-save package="com.google.android.gms"'
-  STR3='allow-unthrottled-location package="com.google.android.gms"'
-  STR4='allow-ignore-location-settings package="com.google.android.gms"'
-
-  find /data/adb/modules -type f -name "*.xml" 2>/dev/null | while IFS= read -r xml; do
-    case "$xml" in "$MODDIR"*) continue ;; esac
-    if grep -qF "$STR1" "$xml" 2>/dev/null || grep -qF "$STR2" "$xml" 2>/dev/null || \
-       grep -qF "$STR3" "$xml" 2>/dev/null || grep -qF "$STR4" "$xml" 2>/dev/null; then
-      
-      # Safely backup before modifying other modules
-      [ ! -f "$xml.frosty_bak" ] && cp "$xml" "$xml.frosty_bak"
-
-      grep -vF "$STR1" "$xml" > "$xml.tmp" && mv "$xml.tmp" "$xml"
-      grep -vF "$STR2" "$xml" > "$xml.tmp" && mv "$xml.tmp" "$xml"
-      grep -vF "$STR3" "$xml" > "$xml.tmp" && mv "$xml.tmp" "$xml"
-      grep -vF "$STR4" "$xml" > "$xml.tmp" && mv "$xml.tmp" "$xml"
-    fi
-  done
-else
-  # If GMS Doze is off, restore previously modified module XMLs
-  find /data/adb/modules -type f -name "*.frosty_bak" 2>/dev/null | while IFS= read -r bak; do
-    orig="${bak%.frosty_bak}"
-    mv "$bak" "$orig" 2>/dev/null
-  done
-fi
-
 # RC overlays and bin stubs for log killing
 INITDIR="$MODDIR/system/etc/init"
 BINDIR="$MODDIR/system/bin"

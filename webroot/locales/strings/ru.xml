@@ -146,4 +146,10 @@
   <string name="log_sysprops_disabled">System Props отключены</string>
   <string name="log_reapply_start">Запуск повторного применения...</string>
   <string name="log_empty">Пока нет активности</string>
+  <string name="tgl_ram_optimizer">Оптимизатор RAM</string>
+  <string name="tgl_ram_optimizer_desc">Ужесточает лимит кэша фоновых приложений, ускоряя холодный запуск программ</string>
+  <string name="log_ram_applied">Оптимизатор RAM применён</string>
+  <string name="log_ram_reverted">Оптимизатор RAM отменён</string>
+  <string name="loading_applying_ram">Применение оптимизатора RAM...</string>
+  <string name="loading_reverting_ram">Отмена оптимизатора RAM...</string>
 </resources>

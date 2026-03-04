@@ -123,7 +123,7 @@ apply_kernel_tweaks() {
 
   while IFS= read -r line; do
     case "$line" in
-      '# ──'*)
+      '# '*)
         # Section header comment — print to tweaks log
         section=$(echo "$line" | sed 's/^# ── *//;s/ *─*$//')
         if [ "$section" != "$last_section" ]; then
@@ -223,6 +223,14 @@ if [ "$ENABLE_DEEP_DOZE" = "1" ]; then
   "$MODDIR/deep_doze.sh" freeze
 else
   log_boot "Deep Doze SKIPPED"
+fi
+
+# RAM Optimizer
+if [ "$ENABLE_RAM_OPTIMIZER" = "1" ]; then
+  log_boot "Applying RAM optimizer..."
+  sh "$MODDIR/frosty.sh" ram_optimizer > /dev/null
+else
+  log_boot "RAM optimizer SKIPPED"
 fi
 
 log_boot "Boot complete at $(date '+%Y-%m-%d %H:%M:%S')"

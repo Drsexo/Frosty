@@ -24,6 +24,7 @@ com.google.android.gms/com.google.android.gms.analytics.AnalyticsReceiver|teleme
 com.google.android.gms/com.google.android.gms.stats.eastworld.EastworldService|telemetry
 com.google.android.gms/com.google.android.gms.stats.service.DropBoxEntryAddedService|telemetry
 com.google.android.gms/com.google.android.gms.stats.service.DropBoxEntryAddedReceiver|telemetry
+com.google.android.gms/com.google.android.gms.stats.DropBoxEntryAddedService|telemetry
 com.google.android.gms/com.google.android.gms.stats.PlatformStatsCollectorService|telemetry
 com.google.android.gms/com.google.android.gms.common.stats.GmsCoreStatsService|telemetry
 com.google.android.gms/com.google.android.gms.common.stats.StatsUploadService|telemetry
@@ -56,6 +57,14 @@ com.google.android.gms/com.google.android.gms.magictether.logging.DailyMetricsLo
 com.google.android.apps.work.clouddpc/com.google.android.apps.work.clouddpc.base.policy.services.ReportingPartialCollectionJobService|telemetry
 com.google.android.apps.work.clouddpc/com.google.android.apps.work.clouddpc.base.policy.services.StatusReportJobService|telemetry
 com.google.android.apps.work.clouddpc/com.google.android.apps.work.clouddpc.vanilla.bugreport.jobs.RemoteBugReportJobService|telemetry
+com.google.android.gms/com.google.android.gms.googlehelp.service.GoogleHelpService|telemetry
+com.google.android.gms/com.google.android.gms.phenotype.service.sync.PhenotypeOperationService|telemetry
+com.google.android.gms/com.google.android.gms.phenotype.service.sync.PhResetService|telemetry
+com.google.android.gms/com.google.android.gms.herrevad.service.HerrevadAndroidService|telemetry
+com.google.android.gms/com.google.android.gms.udc.service.UdcService|telemetry
+com.google.android.gms/com.google.android.gms.udc.service.UdcMddService|telemetry
+com.google.android.gms/com.google.android.gms.focus.FocusAndroidService|telemetry
+com.google.mainline.telemetry/com.google.mainline.telemetry.TelemetryService|telemetry
 
 
 # BACKGROUND - Updates, Font sync, MDM
@@ -114,6 +123,7 @@ com.google.android.gms/com.google.android.gms.nearby.bootstrap.service.NearbyBoo
 com.google.android.gms/com.google.android.gms.nearby.connection.service.NearbyConnectionsAndroidService|connectivity
 com.google.android.gms/com.google.android.gms.nearby.messages.service.NearbyMessagesService|connectivity
 com.google.android.gms/com.google.location.nearby.direct.service.NearbyDirectService|connectivity
+com.google.android.gms/com.google.android.gms.location.nearby.direct.service.NearbyDirectService|connectivity
 com.google.android.gms/com.google.android.gms.nearby.exposurenotification.service.ExposureNotificationService|connectivity
 com.google.android.gms/com.google.android.gms.nearby.sharing.service.ShareSheetSessionService|connectivity
 com.google.android.gms/com.google.android.gms.nearby.fastpair.service.WearableDataListenerService|connectivity

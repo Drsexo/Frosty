@@ -525,6 +525,36 @@ s() {
     ar:avail_sysprops_desc) echo "    يعطل سجلات التصحيح لتوفير RAM" ;;
      *:avail_sysprops_desc) echo "    Disables debug logging, saves RAM" ;;
 
+    fr:avail_ram)         echo "🚀 Optimiseur de RAM" ;;
+    de:avail_ram)         echo "🚀 RAM-Optimierer" ;;
+    pl:avail_ram)         echo "🚀 Optymalizator RAM" ;;
+    it:avail_ram)         echo "🚀 Ottimizzatore RAM" ;;
+    es:avail_ram)         echo "🚀 Optimizador de RAM" ;;
+    pt:avail_ram)         echo "🚀 Otimizador de RAM" ;;
+    tr:avail_ram)         echo "🚀 RAM Optimize Edici" ;;
+    id:avail_ram)         echo "🚀 Pengoptimal RAM" ;;
+    ru:avail_ram)         echo "🚀 Оптимизатор RAM" ;;
+    uk:avail_ram)         echo "🚀 Оптимізатор RAM" ;;
+    zh:avail_ram)         echo "🚀 RAM 优化器 (RAM Optimizer)" ;;
+    ja:avail_ram)         echo "🚀 RAM オプティマイザ (RAM Optimizer)" ;;
+    ar:avail_ram)         echo "🚀 مُحسّن الذاكرة (RAM Optimizer)" ;;
+     *:avail_ram)         echo "🚀 RAM Optimizer" ;;
+
+    fr:avail_ram_desc)    echo "    Réduit le cache en arrière-plan, lancements rapides" ;;
+    de:avail_ram_desc)    echo "    Begrenzt Hintergrund-Cache, beschleunigt Kaltstarts" ;;
+    pl:avail_ram_desc)    echo "    Ogranicza cache w tle, przyspiesza uruchamianie" ;;
+    it:avail_ram_desc)    echo "    Limita la cache in background, avvio più rapido" ;;
+    es:avail_ram_desc)    echo "    Limita caché en 2º plano, inicio más rápido" ;;
+    pt:avail_ram_desc)    echo "    Limita cache em 2º plano, início mais rápido" ;;
+    tr:avail_ram_desc)    echo "    Arka plan önbelleğini sınırlar, hızlı açılış sağlar" ;;
+    id:avail_ram_desc)    echo "    Batasi cache latar belakang, peluncuran lebih cepat" ;;
+    ru:avail_ram_desc)    echo "    Ограничивает кэш фона, ускоряет холодный запуск" ;;
+    uk:avail_ram_desc)    echo "    Обмежує кеш фону, прискорює холодний запуск" ;;
+    zh:avail_ram_desc)    echo "    收紧后台缓存限制，加快应用冷启动速度" ;;
+    ja:avail_ram_desc)    echo "    バックグラウンドキャッシュを制限し、起動を高速化" ;;
+    ar:avail_ram_desc)    echo "    يقلل ذاكرة التخزين المؤقت للخلفية ويسرع الفتح" ;;
+     *:avail_ram_desc)    echo "    Tightens background cache, speeds up app launches" ;;
+
     fr:avail_blur)        echo "🎨 Désactiver le flou (Blur)" ;;
     de:avail_blur)        echo "🎨 Blur (Unschärfe) deaktivieren" ;;
     pl:avail_blur)        echo "🎨 Disable Blur (Wyłącz rozmycie)" ;;
@@ -972,6 +1002,9 @@ ui_print "$(s avail_kernel_desc)"
 ui_print ""
 ui_print "    $(s avail_sysprops)"
 ui_print "$(s avail_sysprops_desc)"
+ui_print ""
+ui_print "    $(s avail_ram)"
+ui_print "$(s avail_ram_desc)"
 ui_print ""
 ui_print "    $(s avail_blur)"
 ui_print "$(s avail_blur_desc)"

@@ -56,13 +56,6 @@ for prop in tombstoned.max_tombstone_count ro.lmk.debug ro.lmk.log_stats \
   resetprop --delete "$prop" 2>/dev/null
 done
 
-# Restore any XML files we modified for GMS Doze
-find /data/adb/modules -type f -name "*.frosty_bak" 2>/dev/null | while IFS= read -r bak; do
-  orig="${bak%.frosty_bak}"
-  mv "$bak" "$orig" 2>/dev/null
-  log "Restored patched XML: $orig"
-done
-
 ENABLE_GMS_DOZE=0
 ENABLE_DEEP_DOZE=0
 [ -f "$USER_PREFS" ] && . "$USER_PREFS"

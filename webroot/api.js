@@ -61,6 +61,7 @@ var API = (function () {
     system_props:    'ENABLE_SYSTEM_PROPS',
     blur_disable:    'ENABLE_BLUR_DISABLE',
     log_killing:     'ENABLE_LOG_KILLING',
+    ram_optimizer:   'ENABLE_RAM_OPTIMIZER',
     gms_doze:        'ENABLE_GMS_DOZE',
     deep_doze:       'ENABLE_DEEP_DOZE',
     deep_doze_level: 'DEEP_DOZE_LEVEL'
@@ -201,6 +202,18 @@ var API = (function () {
 
   async function revertDeepDoze() {
     await run('sh ' + MODDIR + '/deep_doze.sh stock 2>&1');
+    return { status: 'ok' };
+  }
+
+  // ── RAM Optimizer ──
+
+  async function applyRamOptimizer() {
+    await runStrict('sh ' + MODDIR + '/frosty.sh ram_optimizer 2>&1');
+    return { status: 'ok' };
+  }
+
+  async function revertRamOptimizer() {
+    await runStrict('sh ' + MODDIR + '/frosty.sh ram_restore 2>&1');
     return { status: 'ok' };
   }
 
@@ -404,6 +417,8 @@ var API = (function () {
     revertGmsDoze:         revertGmsDoze,
     applyDeepDoze:         applyDeepDoze,
     revertDeepDoze:        revertDeepDoze,
+    applyRamOptimizer:     applyRamOptimizer,
+    revertRamOptimizer:    revertRamOptimizer,
     applyTweaks:           applyTweaks,
     revertTweaks:          revertTweaks,
     applyBlur:             applyBlur,
@@ -420,5 +435,3 @@ var API = (function () {
     importSettings:        importSettings
   };
 })();
-
-

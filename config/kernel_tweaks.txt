@@ -2,7 +2,7 @@
 # Format: /path/to/kernel/file|value
 # Lines starting with # are comments and blank lines are ignored.
 
-# ── SCHEDULER ──
+# SCHEDULER
 /proc/sys/kernel/perf_cpu_time_max_percent|2
 /proc/sys/kernel/sched_autogroup_enabled|1
 /proc/sys/kernel/sched_child_runs_first|0
@@ -15,22 +15,21 @@
 /proc/sys/kernel/sched_nr_migrate|256
 /proc/sys/kernel/sched_schedstats|0
 
-# ── SCHED FEATURES ──
-# Written twice intentionally (sched_features accepts keyword writes)
+# SCHED FEATURES
 /sys/kernel/debug/sched_features|NEXT_BUDDY
 /sys/kernel/debug/sched_features|NO_TTWU_QUEUE
 
-# ── PANIC ──
+# PANIC
 /proc/sys/kernel/panic|0
 /proc/sys/kernel/panic_on_oops|0
 /proc/sys/vm/panic_on_oom|0
 
-# ── TIMER & PRINTK ──
+# TIMER & PRINTK
 /proc/sys/kernel/timer_migration|0
 /proc/sys/kernel/printk_devkmsg|off
 /proc/sys/kernel/printk|0 0 0 0
 
-# ── VM ──
+# VM
 /proc/sys/vm/dirty_background_ratio|2
 /proc/sys/vm/dirty_ratio|5
 /proc/sys/vm/dirty_expire_centisecs|500
@@ -40,27 +39,27 @@
 /proc/sys/vm/oom_dump_tasks|0
 /proc/sys/vm/block_dump|0
 
-# ── NETWORK ──
+# NETWORK
 /proc/sys/net/ipv4/tcp_ecn|1
 /proc/sys/net/ipv4/tcp_fastopen|3
 /proc/sys/net/ipv4/tcp_syncookies|1
 /proc/sys/net/ipv4/tcp_no_metrics_save|1
 
-# ── DEBUG ──
+# DEBUG
 /proc/sys/debug/exception-trace|0
 
-# ── ENTROPY ──
+# ENTROPY
 /proc/sys/kernel/random/read_wakeup_threshold|256
 /proc/sys/kernel/random/write_wakeup_threshold|320
 
-# ── PRINTK RATELIMIT ──
+# PRINTK RATELIMIT
 /proc/sys/kernel/printk_ratelimit|1
 /proc/sys/kernel/printk_ratelimit_burst|5
 
-# ── STUNE (Snapdragon only) ──
+# STUNE (Snapdragon only)
 /dev/stune/top-app/schedtune.prefer_idle|0
 /dev/stune/top-app/schedtune.boost|0
 
-# ── RAMDUMPS ──
+# RAMDUMPS
 /sys/module/subsystem_restart/parameters/enable_mini_ramdumps|0
 /sys/module/subsystem_restart/parameters/enable_ramdumps|0

@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1] - 2026-03-04
+- **Added NEW Ram Optimizer**: It sets `max_cached_processes=10` via both cmd device_config and settings put (for more android versions compatibility), plus enables USAP pool for faster cold launches. Revert deletes both keys, returning to system defaults with no residual state.
+- **GMS Services**: 10 new telemetry entries added: GoogleHelpService, PhenotypeOperationService, PhResetService, HerrevadAndroidService, UdcService, UdcMddService, FocusAndroidService, stats.DropBoxEntryAddedService, gms.location.nearby.direct.service.NearbyDirectService, com.google.mainline.telemetry.
+- **Deep Doze**: no longer spawns a background subshell if the last one is killed mid-sleep.
+- **GMS Doze**: no longer patches other conflicting XML files from other modules, will only cause issues if kept.
+- **WebUI Visual Overhaul**: cleaner style with better vibrant colors.
+
 ## [3.0] - 2026-03-03
 ### Module Internationalization
 - **14 languages support**: The entire module and WebUI are now fully translated, supporting English, French, German, Polish, Italian, Spanish, Portuguese (BR), Turkish, Indonesian, Russian, Ukrainian, Chinese Simplified, Japanese, and Arabic.
@@ -10,8 +17,8 @@
 - **About dialog**: Displays module version, description, and credits inline in the WebUI.
 - **system.prop deletion bug**: The System Props toggle was calling `rm` on `system.prop.old` instead of `mv`, permanently destroying the file on enable. Fixed to always use `mv` in both directions so the file is never lost.
 ### Misc
-- **No more setup wizard**: The installer no longer prompts you for anything during setup. All 14 volume-key interactions have been removed — 6 feature toggles (Kernel Tweaks, System Props, Blur, Log Killing, GMS Doze, Deep Doze) and 8 GMS category choices (Telemetry, Background, Location, Connectivity, Cloud, Payments, Wearables, Games) are gone. Everything is configured in WebUI after reboot instead.
-- **Kernel tweaks are no longer hardcoded**: They are now stored in `kernel_tweaks.txt` for better maintainability.
+- **No more setup wizard**: The installer no longer prompts you for anything during setup. All 14 volume-key interactions have been removed. Everything is configured in WebUI after reboot instead.
+-**Kernel tweaks are no longer hardcoded**: They are now stored in `kernel_tweaks.txt` for better maintainability.
 - **Removed `action.sh`**: Configuration is now done through the WebUI. Magisk users can use [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases).
 - And many more internal fixes for a more robust and clean code.
 

@@ -39,6 +39,7 @@
   var _TKEY_MAP = {
     kernel_tweaks: 'tgl_kernel', system_props: 'tgl_sysprops',
     blur_disable: 'tgl_blur', log_killing: 'tgl_logs',
+    ram_optimizer: 'tgl_ram_optimizer',
     gms_doze: 'tgl_gms_doze', deep_doze: 'tgl_deep_doze',
     telemetry: 'cat_telemetry', background: 'cat_background',
     location: 'cat_location', connectivity: 'cat_connectivity',
@@ -250,6 +251,7 @@
     setChk('t-blur', p.blur_disable);
     setChk('t-logs', p.log_killing);
     setChk('t-sysprops', p.system_props);
+    setChk('t-ram-optimizer', p.ram_optimizer);
     setChk('t-gms-doze', p.gms_doze);
     setChk('t-deep-doze', p.deep_doze);
 
@@ -339,6 +341,16 @@
           updateLoading(t('loading_reverting_deep_doze'));
           await API.revertDeepDoze();
           logAction(t('log_deep_doze_reverted'), 'ok');
+        }
+      } else if (key === 'ram_optimizer') {
+        if (nv) {
+          updateLoading(t('loading_applying_ram'));
+          await API.applyRamOptimizer();
+          logAction(t('log_ram_applied'), 'ok');
+        } else {
+          updateLoading(t('loading_reverting_ram'));
+          await API.revertRamOptimizer();
+          logAction(t('log_ram_reverted'), 'ok');
         }
       }
 
@@ -435,7 +447,7 @@
     try {
       // Step 1: Turn ON all prefs
       updateLoading(t('loading_enabling_toggles'));
-      var allPrefs = ['kernel_tweaks', 'system_props', 'blur_disable', 'log_killing', 'gms_doze', 'deep_doze'];
+      var allPrefs = ['kernel_tweaks', 'system_props', 'blur_disable', 'log_killing', 'ram_optimizer', 'gms_doze', 'deep_doze'];
       for (var i = 0; i < allPrefs.length; i++) {
         await API.setPref(allPrefs[i], 1);
       }
@@ -510,7 +522,7 @@
     try {
       // Step 1: Turn OFF all prefs
       updateLoading(t('loading_disabling_toggles'));
-      var allPrefs = ['kernel_tweaks',  'system_props', 'blur_disable', 'log_killing', 'gms_doze', 'deep_doze'];
+      var allPrefs = ['kernel_tweaks', 'system_props', 'blur_disable', 'log_killing', 'ram_optimizer', 'gms_doze', 'deep_doze'];
       for (var i = 0; i < allPrefs.length; i++) {
         await API.setPref(allPrefs[i], 0);
       }
@@ -1006,6 +1018,7 @@
     $('t-sysprops').addEventListener('change', function () { togglePref('system_props'); });
     $('t-blur').addEventListener('change', function () { togglePref('blur_disable'); });
     $('t-logs').addEventListener('change', function () { togglePref('log_killing'); });
+    $('t-ram-optimizer').addEventListener('change', function () { togglePref('ram_optimizer'); });
     $('t-gms-doze').addEventListener('change', function () { togglePref('gms_doze'); });
     $('t-deep-doze').addEventListener('change', function () { togglePref('deep_doze'); });
     document.querySelectorAll('.tgl-row, .cat-row').forEach(function (row) {

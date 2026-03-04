@@ -146,4 +146,10 @@
   <string name="log_sysprops_disabled">系统属性 (System Props) 已禁用</string>
   <string name="log_reapply_start">开始重新应用...</string>
   <string name="log_empty">暂无活动记录</string>
+  <string name="tgl_ram_optimizer">RAM 优化器</string>
+  <string name="tgl_ram_optimizer_desc">收紧后台应用缓存限制，加快应用的冷启动速度</string>
+  <string name="log_ram_applied">已应用 RAM 优化器</string>
+  <string name="log_ram_reverted">已还原 RAM 优化器</string>
+  <string name="loading_applying_ram">正在应用 RAM 优化器...</string>
+  <string name="loading_reverting_ram">正在还原 RAM 优化器...</string>
 </resources>

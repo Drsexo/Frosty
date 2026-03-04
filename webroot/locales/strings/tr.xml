@@ -146,4 +146,10 @@
   <string name="log_sysprops_disabled">System Props devre dışı bırakıldı</string>
   <string name="log_reapply_start">Yeniden uygulama başlatılıyor...</string>
   <string name="log_empty">Henüz bir aktivite yok</string>
+  <string name="tgl_ram_optimizer">RAM Optimize Edici</string>
+  <string name="tgl_ram_optimizer_desc">Arka plan uygulama önbellek sınırını daraltır ve uygulamaların soğuk başlatılmasını hızlandırır</string>
+  <string name="log_ram_applied">RAM optimize edici uygulandı</string>
+  <string name="log_ram_reverted">RAM optimize edici geri alındı</string>
+  <string name="loading_applying_ram">RAM optimize edici uygulanıyor...</string>
+  <string name="loading_reverting_ram">RAM optimize edici geri alınıyor...</string>
 </resources>

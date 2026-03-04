@@ -189,6 +189,11 @@ stop_screen_monitor() {
   if [ -f "$MONITOR_PID_FILE" ]; then
     local pid=$(cat "$MONITOR_PID_FILE")
     kill "$pid" 2>/dev/null
+    local i=0
+    while kill -0 "$pid" 2>/dev/null && [ $i -lt 6 ]; do
+      sleep 0.5; i=$((i+1))
+    done
+    kill -9 "$pid" 2>/dev/null
     rm -f "$MONITOR_PID_FILE"
     log_deep "[OK] Screen monitor stopped (PID $pid)"
   fi
@@ -335,5 +340,3 @@ case "$1" in
 esac
 
 exit 0
-
-
