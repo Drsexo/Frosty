@@ -540,20 +540,20 @@ s() {
     ar:avail_ram)         echo "🚀 مُحسّن الذاكرة (RAM Optimizer)" ;;
      *:avail_ram)         echo "🚀 RAM Optimizer" ;;
 
-    fr:avail_ram_desc)    echo "    Réduit le cache en arrière-plan, lancements rapides" ;;
-    de:avail_ram_desc)    echo "    Begrenzt Hintergrund-Cache, beschleunigt Kaltstarts" ;;
-    pl:avail_ram_desc)    echo "    Ogranicza cache w tle, przyspiesza uruchamianie" ;;
-    it:avail_ram_desc)    echo "    Limita la cache in background, avvio più rapido" ;;
-    es:avail_ram_desc)    echo "    Limita caché en 2º plano, inicio más rápido" ;;
-    pt:avail_ram_desc)    echo "    Limita cache em 2º plano, início mais rápido" ;;
-    tr:avail_ram_desc)    echo "    Arka plan önbelleğini sınırlar, hızlı açılış sağlar" ;;
-    id:avail_ram_desc)    echo "    Batasi cache latar belakang, peluncuran lebih cepat" ;;
-    ru:avail_ram_desc)    echo "    Ограничивает кэш фона, ускоряет холодный запуск" ;;
-    uk:avail_ram_desc)    echo "    Обмежує кеш фону, прискорює холодний запуск" ;;
-    zh:avail_ram_desc)    echo "    收紧后台缓存限制，加快应用冷启动速度" ;;
-    ja:avail_ram_desc)    echo "    バックグラウンドキャッシュを制限し、起動を高速化" ;;
-    ar:avail_ram_desc)    echo "    يقلل ذاكرة التخزين المؤقت للخلفية ويسرع الفتح" ;;
-     *:avail_ram_desc)    echo "    Tightens background cache, speeds up app launches" ;;
+    fr:avail_ram_desc)    echo "    Limite le cache et les apps vides, ajuste le zram" ;;
+    de:avail_ram_desc)    echo "    Begrenzt Cache-Prozesse, optimiert zram-Swap" ;;
+    pl:avail_ram_desc)    echo "    Ogranicza cache i puste procesy, dostraja zram" ;;
+    it:avail_ram_desc)    echo "    Limita i processi in cache, ottimizza lo zram" ;;
+    es:avail_ram_desc)    echo "    Limita procesos en caché, ajusta zram swap" ;;
+    pt:avail_ram_desc)    echo "    Limita processos em cache, ajusta swap do zram" ;;
+    tr:avail_ram_desc)    echo "    Önbelleği ve boş işlemleri sınırlar, zram ayarlar" ;;
+    id:avail_ram_desc)    echo "    Batasi proses cache/kosong, optimalkan swap zram" ;;
+    ru:avail_ram_desc)    echo "    Ограничивает кэш и пустые процессы, тюнинг zram" ;;
+    uk:avail_ram_desc)    echo "    Обмежує кеш та порожні процеси, налаштовує zram" ;;
+    zh:avail_ram_desc)    echo "    限制缓存与空后台进程，调整 zram 以释放 RAM" ;;
+    ja:avail_ram_desc)    echo "    キャッシュや空プロセスを制限、zramを調整しRAM確保" ;;
+    ar:avail_ram_desc)    echo "    يحد عمليات الخلفية ويضبط zram لتوفير مساحة RAM" ;;
+     *:avail_ram_desc)    echo "    Limits cached/empty apps, tunes zram for more RAM" ;;
 
     fr:avail_blur)        echo "🎨 Désactiver le flou (Blur)" ;;
     de:avail_blur)        echo "🎨 Blur (Unschärfe) deaktivieren" ;;

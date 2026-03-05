@@ -147,7 +147,7 @@
   <string name="log_reapply_start">Запуск повторного застосування...</string>
   <string name="log_empty">Поки немає активності</string>
   <string name="tgl_ram_optimizer">Оптимізатор RAM</string>
-  <string name="tgl_ram_optimizer_desc">Більш жорстко обмежує кеш фонових програм, прискорюючи їх холодний запуск</string>
+  <string name="tgl_ram_optimizer_desc">Обмежує кешовані та порожні фонові процеси, налаштовує поведінку zram swap для звільнення RAM</string>
   <string name="log_ram_applied">Оптимізатор RAM застосовано</string>
   <string name="log_ram_reverted">Оптимізатор RAM скасовано</string>
   <string name="loading_applying_ram">Застосування оптимізатора RAM...</string>

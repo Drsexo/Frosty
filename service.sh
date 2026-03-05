@@ -8,8 +8,11 @@ mkdir -p "$LOGDIR" "$BACKUP_DIR"
 BOOT_LOG="$LOGDIR/boot.log"
 TWEAKS_LOG="$LOGDIR/tweaks.log"
 PROPS_LOG="$LOGDIR/props.log"
+RAM_LOG="$LOGDIR/ram.log"
 KERNEL_BACKUP="$BACKUP_DIR/kernel_values.txt"
 KERNEL_TWEAKS="$MODDIR/config/kernel_tweaks.txt"
+RAM_BACKUP="$BACKUP_DIR/ram_values.txt"
+RAM_TWEAKS="$MODDIR/config/ram_tweaks.txt"
 
 # Timeout fallback
 if ! command -v timeout >/dev/null 2>&1; then
@@ -27,10 +30,12 @@ done
 log_boot()  { echo "[$(date '+%H:%M:%S')] $1" >> "$BOOT_LOG"; }
 log_tweak() { echo "$1" >> "$TWEAKS_LOG"; }
 log_props() { echo "[$(date '+%H:%M:%S')] $1" >> "$PROPS_LOG"; }
+log_ram()   { echo "$1" >> "$RAM_LOG"; }
 
 echo "Frosty Boot - $(date '+%Y-%m-%d %H:%M:%S')" > "$BOOT_LOG"
 echo "Frosty Tweaks - $(date '+%Y-%m-%d %H:%M:%S')" > "$TWEAKS_LOG"
 echo "Frosty Props - $(date '+%Y-%m-%d %H:%M:%S')" > "$PROPS_LOG"
+echo "Frosty RAM - $(date '+%Y-%m-%d %H:%M:%S')" > "$RAM_LOG"
 
 # Wait for boot
 until [ "$(getprop sys.boot_completed)" = "1" ] && [ -d /sdcard ]; do
@@ -112,6 +117,29 @@ backup_kernel() {
   log_boot "Kernel backup saved"
 }
 
+# Back up current RAM sysfs values before tweaking.
+backup_ram() {
+  log_boot "Backing up RAM sysfs values..."
+  echo "# RAM Backup - $(date '+%Y-%m-%d %H:%M:%S')" > "$RAM_BACKUP"
+
+  if [ ! -f "$RAM_TWEAKS" ]; then
+    log_boot "WARNING: ram_tweaks.txt not found, skipping RAM backup"
+    return
+  fi
+
+  while IFS= read -r line; do
+    case "$line" in '#'*|'') continue ;; esac
+    path="${line%%|*}"
+    path=$(echo "$path" | tr -d ' ')
+    [ -z "$path" ] || [ ! -f "$path" ] && continue
+    name=$(basename "$path")
+    val=$(cat "$path" 2>/dev/null)
+    echo "$name=$val=$path" >> "$RAM_BACKUP"
+  done < "$RAM_TWEAKS"
+
+  log_boot "RAM backup saved"
+}
+
 # Apply all tweaks from kernel_tweaks.txt.
 apply_kernel_tweaks() {
   if [ ! -f "$KERNEL_TWEAKS" ]; then
@@ -174,6 +202,15 @@ else
   log_boot "Kernel tweaks SKIPPED"
 fi
 
+# RAM Optimizer
+if [ "$ENABLE_RAM_OPTIMIZER" = "1" ]; then
+  log_boot "Applying RAM optimizer..."
+  backup_ram
+  sh "$MODDIR/frosty.sh" ram_optimizer >> "$RAM_LOG" 2>/dev/null
+else
+  log_boot "RAM optimizer SKIPPED"
+fi
+
 # Kill log processes
 if [ "$ENABLE_LOG_KILLING" = "1" ]; then
   log_boot "Killing log processes..."
@@ -223,14 +260,6 @@ if [ "$ENABLE_DEEP_DOZE" = "1" ]; then
   "$MODDIR/deep_doze.sh" freeze
 else
   log_boot "Deep Doze SKIPPED"
-fi
-
-# RAM Optimizer
-if [ "$ENABLE_RAM_OPTIMIZER" = "1" ]; then
-  log_boot "Applying RAM optimizer..."
-  sh "$MODDIR/frosty.sh" ram_optimizer > /dev/null
-else
-  log_boot "RAM optimizer SKIPPED"
 fi
 
 log_boot "Boot complete at $(date '+%Y-%m-%d %H:%M:%S')"

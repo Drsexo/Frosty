@@ -147,7 +147,7 @@
   <string name="log_reapply_start">再適用を開始しています...</string>
   <string name="log_empty">まだアクティビティがありません</string>
   <string name="tgl_ram_optimizer">RAM オプティマイザ</string>
-  <string name="tgl_ram_optimizer_desc">バックグラウンドアプリのキャッシュ制限を強化し、アプリのコールドスタートを高速化します</string>
+  <string name="tgl_ram_optimizer_desc">キャッシュされたバックグラウンドプロセスや空のプロセスを制限し、zramスワップを調整して空きRAMを増やします</string>
   <string name="log_ram_applied">RAM オプティマイザを適用しました</string>
   <string name="log_ram_reverted">RAM オプティマイザを元に戻しました</string>
   <string name="loading_applying_ram">RAM オプティマイザを適用しています...</string>

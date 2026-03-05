@@ -6,9 +6,12 @@ MODDIR="${0%/*}"
 
 LOGDIR="$MODDIR/logs"
 SERVICES_LOG="$LOGDIR/services.log"
+RAM_LOG="$LOGDIR/ram.log"
 GMS_LIST="$MODDIR/config/gms_services.txt"
 USER_PREFS="$MODDIR/config/user_prefs"
 KERNEL_BACKUP="$MODDIR/backup/kernel_values.txt"
+RAM_TWEAKS="$MODDIR/config/ram_tweaks.txt"
+RAM_BACKUP="$MODDIR/backup/ram_values.txt"
 SYSPROP="$MODDIR/system.prop"
 SYSPROP_OLD="$MODDIR/system.prop.old"
 
@@ -37,6 +40,7 @@ BOX_BOT="  └${LINE}┘"
 unset _i _iw
 
 log_service() { echo "$1" >> "$SERVICES_LOG"; }
+log_ram()     { echo "$1" >> "$RAM_LOG"; }
 
 load_prefs() {
   if [ -f "$USER_PREFS" ]; then
@@ -69,9 +73,9 @@ should_disable_category() {
 
 save_prefs() {
   cat > "$USER_PREFS" << EOF
+ENABLE_RAM_OPTIMIZER=$ENABLE_RAM_OPTIMIZER
 ENABLE_KERNEL_TWEAKS=$ENABLE_KERNEL_TWEAKS
 ENABLE_SYSTEM_PROPS=$ENABLE_SYSTEM_PROPS
-ENABLE_RAM_OPTIMIZER=$ENABLE_RAM_OPTIMIZER
 ENABLE_BLUR_DISABLE=$ENABLE_BLUR_DISABLE
 ENABLE_LOG_KILLING=$ENABLE_LOG_KILLING
 ENABLE_GMS_DOZE=$ENABLE_GMS_DOZE
@@ -164,11 +168,26 @@ freeze_services() {
 
   # Kill log processes
   if [ "$ENABLE_LOG_KILLING" = "1" ]; then
-    for svc in logcat logcatd logd tcpdump cnss_diag statsd traced; do
+    for svc in logcat logcatd logd tcpdump cnss_diag statsd traced traced_perf traced_probes; do
       pid=$(pidof "$svc" 2>/dev/null)
       [ -n "$pid" ] && kill -9 "$pid" 2>/dev/null
     done
     logcat -c 2>/dev/null
+
+    # Disable DropBox diagnostic categories
+    for tag in dumpsys:procstats dumpsys:usagestats procstats usagestats \
+               data_app_wtf keymaster system_server_wtf system_app_strictmode \
+               system_app_wtf system_server_strictmode data_app_strictmode \
+               netstats data_app_anr data_app_crash system_server_anr \
+               system_server_watchdog system_server_crash system_server_native_crash \
+               system_server_lowmem system_app_crash system_app_anr storage_trim \
+               SYSTEM_AUDIT SYSTEM_BOOT SYSTEM_LAST_KMSG system_app_native_crash \
+               SYSTEM_TOMBSTONE SYSTEM_TOMBSTONE_PROTO data_app_native_crash \
+               SYSTEM_RESTART; do
+      content call --uri content://settings/global --method PUT_value \
+        --arg "dropbox:$tag" --extra value:s:disabled 2>/dev/null >/dev/null
+    done
+
     echo "  📝 Logs killed"
   fi
 }
@@ -258,9 +277,9 @@ backup_settings() {
   "exported": "$ts",
   "prefs": {
     "ENABLE_KERNEL_TWEAKS": $ENABLE_KERNEL_TWEAKS,
+    "ENABLE_RAM_OPTIMIZER": $ENABLE_RAM_OPTIMIZER,
     "ENABLE_SYSTEM_PROPS": $ENABLE_SYSTEM_PROPS,
     "ENABLE_BLUR_DISABLE": $ENABLE_BLUR_DISABLE,
-    "ENABLE_RAM_OPTIMIZER": $ENABLE_RAM_OPTIMIZER,
     "ENABLE_LOG_KILLING": $ENABLE_LOG_KILLING,
     "ENABLE_GMS_DOZE": $ENABLE_GMS_DOZE,
     "ENABLE_DEEP_DOZE": $ENABLE_DEEP_DOZE,
@@ -291,9 +310,9 @@ restore_settings() {
   local dl; dl=$(ps_ DEEP_DOZE_LEVEL); [ -z "$dl" ] && dl="moderate"
 
   cat > "$MODDIR/config/user_prefs" << ENDPREFS
+ENABLE_RAM_OPTIMIZER=$(pi ENABLE_RAM_OPTIMIZER)
 ENABLE_KERNEL_TWEAKS=$(pi ENABLE_KERNEL_TWEAKS)
 ENABLE_SYSTEM_PROPS=$(pi ENABLE_SYSTEM_PROPS)
-ENABLE_RAM_OPTIMIZER=$(pi ENABLE_RAM_OPTIMIZER)
 ENABLE_BLUR_DISABLE=$(pi ENABLE_BLUR_DISABLE)
 ENABLE_LOG_KILLING=$(pi ENABLE_LOG_KILLING)
 ENABLE_GMS_DOZE=$(pi ENABLE_GMS_DOZE)
@@ -352,22 +371,101 @@ share_backup() {
 }
 
 apply_ram_optimizer() {
-  log_service "[RAM] Applying RAM optimizer..."
-  cmd device_config put activity_manager max_cached_processes 10 2>/dev/null && \
-    log_service "[RAM][OK] max_cached_processes = 10" || log_service "[RAM][FAIL] max_cached_processes"
-  settings put global activity_manager_constants "max_cached_processes=10" 2>/dev/null && \
-    log_service "[RAM][OK] activity_manager_constants set" || log_service "[RAM][FAIL] activity_manager_constants"
-  device_config put runtime_native usap_pool_enabled true 2>/dev/null && \
-    log_service "[RAM][OK] usap_pool_enabled = true" || log_service "[RAM][FAIL] usap_pool_enabled"
-  echo "{\"status\":\"ok\"}"
+  log_ram "[RAM] Applying RAM optimizer..."
+  mkdir -p "$MODDIR/backup"
+
+  # Backup current RAM values from (skip if backup already exists)
+  if [ ! -f "$RAM_BACKUP" ] && [ -f "$RAM_TWEAKS" ]; then
+    printf "# RAM Backup - $(date)\n" > "$RAM_BACKUP"
+    while IFS= read -r _line; do
+      case "$_line" in \#*|"") continue ;; esac
+      _path="${_line%%|*}"
+      _path=$(echo "$_path" | tr -d ' ')
+      [ -z "$_path" ] || [ ! -f "$_path" ] && continue
+      _name=$(basename "$_path")
+      _val=$(cat "$_path" 2>/dev/null)
+      printf "%s=%s=%s\n" "$_name" "$_val" "$_path" >> "$RAM_BACKUP"
+    done < "$RAM_TWEAKS"
+    log_ram "[RAM][OK] RAM backup saved"
+  fi
+
+  # Apply sysfs tweaks from ram_tweaks.txt
+  if [ -f "$RAM_TWEAKS" ]; then
+    local kcount=0 kfail=0
+    while IFS= read -r _line; do
+      case "$_line" in \#*|"") continue ;; esac
+      _path="${_line%%|*}"
+      _val="${_line#*|}"
+      _path=$(echo "$_path" | tr -d ' ')
+      _val=$(echo "$_val" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+      [ -z "$_path" ] || [ -z "$_val" ] && continue
+      [ ! -f "$_path" ] && continue
+      chmod +w "$_path" 2>/dev/null
+      if echo "$_val" > "$_path" 2>/dev/null; then
+        kcount=$((kcount + 1))
+      else
+        kfail=$((kfail + 1))
+        log_ram "[RAM][FAIL] $_path"
+      fi
+    done < "$RAM_TWEAKS"
+    log_ram "[RAM][OK] RAM tweaks applied ($kcount ok, $kfail failed)"
+  fi
+
+  # Android-layer tweaks (revert by deletion - no stock value needed)
+  local sdk; sdk=$(getprop ro.build.version.sdk 2>/dev/null)
+  if [ "${sdk:-0}" -gt 28 ] 2>/dev/null; then
+    content call --uri content://settings/config --method PUT_value \
+      --arg activity_manager/max_cached_processes --extra value:s:10 2>/dev/null >/dev/null && \
+      log_ram "[RAM][OK] max_cached_processes = 10" || log_ram "[RAM][FAIL] max_cached_processes"
+    content call --uri content://settings/config --method PUT_value \
+      --arg activity_manager/max_empty_processes --extra value:s:5 2>/dev/null >/dev/null && \
+      log_ram "[RAM][OK] max_empty_processes = 5" || log_ram "[RAM][FAIL] max_empty_processes"
+    content call --uri content://settings/config --method PUT_value \
+      --arg activity_manager/max_empty_time --extra value:s:30000 2>/dev/null >/dev/null && \
+      log_ram "[RAM][OK] max_empty_time = 30000" || log_ram "[RAM][FAIL] max_empty_time"
+  fi
+  content call --uri content://settings/global --method PUT_value \
+    --arg activity_manager_constants \
+    --extra value:s:max_cached_processes=10,max_empty_processes=5 2>/dev/null >/dev/null && \
+    log_ram "[RAM][OK] activity_manager_constants set" || log_ram "[RAM][FAIL] activity_manager_constants"
+  content call --uri content://settings/config --method PUT_value \
+    --arg runtime_native/usap_pool_enabled --extra value:s:true 2>/dev/null >/dev/null && \
+    log_ram "[RAM][OK] usap_pool_enabled = true" || log_ram "[RAM][FAIL] usap_pool_enabled"
+  echo "[RAM] Applied RAM optimizer"
 }
 
 revert_ram_optimizer() {
-  log_service "[RAM] Reverting RAM optimizer..."
-  cmd device_config delete activity_manager max_cached_processes 2>/dev/null
-  settings delete global activity_manager_constants 2>/dev/null
-  device_config put runtime_native usap_pool_enabled false 2>/dev/null
-  log_service "[RAM][OK] RAM optimizer reverted"
+  log_ram "[RAM] Reverting RAM optimizer..."
+
+  # Restore RAM values from backup
+  if [ -f "$RAM_BACKUP" ]; then
+    local kcount=0
+    while IFS= read -r line; do
+      case "$line" in \#*|"") continue ;; esac
+      val=$(echo "$line"  | cut -d= -f2)
+      path=$(echo "$line" | cut -d= -f3-)
+      [ -z "$path" ] || [ ! -f "$path" ] && continue
+      chmod +w "$path" 2>/dev/null
+      echo "$val" > "$path" 2>/dev/null && kcount=$((kcount + 1))
+    done < "$RAM_BACKUP"
+    rm -f "$RAM_BACKUP"
+    log_ram "[RAM][OK] RAM values restored ($kcount)"
+  else
+    log_ram "[RAM] No RAM backup found, skipping kernel revert"
+  fi
+
+  # Undo Android-layer tweaks
+  content call --uri content://settings/config --method DELETE_value \
+    --arg activity_manager/max_cached_processes >/dev/null 2>&1
+  content call --uri content://settings/config --method DELETE_value \
+    --arg activity_manager/max_empty_processes >/dev/null 2>&1
+  content call --uri content://settings/config --method DELETE_value \
+    --arg activity_manager/max_empty_time >/dev/null 2>&1
+  content call --uri content://settings/global --method DELETE_value \
+    --arg activity_manager_constants >/dev/null 2>&1
+  content call --uri content://settings/config --method DELETE_value \
+    --arg runtime_native/usap_pool_enabled >/dev/null 2>&1
+  log_ram "[RAM][OK] RAM optimizer reverted"
   echo "{\"status\":\"ok\"}"
 }
 

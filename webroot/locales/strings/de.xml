@@ -147,7 +147,7 @@
   <string name="log_reapply_start">Erneute Anwendung wird gestartet...</string>
   <string name="log_empty">Noch keine Aktivität</string>
   <string name="tgl_ram_optimizer">RAM-Optimierer</string>
-  <string name="tgl_ram_optimizer_desc">Begrenzt den Cache für Hintergrund-Apps und beschleunigt den Kaltstart von Apps</string>
+  <string name="tgl_ram_optimizer_desc">Begrenzt gecachte und leere Hintergrundprozesse, optimiert das zram-Swap-Verhalten für mehr freien RAM</string>
   <string name="log_ram_applied">RAM-Optimierer angewendet</string>
   <string name="log_ram_reverted">RAM-Optimierer zurückgesetzt</string>
   <string name="loading_applying_ram">RAM-Optimierer wird angewendet...</string>

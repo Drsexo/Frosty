@@ -49,10 +49,12 @@ fi
 
 # Revert resetprop
 log "Reverting resetprop..."
-for prop in tombstoned.max_tombstone_count ro.lmk.debug ro.lmk.log_stats \
+for prop in tombstoned.max_tombstone_count tombstoned.max_anr_count ro.lmk.debug ro.lmk.log_stats \
   dalvik.vm.dex2oat-minidebuginfo dalvik.vm.minidebuginfo \
+  sys.wifitracing.started persist.vendor.wifienhancelog \
   disableBlurs enable_blurs_on_windows ro.launcher.blur.appLaunch \
-  ro.sf.blurs_are_expensive ro.surface_flinger.supports_background_blur; do
+  ro.sf.blurs_are_expensive ro.surface_flinger.supports_background_blur \
+  persist.traced.enable; do
   resetprop --delete "$prop" 2>/dev/null
 done
 
@@ -90,6 +92,22 @@ done
 
 dumpsys deviceidle unforce 2>/dev/null
 log "Deep Doze reverted"
+
+# Revert DropBox category disables
+log "Reverting DropBox settings..."
+for tag in dumpsys:procstats dumpsys:usagestats procstats usagestats \
+           data_app_wtf keymaster system_server_wtf system_app_strictmode \
+           system_app_wtf system_server_strictmode data_app_strictmode \
+           netstats data_app_anr data_app_crash system_server_anr \
+           system_server_watchdog system_server_crash system_server_native_crash \
+           system_server_lowmem system_app_crash system_app_anr storage_trim \
+           SYSTEM_AUDIT SYSTEM_BOOT SYSTEM_LAST_KMSG system_app_native_crash \
+           SYSTEM_TOMBSTONE SYSTEM_TOMBSTONE_PROTO data_app_native_crash \
+           SYSTEM_RESTART; do
+  content call --uri content://settings/global --method DELETE_value \
+      --arg "dropbox:$tag" 2>/dev/null
+done
+log "DropBox settings reverted"
 
 # Re-enable GMS services
 if [ -f "$GMS_LIST" ]; then

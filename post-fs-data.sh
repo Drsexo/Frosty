@@ -5,13 +5,6 @@ MODDIR="${0%/*}"
 
 [ -f "$MODDIR/config/user_prefs" ] && . "$MODDIR/config/user_prefs"
 
-# Resetprop tweaks
-resetprop -n tombstoned.max_tombstone_count 0
-resetprop -n ro.lmk.debug false
-resetprop -n ro.lmk.log_stats false
-resetprop -n dalvik.vm.dex2oat-minidebuginfo false
-resetprop -n dalvik.vm.minidebuginfo false
-
 if [ "$ENABLE_BLUR_DISABLE" = "1" ]; then
   resetprop -n disableBlurs true
   resetprop -n enable_blurs_on_windows 0
@@ -20,15 +13,27 @@ if [ "$ENABLE_BLUR_DISABLE" = "1" ]; then
   resetprop -n ro.surface_flinger.supports_background_blur 0
 fi
 
-# RC overlays and bin stubs for log killing
 INITDIR="$MODDIR/system/etc/init"
 BINDIR="$MODDIR/system/bin"
 
 if [ "$ENABLE_LOG_KILLING" = "1" ]; then
+  # Crash and debug reporting
+  resetprop -n tombstoned.max_tombstone_count 0
+  resetprop -n tombstoned.max_anr_count 0
+  resetprop -n ro.lmk.debug false
+  resetprop -n ro.lmk.log_stats false
+  resetprop -n dalvik.vm.dex2oat-minidebuginfo false
+  resetprop -n dalvik.vm.minidebuginfo false
+
+# RC overlays and bin stubs for log killing
+  # Wi-Fi vendor trace logging (Qualcomm — no-op on other chipsets)
+  resetprop -n sys.wifitracing.started 0
+  resetprop -n persist.vendor.wifienhancelog 0
+
   mkdir -p "$INITDIR"
   for rc in atrace atrace_userdebug bugreport debuggerd debuggerd64 dmesgd \
             dumpstate logcat logcatd logd logtagd lpdumpd tombstoned \
-            traced_perf traced_probes traceur; do
+            traced traced_perf traced_probes traceur; do
     [ ! -f "$INITDIR/${rc}.rc" ] && : > "$INITDIR/${rc}.rc"
   done
 

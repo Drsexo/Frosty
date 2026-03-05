@@ -27,6 +27,9 @@ debug.atrace.tags.enableflags=0
 debug.kill_allocating_task=0
 debug_test=0
 
+# Tracing
+persist.traced.enable=0
+
 # Logcat
 logcat.live=disable
 live.logcat=disable

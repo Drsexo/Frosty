@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.2] - 2026-03-05
+### Improved RAM Optimizer
+- **Android process management**: Caps cached background processes at 10 and empty (dead-weight) processes at 5 via `device_config`. Empty processes are now evicted after 30 seconds instead of the default 30 minutes.
+- **USAP pool**: Pre-forks Zygote processes at boot so cold app launches start faster.
+- **Added new RAM tweaks with proper backup/restore**: 
+`swappiness=100` (pushes stale anonymous pages to zram sooner)
+`page-cluster=0` (disables pointless swap readahead on zram devices)
+`watermark_scale_factor=30` (kernel reclaims memory proactively before stalls occur)
+`extra_free_kbytes=8192` (LMKD starts evicting cached apps slightly earlier; skipped silently if the path does not exist on the kernel).
+- **Proper backup/restore**: Mirrors the kernel tweaks pattern exactly. Actual pre-Frosty sysfs values are saved to `backup/ram_values.txt` on first enable and restored on revert.
+### New Tracing Nuking
+- **`traced` RC stub was missing**: `traced` was already stubbed as a binary in `post-fs-data.sh` but its init RC override was absent, meaning the Perfetto main daemon could still be started by init before the binary stub took effect. RC entry added.
+- **`persist.traced.enable=0`** added to `system.prop` to disable Perfetto at the framework level as a belt-and-suspenders measure alongside the binary/RC stubs.
+- **`traced_perf` and `traced_probes`** added to the runtime kill loop in `frosty.sh` so all three Perfetto daemons are killed immediately when Log Killing is toggled on from the WebUI.
+### Log Killing: DropBox Categories
+- **25 Android DropBox diagnostic categories** are now disabled when Log Killing is enabled. This disables system-level crash and diagnostic log collector that accumulates dumps in `/data/system/dropbox/` continuously. 
+- **`tombstoned.max_anr_count=0`** added alongside the existing `tombstoned.max_tombstone_count=0`. This caps the ANR trace counter for `/data/anr/` separately from the tombstones counter.
+- **Qualcomm Wi-Fi trace logging disabled**: `sys.wifitracing.started=0` and `persist.vendor.wifienhancelog=0` added unconditionally (no-ops on non-Qualcomm devices).
+
 ## [3.1] - 2026-03-04
 - **Added NEW Ram Optimizer**: It sets `max_cached_processes=10` via both cmd device_config and settings put (for more android versions compatibility), plus enables USAP pool for faster cold launches. Revert deletes both keys, returning to system defaults with no residual state.
 - **GMS Services**: 10 new telemetry entries added: GoogleHelpService, PhenotypeOperationService, PhResetService, HerrevadAndroidService, UdcService, UdcMddService, FocusAndroidService, stats.DropBoxEntryAddedService, gms.location.nearby.direct.service.NearbyDirectService, com.google.mainline.telemetry.

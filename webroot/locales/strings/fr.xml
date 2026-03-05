@@ -147,7 +147,7 @@
   <string name="log_reapply_start">Début de la réapplication...</string>
   <string name="log_empty">Aucune activité pour le moment</string>
   <string name="tgl_ram_optimizer">Optimiseur de RAM</string>
-  <string name="tgl_ram_optimizer_desc">Réduit le cache des applications en arrière-plan et accélère les lancements à froid</string>
+  <string name="tgl_ram_optimizer_desc">Limite les processus en cache et vides en arrière-plan, ajuste le swap zram pour libérer plus de RAM</string>
   <string name="log_ram_applied">Optimiseur de RAM appliqué</string>
   <string name="log_ram_reverted">Optimiseur de RAM annulé</string>
   <string name="loading_applying_ram">Application de l\'optimiseur de RAM...</string>

@@ -146,10 +146,10 @@
   <string name="log_sysprops_disabled">System Props disabled</string>
   <string name="log_reapply_start">Starting reapplication...</string>
   <string name="log_empty">No activity yet</string>
-  <string name="tgl_ram_optimizer">RAM Optimizer</string>
-  <string name="tgl_ram_optimizer_desc">Tightens background app cache limit, speeds up cold app launches</string>
-  <string name="log_ram_applied">RAM optimizer applied</string>
-  <string name="log_ram_reverted">RAM optimizer reverted</string>
-  <string name="loading_applying_ram">Applying RAM optimizer...</string>
-  <string name="loading_reverting_ram">Reverting RAM optimizer...</string>
+    <string name="tgl_ram_optimizer">RAM Optimizer</string>
+    <string name="tgl_ram_optimizer_desc">Limits cached and empty background processes, tunes zram swap behavior for more free RAM</string>
+    <string name="log_ram_applied">RAM optimizer applied</string>
+    <string name="log_ram_reverted">RAM optimizer reverted</string>
+    <string name="loading_applying_ram">Applying RAM optimizer...</string>
+    <string name="loading_reverting_ram">Reverting RAM optimizer...</string>
 </resources>

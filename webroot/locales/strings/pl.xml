@@ -147,7 +147,7 @@
   <string name="log_reapply_start">Rozpoczynanie ponownego stosowania...</string>
   <string name="log_empty">Brak aktywności</string>
   <string name="tgl_ram_optimizer">Optymalizator RAM</string>
-  <string name="tgl_ram_optimizer_desc">Zmniejsza limit pamięci podręcznej dla aplikacji w tle i przyspiesza zimny start aplikacji</string>
+  <string name="tgl_ram_optimizer_desc">Ogranicza buforowane i puste procesy w tle, dostraja zachowanie swap zram dla większej ilości wolnego RAM-u</string>
   <string name="log_ram_applied">Optymalizator RAM zastosowany</string>
   <string name="log_ram_reverted">Optymalizator RAM wycofany</string>
   <string name="loading_applying_ram">Zastosowywanie optymalizatora RAM...</string>

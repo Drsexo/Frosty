@@ -147,7 +147,7 @@
   <string name="log_reapply_start">Iniciando reaplicación...</string>
   <string name="log_empty">Sin actividad todavía</string>
   <string name="tgl_ram_optimizer">Optimizador de RAM</string>
-  <string name="tgl_ram_optimizer_desc">Limita el caché de apps en segundo plano y acelera el inicio en frío de aplicaciones</string>
+  <string name="tgl_ram_optimizer_desc">Limita los procesos en caché y vacíos en segundo plano, ajusta el swap de zram para liberar más RAM</string>
   <string name="log_ram_applied">Optimizador de RAM aplicado</string>
   <string name="log_ram_reverted">Optimizador de RAM revertido</string>
   <string name="loading_applying_ram">Aplicando optimizador de RAM...</string>

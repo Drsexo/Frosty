@@ -147,7 +147,7 @@
   <string name="log_reapply_start">جارٍ بدء إعادة التطبيق...</string>
   <string name="log_empty">لا يوجد نشاط حتى الآن</string>
   <string name="tgl_ram_optimizer">مُحسّن الذاكرة (RAM)</string>
-  <string name="tgl_ram_optimizer_desc">يقلل حد ذاكرة التخزين المؤقت لتطبيقات الخلفية، ويسرّع فتح التطبيقات من الصفر</string>
+  <string name="tgl_ram_optimizer_desc">يحد من العمليات المخبأة والفارغة في الخلفية، ويضبط سلوك تبديل zram لتوفير المزيد من الذاكرة (RAM)</string>
   <string name="log_ram_applied">تم تطبيق مُحسّن الذاكرة</string>
   <string name="log_ram_reverted">تم إلغاء مُحسّن الذاكرة</string>
   <string name="loading_applying_ram">جارٍ تطبيق مُحسّن الذاكرة...</string>

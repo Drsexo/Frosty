@@ -147,7 +147,7 @@
   <string name="log_reapply_start">Memulai penerapan ulang...</string>
   <string name="log_empty">Belum ada aktivitas</string>
   <string name="tgl_ram_optimizer">Pengoptimal RAM</string>
-  <string name="tgl_ram_optimizer_desc">Membatasi cache aplikasi di latar belakang dan mempercepat peluncuran awal aplikasi (cold boot)</string>
+  <string name="tgl_ram_optimizer_desc">Membatasi proses latar belakang cache dan kosong, menyesuaikan perilaku swap zram agar RAM lebih lega</string>
   <string name="log_ram_applied">Pengoptimal RAM diterapkan</string>
   <string name="log_ram_reverted">Pengoptimal RAM dikembalikan</string>
   <string name="loading_applying_ram">Menerapkan pengoptimal RAM...</string>

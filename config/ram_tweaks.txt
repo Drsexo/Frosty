@@ -1,0 +1,11 @@
+# FROSTY RAM Tweaks
+# Format: /path/to/kernel/file|value
+# Applied when RAM Optimizer is enabled. Backed up to backup/ram_values.txt before writing.
+
+# ZRAM / SWAP
+/proc/sys/vm/swappiness|100
+/proc/sys/vm/page-cluster|0
+
+# MEMORY RECLAIM
+/proc/sys/vm/watermark_scale_factor|30
+/proc/sys/vm/extra_free_kbytes|8192
