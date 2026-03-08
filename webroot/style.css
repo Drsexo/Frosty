@@ -170,8 +170,8 @@ input[type=text] { font: inherit; color: inherit; }
 
 /* ── Header (Flat Bottom, No clipping) ── */
 .hdr { padding: 0; position: relative; margin-bottom: 8px;}
-.hdr-banner { position: relative; width: 100%; line-height: 0; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
-.hdr-banner-img { width: 100%; height: auto; display: block; object-fit: cover; border-radius: 0; }
+.hdr-banner { position: relative; width: 100%; max-height: 50vh; line-height: 0; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+.hdr-banner-img { width: 100%; height: auto; display: block; object-fit: cover; object-position: center; border-radius: 0; }
 
 /* Mask fade into the background */
 .hdr-banner::after {
@@ -275,14 +275,14 @@ input[type=text] { font: inherit; color: inherit; }
 .card-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .card-title-row .card-title { margin-bottom: 0; }
 
-.log-copy-btn {
+.log-action-btn {
   padding: 4px 10px; border-radius: var(--radius-xs);
   background: var(--surface-2);
   border: 1px solid var(--stroke-var);
   color: var(--on-surface-var);
   transition: all 0.2s var(--smooth);
 }
-.log-copy-btn:active { background: #0072FF; color: #ffffff; border-color: #0072FF; transform: scale(0.9); }
+.log-action-btn:active { background: #0072FF; color: #ffffff; border-color: #0072FF; transform: scale(0.9); }
 
 /* ── Toggle & Category Rows ── */
 .tgl-row, .cat-row {
@@ -385,6 +385,15 @@ input[type=text] { font: inherit; color: inherit; }
 .cat-ico { font-size: 1.25rem; flex-shrink: 0; }
 .cat-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .cat-name { font-size: 0.9rem; font-weight: 700; }
+.cat-desc { font-size: 0.75rem; color: var(--on-surface-var); line-height: 1.4; }
+.cat-btn {
+  padding: 4px 10px; border-radius: var(--radius-xs);
+  background: var(--surface-2);
+  border: 1px solid var(--stroke-var);
+  color: var(--on-surface-var);
+  transition: all 0.2s var(--smooth);
+}
+.cat-btn:active { background: #0072FF; color: #ffffff; border-color: #0072FF; transform: scale(0.9); }
 
 /* Tag spacing */
 .cat-tag {

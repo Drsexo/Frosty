@@ -28,17 +28,17 @@ Frosty optimise l'autonomie de la batterie en gelant sélectivement les composan
 
 ## ✨ Fonctionnalités
 
-- **Gel GMS** : Désactivez les services GMS répartis en 8 catégories avec un contrôle granulaire.
-- **GMS Doze** : Retire les GMS des listes blanches (Whitelist) d'économie d'énergie.
-- **Deep Doze** : Restrictions d'arrière-plan très agressives pour toutes les applications (Modéré/Maximum).
-- **Kernel Tweaks** : Optimisations de l'ordonnanceur (Scheduler), de la VM et du réseau.
-- **Kill Logs** : Arrêt des processus de journalisation en arrière-plan (économise la batterie et la RAM).
-- **System Props** : Désactive les propriétés de débogage pour économiser la RAM.
-- **Configuration en direct** : Contrôle total via WebUI avec des interrupteurs en temps réel.
+- **Gel GMS**: Désactivez les services GMS répartis en 8 catégories avec un contrôle granulaire.
+- **GMS Doze**: Retire les GMS des listes blanches (Whitelist) d'économie d'énergie.
+- **Deep Doze**: Restrictions d'arrière-plan très agressives pour toutes les applications (Modéré/Maximum).
+- **Kernel Tweaks**: Optimisations de l'ordonnanceur (Scheduler), de la VM et du réseau.
+- **Kill Logs**: Arrêt des processus de journalisation en arrière-plan (économise la batterie et la RAM).
+- **System Props**: Désactive les propriétés de débogage pour économiser la RAM.
+- **Configuration en direct**: Contrôle total via WebUI avec des interrupteurs en temps réel.
 
 ## 📦 Installation
 
-**Prérequis :** Android 9+, Magisk 20.4+ / KernelSU / APatch, Services Google Play.
+**Prérequis:** Android 9+, Magisk 20.4+ / KernelSU / APatch, Services Google Play.
 
 1. Téléchargez le module depuis les [Releases](https://github.com/Drsexo/Frosty/releases).
 2. Installez-le via votre gestionnaire root.
@@ -50,7 +50,7 @@ Frosty optimise l'autonomie de la batterie en gelant sélectivement les composan
 
 ## 📖 Utilisation
 
-Ouvrez la WebUI depuis votre gestionnaire root :
+Ouvrez la WebUI depuis votre gestionnaire root:
 
 - **Tweaks Système** — Activez les Tweaks du noyau, System Props, désactivez le flou, arrêtez les logs (Kill Logs).
 - **GMS Doze / Deep Doze** — Configurez l'agressivité du mode Doze.
@@ -90,11 +90,11 @@ Ouvrez la WebUI depuis votre gestionnaire root :
 
 ## ❓ FAQ
 
-**Q : Pourquoi mes notifications sont-elles retardées ?**
-R : GMS Doze et Deep Doze restreignent massivement l'activité en arrière-plan. Ajoutez vos applications de messagerie à la Whitelist.
+**Q: Pourquoi mes notifications sont-elles retardées ?**
+R: GMS Doze et Deep Doze restreignent massivement l'activité en arrière-plan. Ajoutez vos applications de messagerie à la Whitelist.
 
-**Q : Frosty fonctionne-t-il sans les Services Google Play ?**
-R : Oui. Les Kernel Tweaks, System Props, la désactivation du flou, le Kill Logs et le Deep Doze fonctionneront sans GMS.
+**Q: Frosty fonctionne-t-il sans les Services Google Play ?**
+R: Oui. Les Kernel Tweaks, System Props, la désactivation du flou, le Kill Logs et le Deep Doze fonctionneront sans GMS.
 
 ## 📝 Whitelist Doze
 

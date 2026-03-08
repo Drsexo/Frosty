@@ -42,6 +42,10 @@
   <string name="cat_wearables_tag">Wear OS、Google Fit が無効になります</string>
   <string name="cat_games">ゲーム (Games)</string>
   <string name="cat_games_tag">Play ゲームの実績やクラウドセーブが無効になります</string>
+  <string name="sec_misc">その他</string>
+  <string name="cat_dexopt">DEX Optimization</string>
+  <string name="cat_dexopt_desc">DEX (Dalvik Executable) ファイルを最適化してパフォーマンスを向上させます</string>
+  <string name="btn_optimize">最適化</string>
   <string name="sec_log">アクティビティログ</string>
   <string name="wl_title">Doze ホワイトリスト (Whitelist)</string>
   <string name="wl_notice">ここに追加されたアプリは、ディープスリープの厳しい制限を回避します。メッセージアプリ、銀行アプリ、アラームアプリを追加してください。</string>
@@ -129,6 +133,9 @@
   <string name="log_toggle_off">{0} がオフになりました</string>
   <string name="log_webui_ready">WebUI の準備が完了しました</string>
   <string name="log_load_failed">読み込みエラー: {0}</string>
+  <string name="executing">実行中: {0}</string>
+  <string name="log_executed">実行成功: {0}</string>
+  <string name="log_execution_failed">実行エラー: {0}</string>
   <string name="log_reboot_effect">変更を完全に適用するにはデバイスを再起動してください</string>
   <string name="log_reverting_all">すべての設定をシステムのデフォルト状態に復元しています...</string>
   <string name="log_freeze_all">すべての設定を有効にしています...</string>

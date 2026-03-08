@@ -262,22 +262,33 @@
       </div>
     </section>
 
+    <!-- Miscellaneous -->
+    <section class="card">
+      <h2 class="card-title"><span>🛠️ </span><span data-i18n="sec_misc">Miscellaneous</span></h2>
+      <div class="cat-row ripple" data-cat="dexopt">
+        <div class="cat-left"><span class="cat-ico">♻️</span><div class="cat-info"><span class="cat-name" data-i18n="cat_dexopt">DexOpt</span><span class="cat-desc" data-i18n="cat_dexopt_desc">Optimizes DEX (Dalvik Executable) files for better performance</span></div></div>
+        <button class="cat-btn" id="btn-dexopt">
+          <span data-i18n="btn_optimize">Optimize</span>
+        </button>
+      </div>
+    </section>
+
     <!-- Activity Log -->
     <section class="card">
       <div class="card-title-row">
         <h2 class="card-title"><span>📄 </span><span data-i18n="sec_log">Activity Log</span></h2>
         <div style="display:flex;gap:6px">
-          <button class="log-copy-btn ripple" id="log-copy-btn" title="Copy log">
+          <button class="log-action-btn ripple" id="btn-copy-log" title="Copy log">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
           </button>
-          <button class="log-copy-btn ripple" id="log-clear-btn" title="Clear log">
+          <button class="log-action-btn ripple" id="btn-clear-log" title="Clear log">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
           </button>
         </div>
       </div>
       <div class="log-wrap">
         <div class="log-box" id="log-box" data-i18n-empty="log_empty" data-empty="No activity yet"></div>
-        <button class="log-expand-btn" id="log-expand-btn" title="Expand">
+        <button class="log-expand-btn" id="btn-expand-log" title="Expand">
           <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
         </button>
       </div>

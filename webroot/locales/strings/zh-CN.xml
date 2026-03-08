@@ -42,6 +42,10 @@
   <string name="cat_wearables_tag">将禁用 Wear OS 和 Google Fit 健身追踪</string>
   <string name="cat_games">游戏 (Games)</string>
   <string name="cat_games_tag">将禁用 Play 游戏成就及云存档同步</string>
+  <string name="sec_misc">雜項</string>
+  <string name="cat_dexopt">DEX 优化</string>
+  <string name="cat_dexopt_desc">优化 DEX (Dalvik Executable) 文件以提高性能</string>
+  <string name="btn_optimize">优化</string>
   <string name="sec_log">活动日志</string>
   <string name="wl_title">Doze 白名单 (Whitelist)</string>
   <string name="wl_notice">添加到此处的应用将绕过深度休眠的严格限制。请在此处添加您的聊天通讯、银行及闹钟应用。</string>
@@ -129,6 +133,9 @@
   <string name="log_toggle_off">{0} 已关闭</string>
   <string name="log_webui_ready">WebUI 界面已就绪</string>
   <string name="log_load_failed">加载时发生错误：{0}</string>
+  <string name="executing">正在执行: {0}</string>
+  <string name="log_executed">执行成功: {0}</string>
+  <string name="log_execution_failed">执行时发生错误：{0}</string>
   <string name="log_reboot_effect">请重启设备以使所有更改完全生效</string>
   <string name="log_reverting_all">正在将所有设置恢复为系统默认状态...</string>
   <string name="log_freeze_all">正在启用所有配置项...</string>

@@ -42,6 +42,10 @@
   <string name="cat_wearables_tag">Akan mematikan Wear OS dan Google Fit</string>
   <string name="cat_games">Game (Games)</string>
   <string name="cat_games_tag">Akan mematikan Play Games dan penyimpanan cloud</string>
+  <string name="sec_misc">Berbagai macam</string>
+  <string name="cat_dexopt">Optimasi DEX</string>
+  <string name="cat_dexopt_desc">Optimasi file DEX (Dalvik Executable) untuk meningkatkan kinerja</string>
+  <string name="btn_optimize">Optimalkan</string>
   <string name="sec_log">Log Aktivitas</string>
   <string name="wl_title">Whitelist Doze</string>
   <string name="wl_notice">Aplikasi yang ditambahkan di sini akan melewati batasan Deep Doze yang ketat. Tambahkan aplikasi perpesanan, bank, dan alarm di sini.</string>
@@ -129,6 +133,9 @@
   <string name="log_toggle_off">{0} telah dinonaktifkan</string>
   <string name="log_webui_ready">WebUI siap digunakan</string>
   <string name="log_load_failed">Gagal memuat: {0}</string>
+  <string name="executing">Mengeksekusi: {0}</string>
+  <string name="log_executed">Berhasil dieksekusi: {0}</string>
+  <string name="log_execution_failed">Gagal mengeksekusi: {0}</string>
   <string name="log_reboot_effect">Reboot perangkat untuk mendapatkan efek penuh</string>
   <string name="log_reverting_all">Mengembalikan semua konfigurasi ke default...</string>
   <string name="log_freeze_all">Mengaktifkan semua konfigurasi...</string>

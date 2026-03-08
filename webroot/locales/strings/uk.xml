@@ -42,6 +42,10 @@
   <string name="cat_wearables_tag">Вимикає Wear OS та Google Fit</string>
   <string name="cat_games">Ігри (Games)</string>
   <string name="cat_games_tag">Вимикає Play Games та хмарні збереження</string>
+  <string name="sec_misc">Різне</string>
+  <string name="cat_dexopt">Оптимізація DEX</string>
+  <string name="cat_dexopt_desc">Оптимізує файли DEX (Dalvik Executable) для покращення продуктивності</string>
+  <string name="btn_optimize">Оптимізувати</string>
   <string name="sec_log">Журнал активності</string>
   <string name="wl_title">Білий список (Whitelist) Doze</string>
   <string name="wl_notice">Застосунки, додані сюди, обходять жорсткі обмеження Deep Doze. Додайте свої месенджери, банківські застосунки та будильники.</string>
@@ -129,6 +133,9 @@
   <string name="log_toggle_off">{0} вимкнено</string>
   <string name="log_webui_ready">Інтерфейс WebUI повністю готовий</string>
   <string name="log_load_failed">Помилка при завантаженні: {0}</string>
+  <string name="executing">Виконується: {0}</string>
+  <string name="log_executed">Успішно виконано: {0}</string>
+  <string name="log_execution_failed">Помилка при виконанні: {0}</string>
   <string name="log_reboot_effect">Перезавантажте пристрій для повного застосування змін</string>
   <string name="log_reverting_all">Скидання всіх налаштувань до значень за замовчуванням...</string>
   <string name="log_freeze_all">Активація всіх налаштувань...</string>

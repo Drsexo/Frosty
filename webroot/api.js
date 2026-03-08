@@ -5,7 +5,6 @@ var API = (function () {
 
   var MODDIR      = '/data/adb/modules/Frosty';
   var PREFS       = MODDIR + '/config/user_prefs';
-  var GMS_LIST    = MODDIR + '/config/gms_services.txt';
   var WHITELIST   = MODDIR + '/config/doze_whitelist.txt';
   var LOG_DIR     = MODDIR + '/logs';
 
@@ -153,37 +152,20 @@ var API = (function () {
     }
   }
 
-  // ── Category immediate apply/revert ──
+  // ── Kernel Tweaks ──
 
-  async function freezeCategory(category) {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh freeze_category \'' + esc(category) + '\' 2>/dev/null');
-  }
-  async function unfreezeCategory(category) {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh unfreeze_category \'' + esc(category) + '\' 2>/dev/null');
+  async function applyKernelTweaks() {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh apply_kernel 2>/dev/null');
   }
 
-  // ── GMS Doze ──
-
-  async function applyGmsDoze() {
-    await run('sh ' + MODDIR + '/gms_doze.sh apply 2>&1');
-    return { status: 'ok' };
+  async function revertKernelTweaks() {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh revert_kernel 2>/dev/null');
   }
 
-  async function revertGmsDoze() {
-    await run('sh ' + MODDIR + '/gms_doze.sh revert 2>&1');
-    return { status: 'ok' };
-  }
+  // ── System Props toggle ──
 
-  // ── Deep Doze ──
-
-  async function applyDeepDoze() {
-    await run('sh ' + MODDIR + '/deep_doze.sh freeze 2>&1');
-    return { status: 'ok' };
-  }
-
-  async function revertDeepDoze() {
-    await run('sh ' + MODDIR + '/deep_doze.sh stock 2>&1');
-    return { status: 'ok' };
+  async function toggleSystemProps(enable) {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh apply_sysprops 2>/dev/null');
   }
 
   // ── RAM Optimizer ──
@@ -194,16 +176,6 @@ var API = (function () {
 
   async function revertRamOptimizer() {
     return await runJSON('sh ' + MODDIR + '/frosty.sh ram_restore 2>/dev/null');
-  }
-
-  // ── Kernel Tweaks ──
-
-  async function applyTweaks() {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh apply_kernel 2>/dev/null');
-  }
-
-  async function revertTweaks() {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh revert_kernel 2>/dev/null');
   }
 
   // ── Blur ──
@@ -229,10 +201,28 @@ var API = (function () {
     return await runJSON('sh ' + MODDIR + '/frosty.sh kill_logs 2>/dev/null');
   }
 
-  // ── System Props toggle ──
+  // ── GMS Doze ──
 
-  async function toggleSystemProps(enable) {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh apply_sysprops 2>/dev/null');
+  async function applyGmsDoze() {
+    await run('sh ' + MODDIR + '/gms_doze.sh apply 2>&1');
+    return { status: 'ok' };
+  }
+
+  async function revertGmsDoze() {
+    await run('sh ' + MODDIR + '/gms_doze.sh revert 2>&1');
+    return { status: 'ok' };
+  }
+
+  // ── Deep Doze ──
+
+  async function applyDeepDoze() {
+    await run('sh ' + MODDIR + '/deep_doze.sh freeze 2>&1');
+    return { status: 'ok' };
+  }
+
+  async function revertDeepDoze() {
+    await run('sh ' + MODDIR + '/deep_doze.sh stock 2>&1');
+    return { status: 'ok' };
   }
 
   // ── Whitelist ──
@@ -267,6 +257,21 @@ var API = (function () {
     var escaped = esc(pkg).replace(/\./g, '\\.');
     await exec('sed -i "/^' + escaped + '$/d" "' + WHITELIST + '"');
     return { status: 'ok' };
+  }
+
+  // ── Category immediate apply/revert ──
+
+  async function freezeCategory(category) {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh freeze_category \'' + esc(category) + '\' 2>/dev/null');
+  }
+  async function unfreezeCategory(category) {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh unfreeze_category \'' + esc(category) + '\' 2>/dev/null');
+  }
+
+  // ── DexOpt (Background optimization) ──
+
+  async function executeDexOpt() {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh dexopt 2>/dev/null');
   }
 
   // ── Logs ──
@@ -306,39 +311,40 @@ var API = (function () {
   }
 
   async function shareBackup(filePath) {
-    await run('sh ' + MODDIR + '/frosty.sh share "' + filePath + '" 2>&1');
+    await run('sh ' + MODDIR + '/frosty.sh share_backup "' + filePath + '" 2>&1');
   }
 
   return {
-    available:             available,
-    exec:                  exec,
-    run:                   run,
-    getPrefs:              getPrefs,
-    setPref:               setPref,
-    applyFreeze:           applyFreeze,
-    applyStock:            applyStock,
-    freezeCategory:        freezeCategory,
-    unfreezeCategory:      unfreezeCategory,
-    applyGmsDoze:          applyGmsDoze,
-    revertGmsDoze:         revertGmsDoze,
-    applyDeepDoze:         applyDeepDoze,
-    revertDeepDoze:        revertDeepDoze,
-    applyRamOptimizer:     applyRamOptimizer,
-    revertRamOptimizer:    revertRamOptimizer,
-    applyTweaks:           applyTweaks,
-    revertTweaks:          revertTweaks,
-    applyBlur:             applyBlur,
-    killLogs:              killLogs,
-    toggleSystemProps:     toggleSystemProps,
-    getWhitelist:          getWhitelist,
-    addWhitelist:          addWhitelist,
-    removeWhitelist:       removeWhitelist,
-    appendLog:             appendLog,
-    nativeListPackages:    nativeListPackages,
-    nativeGetPackagesInfo: nativeGetPackagesInfo,
-    listBackups:           listBackups,
-    exportSettings:        exportSettings,
-    importSettings:        importSettings,
-    shareBackup:           shareBackup
+    available,
+    exec,
+    run,
+    getPrefs,
+    setPref,
+    applyFreeze,
+    applyStock,
+    applyKernelTweaks,
+    revertKernelTweaks,
+    toggleSystemProps,
+    applyRamOptimizer,
+    revertRamOptimizer,
+    applyBlur,
+    killLogs,
+    applyGmsDoze,
+    revertGmsDoze,
+    applyDeepDoze,
+    revertDeepDoze,
+    freezeCategory,
+    unfreezeCategory,
+    executeDexOpt,
+    getWhitelist,
+    addWhitelist,
+    removeWhitelist,
+    appendLog,
+    nativeListPackages,
+    nativeGetPackagesInfo,
+    listBackups,
+    exportSettings,
+    importSettings,
+    shareBackup
   };
 })();

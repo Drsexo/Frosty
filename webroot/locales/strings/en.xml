@@ -42,6 +42,10 @@
   <string name="cat_wearables_tag">Breaks Wear OS, Fit</string>
   <string name="cat_games">Games</string>
   <string name="cat_games_tag">Breaks Play Games</string>
+  <string name="sec_misc">Miscellaneous</string>
+  <string name="cat_dexopt">DEX Optimization</string>
+  <string name="cat_dexopt_desc">Optimizes DEX (Dalvik Executable) files for better performance</string>
+  <string name="btn_optimize">Optimize</string>
   <string name="sec_log">Activity Log</string>
   <string name="wl_title">Doze Whitelist</string>
   <string name="wl_notice">Whitelisted apps bypass Deep Doze restrictions. Add messaging, banking, and alarm apps here.</string>
@@ -129,6 +133,9 @@
   <string name="log_toggle_off">{0} disabled</string>
   <string name="log_webui_ready">WebUI ready</string>
   <string name="log_load_failed">Load failed: {0}</string>
+  <string name="executing">Executing: {0}</string>
+  <string name="log_executed">Executed successfully: {0}</string>
+  <string name="log_execution_failed">Execution failed: {0}</string>
   <string name="log_reboot_effect">Reboot for full effect</string>
   <string name="log_reverting_all">Revert All: disabling everything...</string>
   <string name="log_freeze_all">Enable All: turning everything on...</string>

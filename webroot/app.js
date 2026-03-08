@@ -294,11 +294,11 @@
       if (key === 'kernel_tweaks') {
         if (nv) {
           updateLoading(t('loading_applying_kernel'));
-          var r = await API.applyTweaks();
+          var r = await API.applyKernelTweaks();
           if (r.status === 'ok') logAction(tf('log_kernel_applied', r.applied, r.failed, r.skipped || 0), r.failed > 0 ? 'warn' : 'ok');
         } else {
           updateLoading(t('loading_reverting_kernel'));
-          var r2 = await API.revertTweaks();
+          var r2 = await API.revertKernelTweaks();
           if (r2.status === 'ok') logAction(tf('log_kernel_restored', r2.restored), 'ok');
         }
       } else if (key === 'blur_disable') {
@@ -480,7 +480,7 @@
 
       // Step 4: Apply kernel tweaks
       await yieldFrame(t('loading_applying_kernel'));
-      var rk = await API.applyTweaks();
+      var rk = await API.applyKernelTweaks();
       if (rk.status === 'ok') logAction(tf('log_kernel_applied', rk.applied, rk.failed, rk.skipped || 0), rk.failed > 0 ? 'warn' : 'ok');
 
       // Step 5: Enable system props (rename .old → system.prop if needed)
@@ -552,7 +552,7 @@
 
       // Step 3: Revert kernel FIRST (before frosty.sh stock backup)
       await yieldFrame(t('loading_restoring_kernel'));
-      var rk = await API.revertTweaks();
+      var rk = await API.revertKernelTweaks();
       if (rk.status === 'ok') logAction(tf('log_kernel_vals_restored', rk.restored), rk.restored > 0 ? 'ok' : 'warn');
 
       // Step 4: Disable system props (rename system.prop → .old)
@@ -1120,142 +1120,6 @@
   function bind() {
     $('btn-freeze').addEventListener('click', applyFreeze);
     $('btn-stock').addEventListener('click', applyStock);
-
-    $('t-kernel').addEventListener('change', function () { togglePref('kernel_tweaks'); });
-    $('t-sysprops').addEventListener('change', function () { togglePref('system_props'); });
-    $('t-blur').addEventListener('change', function () { togglePref('blur_disable'); });
-    $('t-logs').addEventListener('change', function () { togglePref('log_killing'); });
-    $('t-ram-optimizer').addEventListener('change', function () { togglePref('ram_optimizer'); });
-    $('t-gms-doze').addEventListener('change', function () { togglePref('gms_doze'); });
-    $('t-deep-doze').addEventListener('change', function () { togglePref('deep_doze'); });
-    document.querySelectorAll('.tgl-row, .cat-row').forEach(function (row) {
-      row.addEventListener('click', function (e) {
-        if (e.target.closest('.tgl')) return;
-        var chk = row.querySelector('input[type="checkbox"]');
-        if (chk) chk.click();
-      });
-    });
-
-    $('lvl-mod').addEventListener('click', function () { setDozeLevel('moderate'); });
-    $('lvl-max').addEventListener('click', function () { setDozeLevel('maximum'); });
-
-    $('wl-open').addEventListener('click', openWhitelist);
-    $('wl-close').addEventListener('click', closeWhitelist);
-    $('wl-modal').addEventListener('click', function (e) {
-      if (e.target === this) closeWhitelist();
-    });
-
-
-    $('wl-search').addEventListener('input', function () {
-      debouncedSearch(this.value);
-    });
-
-    $('wl-sys').addEventListener('change', function () {
-      wlShowSys = this.checked;
-      wlFiltered = getSortedFiltered();
-      renderWl();
-    });
-
-    $('wl-list').addEventListener('scroll', onWlScroll, { passive: true });
-
-    $('wl-list').addEventListener('click', function (e) {
-      var item = e.target.closest('.wl-item');
-      if (item && item.dataset.pkg) {
-        toggleWlApp(item.dataset.pkg);
-      }
-    });
-
-    var cats = ['telemetry', 'background', 'location', 'connectivity', 'cloud', 'payments', 'wearables', 'games'];
-    cats.forEach(function (cat) {
-      var el = $('t-' + cat);
-      if (el) el.addEventListener('change', function () { toggleCategory(cat); });
-    });
-
-    // ── 3-dots menu ──
-    var dropdown = $('hdr-dropdown');
-    $('hdr-dots-btn').addEventListener('click', function (e) {
-      e.stopPropagation();
-      dropdown.classList.toggle('open');
-    });
-    document.addEventListener('click', function () {
-      dropdown.classList.remove('open');
-    });
-    document.addEventListener('scroll', function (e) {
-      if (dropdown.contains(e.target)) return;
-      dropdown.classList.remove('open');
-    }, { passive: true, capture: true });
-    var _appEl = document.getElementById('app');
-    if (_appEl) _appEl.addEventListener('scroll', function (e) {
-      if (dropdown.contains(e.target)) return;
-      dropdown.classList.remove('open');
-    }, { passive: true });
-
-    // ── About ──
-    $('menu-about').addEventListener('click', function () {
-      dropdown.classList.remove('open');
-      openAbout();
-    });
-    $('about-close').addEventListener('click', function () {
-      $('about-modal').classList.remove('open');
-    });
-    $('about-modal').addEventListener('click', function (e) {
-      if (e.target === this) this.classList.remove('open');
-    });
-    $('about-gh-btn').addEventListener('click', function (e) {
-      e.preventDefault();
-      try { API.run('am start -a android.intent.action.VIEW -d "https://github.com/Drsexo/Frosty"'); }
-      catch (err) { window.open('https://github.com/Drsexo/Frosty', '_blank'); }
-    });
-
-    // ── Import / Export ──
-    $('menu-io').addEventListener('click', function () {
-      dropdown.classList.remove('open');
-      openIO();
-    });
-    $('io-close').addEventListener('click', function () {
-      $('io-modal').classList.remove('open');
-    });
-    $('io-modal').addEventListener('click', function (e) {
-      if (e.target === this) this.classList.remove('open');
-    });
-    $('io-export-btn').addEventListener('click', async function () {
-      var btn = this;
-      btn.disabled = true;
-      try {
-        var path = await API.exportSettings();
-        if (path && path.indexOf('frosty_') !== -1) {
-          toast(t('toast_exported') + ': ' + path.split('/').pop(), 'ok');
-          loadIOList();
-        } else {
-          toast(t('toast_export_failed'), 'err');
-        }
-      } catch(e) { toast(t('toast_export_failed') + ': ' + String(e.message || e).substring(0, 60), 'err'); }
-      btn.disabled = false;
-    });
-
-    // ── Language ──
-    $('menu-lang').addEventListener('click', function () {
-      dropdown.classList.remove('open');
-      openLang();
-    });
-    $('lang-close').addEventListener('click', function () {
-      $('lang-modal').classList.remove('open');
-    });
-    $('lang-modal').addEventListener('click', function (e) {
-      if (e.target === this) this.classList.remove('open');
-    });
-
-    $('log-clear-btn').addEventListener('click', function () {
-      localLogs = [];
-      var box = $('log-box');
-      if (box) box.innerHTML = '';
-    });
-
-    $('log-expand-btn').addEventListener('click', function () {
-      $('log-box').classList.toggle('expanded');
-      this.classList.toggle('expanded');
-    });
-
     $('btn-reapply').addEventListener('click', async function () {
       if (busy) return;
       var rp = state.prefs || {}, rc = state.categories || {};
@@ -1295,7 +1159,7 @@
       try {
         if (rp.kernel_tweaks) {
           await stepLoad('loading_applying_kernel');
-          var rk = await API.applyTweaks();
+          var rk = await API.applyKernelTweaks();
           if (rk.status === 'ok') logAction(tf('log_kernel_applied', rk.applied, rk.failed, rk.skipped || 0), rk.failed > 0 ? 'warn' : 'ok');
           else logAction(rk.message || 'Kernel: error', 'err');
         }
@@ -1356,7 +1220,75 @@
       busy = false;
     });
 
-        $('log-copy-btn').addEventListener('click', function () {
+    // ── System Tweaks ──
+    $('t-kernel').addEventListener('change', function () { togglePref('kernel_tweaks'); });
+    $('t-sysprops').addEventListener('change', function () { togglePref('system_props'); });
+    $('t-blur').addEventListener('change', function () { togglePref('blur_disable'); });
+    $('t-logs').addEventListener('change', function () { togglePref('log_killing'); });
+    $('t-ram-optimizer').addEventListener('change', function () { togglePref('ram_optimizer'); });
+    $('t-gms-doze').addEventListener('change', function () { togglePref('gms_doze'); });
+    $('t-deep-doze').addEventListener('change', function () { togglePref('deep_doze'); });
+    document.querySelectorAll('.tgl-row, .cat-row').forEach(function (row) {
+      row.addEventListener('click', function (e) {
+        if (e.target.closest('.tgl')) return;
+        var chk = row.querySelector('input[type="checkbox"]');
+        if (chk) chk.click();
+      });
+    });
+
+    // ── Doze ──
+    $('lvl-mod').addEventListener('click', function () { setDozeLevel('moderate'); });
+    $('lvl-max').addEventListener('click', function () { setDozeLevel('maximum'); });
+
+    $('wl-open').addEventListener('click', openWhitelist);
+    $('wl-close').addEventListener('click', closeWhitelist);
+    $('wl-modal').addEventListener('click', function (e) {
+      if (e.target === this) closeWhitelist();
+    });
+
+
+    $('wl-search').addEventListener('input', function () {
+      debouncedSearch(this.value);
+    });
+
+    $('wl-sys').addEventListener('change', function () {
+      wlShowSys = this.checked;
+      wlFiltered = getSortedFiltered();
+      renderWl();
+    });
+
+    $('wl-list').addEventListener('scroll', onWlScroll, { passive: true });
+
+    $('wl-list').addEventListener('click', function (e) {
+      var item = e.target.closest('.wl-item');
+      if (item && item.dataset.pkg) {
+        toggleWlApp(item.dataset.pkg);
+      }
+    });
+
+    // ── GMS Categories ──
+    var cats = ['telemetry', 'background', 'location', 'connectivity', 'cloud', 'payments', 'wearables', 'games'];
+    cats.forEach(function (cat) {
+      var el = $('t-' + cat);
+      if (el) el.addEventListener('change', function () { toggleCategory(cat); });
+    });
+
+    // ── Miscellaneous ──
+    $('btn-dexopt').addEventListener('click', async function () {
+      showLoading(tf('executing', t("cat_dexopt")));
+      try {
+        await API.executeDexOpt();
+        log(tf('log_executed', t("cat_dexopt")), 'ok');
+        toast(tf('log_executed', t("cat_dexopt")), 'ok');
+      } catch (e) {
+        log(tf('log_execution_failed', e.message), 'err');
+        toast(tf('log_execution_failed', e.message), 'err');
+      }
+      hideLoading();
+    });
+
+    // ── Activity Log ──
+    $('btn-copy-log').addEventListener('click', function () {
       var box = $('log-box');
       if (!box || !box.children.length) return;
       var lines = Array.from(box.children).map(function (row) {
@@ -1382,6 +1314,89 @@
         document.body.removeChild(ta);
       }
     });
+    $('btn-clear-log').addEventListener('click', function () {
+      localLogs = [];
+      var box = $('log-box');
+      if (box) box.innerHTML = '';
+    });
+    $('btn-expand-log').addEventListener('click', function () {
+      $('log-box').classList.toggle('expanded');
+      this.classList.toggle('expanded');
+    });
+
+    // ── 3-dots menu ──
+    var dropdown = $('hdr-dropdown');
+    $('hdr-dots-btn').addEventListener('click', function (e) {
+      e.stopPropagation();
+      dropdown.classList.toggle('open');
+    });
+    document.addEventListener('click', function () {
+      dropdown.classList.remove('open');
+    });
+    document.addEventListener('scroll', function (e) {
+      if (dropdown.contains(e.target)) return;
+      dropdown.classList.remove('open');
+    }, { passive: true, capture: true });
+    var _appEl = document.getElementById('app');
+    if (_appEl) _appEl.addEventListener('scroll', function (e) {
+      if (dropdown.contains(e.target)) return;
+      dropdown.classList.remove('open');
+    }, { passive: true });
+
+    // ── Import / Export ──
+    $('menu-io').addEventListener('click', function () {
+      dropdown.classList.remove('open');
+      openIO();
+    });
+    $('io-close').addEventListener('click', function () {
+      $('io-modal').classList.remove('open');
+    });
+    $('io-modal').addEventListener('click', function (e) {
+      if (e.target === this) this.classList.remove('open');
+    });
+    $('io-export-btn').addEventListener('click', async function () {
+      var btn = this;
+      btn.disabled = true;
+      try {
+        var path = await API.exportSettings();
+        if (path && path.indexOf('frosty_') !== -1) {
+          toast(t('toast_exported') + ': ' + path.split('/').pop(), 'ok');
+          loadIOList();
+        } else {
+          toast(t('toast_export_failed'), 'err');
+        }
+      } catch(e) { toast(t('toast_export_failed') + ': ' + String(e.message || e).substring(0, 60), 'err'); }
+      btn.disabled = false;
+    });
+
+    // ── Language ──
+    $('menu-lang').addEventListener('click', function () {
+      dropdown.classList.remove('open');
+      openLang();
+    });
+    $('lang-close').addEventListener('click', function () {
+      $('lang-modal').classList.remove('open');
+    });
+    $('lang-modal').addEventListener('click', function (e) {
+      if (e.target === this) this.classList.remove('open');
+    });
+
+    // ── About ──
+    $('menu-about').addEventListener('click', function () {
+      dropdown.classList.remove('open');
+      openAbout();
+    });
+    $('about-close').addEventListener('click', function () {
+      $('about-modal').classList.remove('open');
+    });
+    $('about-modal').addEventListener('click', function (e) {
+      if (e.target === this) this.classList.remove('open');
+    });
+    $('about-gh-btn').addEventListener('click', function (e) {
+      e.preventDefault();
+      try { API.run('am start -a android.intent.action.VIEW -d "https://github.com/Drsexo/Frosty"'); }
+      catch (err) { window.open('https://github.com/Drsexo/Frosty', '_blank'); }
+    });
 
     // Pause polling when app is backgrounded, resume when foregrounded
     document.addEventListener('visibilitychange', function () {
@@ -1393,14 +1408,14 @@
   // ── Init ──
 
   async function init() {
-    if (!API.available()) {
-      $('app').innerHTML =
-        '<div class="card" style="margin-top:60px;text-align:center;padding:30px">' +
-        '<div style="font-size:2rem;margin-bottom:12px">⚠️</div>' +
-        '<h2 style="font-size:1rem;margin-bottom:6px">' + t('ksu_unavailable_title') + '</h2>' +
-        '<p style="color:var(--text-dim);font-size:.82rem">' + t('ksu_unavailable_desc') + '</p></div>';
-      return;
-    }
+    // if (!API.available()) {
+    //   $('app').innerHTML =
+    //     '<div class="card" style="margin-top:60px;text-align:center;padding:30px">' +
+    //     '<div style="font-size:2rem;margin-bottom:12px">⚠️</div>' +
+    //     '<h2 style="font-size:1rem;margin-bottom:6px">' + t('ksu_unavailable_title') + '</h2>' +
+    //     '<p style="color:var(--text-dim);font-size:.82rem">' + t('ksu_unavailable_desc') + '</p></div>';
+    //   return;
+    // }
 
     await initLang();
 

@@ -93,29 +93,7 @@ EOF
   chmod 644 "$USER_PREFS"
 }
 
-# Toggle system.prop
-apply_system_props() {
-  if [ "$ENABLE_SYSTEM_PROPS" = "1" ]; then
-    if [ -f "$SYSPROP_OLD" ]; then
-      mv "$SYSPROP_OLD" "$SYSPROP"
-      echo '{"status":"ok","action":"enabled"}'
-    elif [ -f "$SYSPROP" ]; then
-      echo '{"status":"ok","action":"enabled"}'
-    else
-      echo '{"status":"error","message":"system.prop and system.prop.old both missing"}'
-    fi
-  else
-    if [ -f "$SYSPROP" ]; then
-      mv "$SYSPROP" "$SYSPROP_OLD"
-      echo '{"status":"ok","action":"disabled"}'
-    elif [ -f "$SYSPROP_OLD" ]; then
-      echo '{"status":"ok","action":"disabled"}'
-    else
-      echo '{"status":"error","message":"system.prop and system.prop.old both missing"}'
-    fi
-  fi
-}
-
+# Freeze All
 freeze_services() {
   echo "Frosty Services - FREEZE $(date '+%Y-%m-%d %H:%M:%S')" > "$SERVICES_LOG"
 
@@ -169,6 +147,7 @@ freeze_services() {
   echo ""
 }
 
+# Revert All
 stock_services() {
   echo "Frosty Services - STOCK $(date '+%Y-%m-%d %H:%M:%S')" > "$SERVICES_LOG"
 
@@ -226,117 +205,94 @@ stock_services() {
   "$MODDIR/deep_doze.sh" stock
 }
 
-backup_settings() {
-  local dir="/storage/emulated/0/Frosty"
-  mkdir -p "$dir" 2>/dev/null || { echo "ERROR: Cannot write to /storage/emulated/0/Frosty — grant storage permission"; return 1; }
-  local ts=$(date '+%Y%m%d_%H%M%S')
-  local out="$dir/frosty_$ts.json"
-  local modver; modver=$(grep "^version=" "$MODDIR/module.prop" 2>/dev/null | cut -d= -f2)
-  [ -z "$modver" ] && modver="unknown"
-  . "$MODDIR/config/user_prefs"
-  local wl_b64=""
-  if [ -f "$MODDIR/config/doze_whitelist.txt" ]; then
-    wl_b64=$(base64 < "$MODDIR/config/doze_whitelist.txt" | tr -d '\n')
+# Kernel Tweaks
+apply_kernel() {
+  local tweaks="$MODDIR/config/kernel_tweaks.txt"
+
+  if [ ! -f "$tweaks" ]; then
+    echo '{"status":"error","message":"kernel_tweaks.txt not found"}'
+    return
   fi
-  cat > "$out" << ENDJSON
-{
-  "version": "$modver",
-  "exported": "$ts",
-  "prefs": {
-    "ENABLE_KERNEL_TWEAKS": $ENABLE_KERNEL_TWEAKS,
-    "ENABLE_RAM_OPTIMIZER": $ENABLE_RAM_OPTIMIZER,
-    "ENABLE_SYSTEM_PROPS": $ENABLE_SYSTEM_PROPS,
-    "ENABLE_BLUR_DISABLE": $ENABLE_BLUR_DISABLE,
-    "ENABLE_LOG_KILLING": $ENABLE_LOG_KILLING,
-    "ENABLE_GMS_DOZE": $ENABLE_GMS_DOZE,
-    "ENABLE_DEEP_DOZE": $ENABLE_DEEP_DOZE,
-    "DEEP_DOZE_LEVEL": "$DEEP_DOZE_LEVEL",
-    "DISABLE_TELEMETRY": $DISABLE_TELEMETRY,
-    "DISABLE_BACKGROUND": $DISABLE_BACKGROUND,
-    "DISABLE_LOCATION": $DISABLE_LOCATION,
-    "DISABLE_CONNECTIVITY": $DISABLE_CONNECTIVITY,
-    "DISABLE_CLOUD": $DISABLE_CLOUD,
-    "DISABLE_PAYMENTS": $DISABLE_PAYMENTS,
-    "DISABLE_WEARABLES": $DISABLE_WEARABLES,
-    "DISABLE_GAMES": $DISABLE_GAMES
-  },
-  "whitelist_b64": "$wl_b64"
+
+  # Backup current values if no backup exists yet
+  if [ ! -f "$KERNEL_BACKUP" ]; then
+    mkdir -p "$MODDIR/backup"
+    printf "# Kernel Backup - $(date)\n" > "$KERNEL_BACKUP"
+    while IFS= read -r _line; do
+      [ -z "$_line" ] && continue
+      case "$_line" in '#'*) continue ;; esac
+      _path=$(printf '%s' "$_line" | cut -d'|' -f1 | tr -d ' ')
+      [ -z "$_path" ] || [ ! -e "$_path" ] && continue
+      _name=$(basename "$_path")
+      _val=$(cat "$_path" 2>/dev/null)
+      printf "%s=%s=%s\n" "$_name" "$_val" "$_path" >> "$KERNEL_BACKUP"
+    done < "$tweaks"
+  fi
+
+  local count=0 fail=0 skip=0
+  while IFS= read -r _line; do
+    [ -z "$_line" ] && continue
+    case "$_line" in '#'*) continue ;; esac
+    _path=$(printf '%s' "$_line" | cut -d'|' -f1 | tr -d ' ')
+    _val=$(printf '%s' "$_line" | cut -d'|' -f2-)
+    [ -z "$_path" ] || [ -z "$_val" ] && continue
+    if [ ! -e "$_path" ]; then
+      skip=$((skip + 1))
+      continue
+    fi
+    chmod +w "$_path" 2>/dev/null
+    if printf '%s\n' "$_val" > "$_path" 2>/dev/null; then
+      count=$((count + 1))
+    else
+      fail=$((fail + 1))
+    fi
+  done < "$tweaks"
+  echo "{\"status\":\"ok\",\"applied\":$count,\"failed\":$fail,\"skipped\":$skip}"
 }
-ENDJSON
-  echo "$out"
-}
 
-restore_settings() {
-  local file="$1"
-  [ -z "$file" ] && { echo "ERROR: No file specified"; exit 1; }
-  [ ! -f "$file" ] && { echo "ERROR: Not found: $file"; exit 1; }
-
-  pi() { grep "\"$1\"" "$file" | grep -o '[0-9]*' | head -1; }
-  ps_() { grep "\"$1\"" "$file" | sed 's/.*: *"//;s/".*//' | head -1; }
-
-  local dl; dl=$(ps_ DEEP_DOZE_LEVEL); [ -z "$dl" ] && dl="moderate"
-
-  cat > "$MODDIR/config/user_prefs" << ENDPREFS
-ENABLE_RAM_OPTIMIZER=$(pi ENABLE_RAM_OPTIMIZER)
-ENABLE_KERNEL_TWEAKS=$(pi ENABLE_KERNEL_TWEAKS)
-ENABLE_SYSTEM_PROPS=$(pi ENABLE_SYSTEM_PROPS)
-ENABLE_BLUR_DISABLE=$(pi ENABLE_BLUR_DISABLE)
-ENABLE_LOG_KILLING=$(pi ENABLE_LOG_KILLING)
-ENABLE_GMS_DOZE=$(pi ENABLE_GMS_DOZE)
-ENABLE_DEEP_DOZE=$(pi ENABLE_DEEP_DOZE)
-DEEP_DOZE_LEVEL=$dl
-DISABLE_TELEMETRY=$(pi DISABLE_TELEMETRY)
-DISABLE_BACKGROUND=$(pi DISABLE_BACKGROUND)
-DISABLE_LOCATION=$(pi DISABLE_LOCATION)
-DISABLE_CONNECTIVITY=$(pi DISABLE_CONNECTIVITY)
-DISABLE_CLOUD=$(pi DISABLE_CLOUD)
-DISABLE_PAYMENTS=$(pi DISABLE_PAYMENTS)
-DISABLE_WEARABLES=$(pi DISABLE_WEARABLES)
-DISABLE_GAMES=$(pi DISABLE_GAMES)
-ENDPREFS
-
-  local wl_file="$MODDIR/config/doze_whitelist.txt"
-  local b64_data=$(grep '"whitelist_b64"' "$file" | sed 's/.*: *"//;s/".*//')
-  
-  if [ -n "$b64_data" ]; then
-    echo "$b64_data" | base64 -d > "$wl_file"
+revert_kernel() {
+  local count=0
+  if [ -f "$KERNEL_BACKUP" ]; then
+    while IFS= read -r line; do
+      case "$line" in
+        ''|'#'*) continue ;;
+      esac
+      val=$(echo "$line"  | cut -d= -f2)
+      path=$(echo "$line" | cut -d= -f3-)
+      [ -z "$path" ] || [ ! -e "$path" ] && continue
+      chmod +w "$path" 2>/dev/null
+      echo "$val" > "$path" 2>/dev/null && count=$((count + 1))
+    done < "$KERNEL_BACKUP"
+    echo "{\"status\":\"ok\",\"restored\":$count}"
   else
-    printf '# Frosty Deep Doze Whitelist - restored %s\n\n' "$(date '+%Y-%m-%d %H:%M:%S')" > "$wl_file"
-    grep '"whitelist":' "$file" | sed 's/.*"whitelist": *\[//;s/\].*//' | tr ',' '\n' | tr -d '"' | grep -v '^$' >> "$wl_file"
+    echo '{"status":"ok","restored":0}'
   fi
-
-  echo "OK"
 }
 
-list_backups() {
-  local dir="/storage/emulated/0/Frosty"
-  [ ! -d "$dir" ] && { echo "[]"; return; }
-  local files; files=$(ls -t "$dir"/frosty_*.json 2>/dev/null)
-  [ -z "$files" ] && { echo "[]"; return; }
-  printf '['
-  local first=1
-  for f in $files; do
-    local name; name=$(basename "$f")
-    [ "$first" -eq 1 ] && first=0 || printf ','
-    printf '{"name":"%s","path":"%s"}' "$name" "$f"
-  done
-  printf ']\n'
+# System Props
+apply_system_props() {
+  if [ "$ENABLE_SYSTEM_PROPS" = "1" ]; then
+    if [ -f "$SYSPROP_OLD" ]; then
+      mv "$SYSPROP_OLD" "$SYSPROP"
+      echo '{"status":"ok","action":"enabled"}'
+    elif [ -f "$SYSPROP" ]; then
+      echo '{"status":"ok","action":"enabled"}'
+    else
+      echo '{"status":"error","message":"system.prop and system.prop.old both missing"}'
+    fi
+  else
+    if [ -f "$SYSPROP" ]; then
+      mv "$SYSPROP" "$SYSPROP_OLD"
+      echo '{"status":"ok","action":"disabled"}'
+    elif [ -f "$SYSPROP_OLD" ]; then
+      echo '{"status":"ok","action":"disabled"}'
+    else
+      echo '{"status":"error","message":"system.prop and system.prop.old both missing"}'
+    fi
+  fi
 }
 
-share_backup() {
-  local file="$1"
-  [ ! -f "$file" ] && { echo "ERROR: not found"; return 1; }
-  local name; name=$(basename "$file")
-  local pub="/data/local/tmp/$name"
-  cp "$file" "$pub" && chmod 644 "$pub"
-  am start -a android.intent.action.SEND \
-    --eu android.intent.extra.STREAM "file://$pub" \
-    --et android.intent.extra.SUBJECT "$name" \
-    -t application/json \
-    -f 0x10000001 2>/dev/null
-  echo "$pub"
-}
-
+# RAM Optimizer
 apply_ram_optimizer() {
   log_ram "[RAM] Applying RAM optimizer..."
   mkdir -p "$MODDIR/backup"
@@ -452,69 +408,151 @@ revert_ram_optimizer() {
   echo "{\"status\":\"ok\"}"
 }
 
-apply_kernel() {
-  local tweaks="$MODDIR/config/kernel_tweaks.txt"
-
-  if [ ! -f "$tweaks" ]; then
-    echo '{"status":"error","message":"kernel_tweaks.txt not found"}'
-    return
-  fi
-
-  # Backup current values if no backup exists yet
-  if [ ! -f "$KERNEL_BACKUP" ]; then
-    mkdir -p "$MODDIR/backup"
-    printf "# Kernel Backup - $(date)\n" > "$KERNEL_BACKUP"
-    while IFS= read -r _line; do
-      [ -z "$_line" ] && continue
-      case "$_line" in '#'*) continue ;; esac
-      _path=$(printf '%s' "$_line" | cut -d'|' -f1 | tr -d ' ')
-      [ -z "$_path" ] || [ ! -e "$_path" ] && continue
-      _name=$(basename "$_path")
-      _val=$(cat "$_path" 2>/dev/null)
-      printf "%s=%s=%s\n" "$_name" "$_val" "$_path" >> "$KERNEL_BACKUP"
-    done < "$tweaks"
-  fi
-
-  local count=0 fail=0 skip=0
-  while IFS= read -r _line; do
-    [ -z "$_line" ] && continue
-    case "$_line" in '#'*) continue ;; esac
-    _path=$(printf '%s' "$_line" | cut -d'|' -f1 | tr -d ' ')
-    _val=$(printf '%s' "$_line" | cut -d'|' -f2-)
-    [ -z "$_path" ] || [ -z "$_val" ] && continue
-    if [ ! -e "$_path" ]; then
-      skip=$((skip + 1))
-      continue
+# Kill Logs
+kill_logs() {
+  local k=0
+  for svc in logcat logcatd logd tcpdump cnss_diag statsd traced traced_perf traced_probes \
+             idd-logreader idd-logreadermain dumpstate aplogd vendor.tcpdump vendor_tcpdump vendor.cnss_diag; do
+    pid=$(pidof "$svc" 2>/dev/null)
+    if [ -n "$pid" ]; then
+      kill -9 "$pid" 2>/dev/null
+      k=$((k + 1))
     fi
-    chmod +w "$_path" 2>/dev/null
-    if printf '%s\n' "$_val" > "$_path" 2>/dev/null; then
-      count=$((count + 1))
-    else
-      fail=$((fail + 1))
-    fi
-  done < "$tweaks"
-  echo "{\"status\":\"ok\",\"applied\":$count,\"failed\":$fail,\"skipped\":$skip}"
+  done
+  logcat -c 2>/dev/null
+  dmesg -c >/dev/null 2>&1
+
+  # Disable DropBox diagnostic categories
+  for tag in dumpsys:procstats dumpsys:usagestats procstats usagestats \
+             data_app_wtf keymaster system_server_wtf system_app_strictmode \
+             system_app_wtf system_server_strictmode data_app_strictmode \
+             netstats data_app_anr data_app_crash system_server_anr \
+             system_server_watchdog system_server_crash system_server_native_crash \
+             system_server_lowmem system_app_crash system_app_anr storage_trim \
+             SYSTEM_AUDIT SYSTEM_BOOT SYSTEM_LAST_KMSG system_app_native_crash \
+             SYSTEM_TOMBSTONE SYSTEM_TOMBSTONE_PROTO data_app_native_crash \
+             SYSTEM_RESTART; do
+    content call --uri content://settings/global --method PUT_value \
+      --arg "dropbox:$tag" --extra value:s:disabled 2>/dev/null >/dev/null &
+  done
+  wait
+
+  echo "{\"status\":\"ok\",\"killed\":$k}"
 }
 
-revert_kernel() {
-  local count=0
-  if [ -f "$KERNEL_BACKUP" ]; then
-    while IFS= read -r line; do
-      case "$line" in
-        ''|'#'*) continue ;;
-      esac
-      val=$(echo "$line"  | cut -d= -f2)
-      path=$(echo "$line" | cut -d= -f3-)
-      [ -z "$path" ] || [ ! -e "$path" ] && continue
-      chmod +w "$path" 2>/dev/null
-      echo "$val" > "$path" 2>/dev/null && count=$((count + 1))
-    done < "$KERNEL_BACKUP"
-    echo "{\"status\":\"ok\",\"restored\":$count}"
+# Backup & Restore
+backup_settings() {
+  local dir="/storage/emulated/0/Frosty"
+  mkdir -p "$dir" 2>/dev/null || { echo "ERROR: Cannot write to /storage/emulated/0/Frosty — grant storage permission"; return 1; }
+  local ts=$(date '+%Y%m%d_%H%M%S')
+  local out="$dir/frosty_$ts.json"
+  local modver; modver=$(grep "^version=" "$MODDIR/module.prop" 2>/dev/null | cut -d= -f2)
+  [ -z "$modver" ] && modver="unknown"
+  . "$MODDIR/config/user_prefs"
+  local wl_b64=""
+  if [ -f "$MODDIR/config/doze_whitelist.txt" ]; then
+    wl_b64=$(base64 < "$MODDIR/config/doze_whitelist.txt" | tr -d '\n')
+  fi
+  cat > "$out" << ENDJSON
+{
+  "version": "$modver",
+  "exported": "$ts",
+  "prefs": {
+    "ENABLE_KERNEL_TWEAKS": $ENABLE_KERNEL_TWEAKS,
+    "ENABLE_RAM_OPTIMIZER": $ENABLE_RAM_OPTIMIZER,
+    "ENABLE_SYSTEM_PROPS": $ENABLE_SYSTEM_PROPS,
+    "ENABLE_BLUR_DISABLE": $ENABLE_BLUR_DISABLE,
+    "ENABLE_LOG_KILLING": $ENABLE_LOG_KILLING,
+    "ENABLE_GMS_DOZE": $ENABLE_GMS_DOZE,
+    "ENABLE_DEEP_DOZE": $ENABLE_DEEP_DOZE,
+    "DEEP_DOZE_LEVEL": "$DEEP_DOZE_LEVEL",
+    "DISABLE_TELEMETRY": $DISABLE_TELEMETRY,
+    "DISABLE_BACKGROUND": $DISABLE_BACKGROUND,
+    "DISABLE_LOCATION": $DISABLE_LOCATION,
+    "DISABLE_CONNECTIVITY": $DISABLE_CONNECTIVITY,
+    "DISABLE_CLOUD": $DISABLE_CLOUD,
+    "DISABLE_PAYMENTS": $DISABLE_PAYMENTS,
+    "DISABLE_WEARABLES": $DISABLE_WEARABLES,
+    "DISABLE_GAMES": $DISABLE_GAMES
+  },
+  "whitelist_b64": "$wl_b64"
+}
+ENDJSON
+  echo "$out"
+}
+
+restore_settings() {
+  local file="$1"
+  [ -z "$file" ] && { echo "ERROR: No file specified"; exit 1; }
+  [ ! -f "$file" ] && { echo "ERROR: Not found: $file"; exit 1; }
+
+  pi() { grep "\"$1\"" "$file" | grep -o '[0-9]*' | head -1; }
+  ps_() { grep "\"$1\"" "$file" | sed 's/.*: *"//;s/".*//' | head -1; }
+
+  local dl; dl=$(ps_ DEEP_DOZE_LEVEL); [ -z "$dl" ] && dl="moderate"
+
+  cat > "$MODDIR/config/user_prefs" << ENDPREFS
+ENABLE_RAM_OPTIMIZER=$(pi ENABLE_RAM_OPTIMIZER)
+ENABLE_KERNEL_TWEAKS=$(pi ENABLE_KERNEL_TWEAKS)
+ENABLE_SYSTEM_PROPS=$(pi ENABLE_SYSTEM_PROPS)
+ENABLE_BLUR_DISABLE=$(pi ENABLE_BLUR_DISABLE)
+ENABLE_LOG_KILLING=$(pi ENABLE_LOG_KILLING)
+ENABLE_GMS_DOZE=$(pi ENABLE_GMS_DOZE)
+ENABLE_DEEP_DOZE=$(pi ENABLE_DEEP_DOZE)
+DEEP_DOZE_LEVEL=$dl
+DISABLE_TELEMETRY=$(pi DISABLE_TELEMETRY)
+DISABLE_BACKGROUND=$(pi DISABLE_BACKGROUND)
+DISABLE_LOCATION=$(pi DISABLE_LOCATION)
+DISABLE_CONNECTIVITY=$(pi DISABLE_CONNECTIVITY)
+DISABLE_CLOUD=$(pi DISABLE_CLOUD)
+DISABLE_PAYMENTS=$(pi DISABLE_PAYMENTS)
+DISABLE_WEARABLES=$(pi DISABLE_WEARABLES)
+DISABLE_GAMES=$(pi DISABLE_GAMES)
+ENDPREFS
+
+  local wl_file="$MODDIR/config/doze_whitelist.txt"
+  local b64_data=$(grep '"whitelist_b64"' "$file" | sed 's/.*: *"//;s/".*//')
+  
+  if [ -n "$b64_data" ]; then
+    echo "$b64_data" | base64 -d > "$wl_file"
   else
-    echo '{"status":"ok","restored":0}'
+    printf '# Frosty Deep Doze Whitelist - restored %s\n\n' "$(date '+%Y-%m-%d %H:%M:%S')" > "$wl_file"
+    grep '"whitelist":' "$file" | sed 's/.*"whitelist": *\[//;s/\].*//' | tr ',' '\n' | tr -d '"' | grep -v '^$' >> "$wl_file"
   fi
+
+  echo "OK"
 }
 
+list_backups() {
+  local dir="/storage/emulated/0/Frosty"
+  [ ! -d "$dir" ] && { echo "[]"; return; }
+  local files; files=$(ls -t "$dir"/frosty_*.json 2>/dev/null)
+  [ -z "$files" ] && { echo "[]"; return; }
+  printf '['
+  local first=1
+  for f in $files; do
+    local name; name=$(basename "$f")
+    [ "$first" -eq 1 ] && first=0 || printf ','
+    printf '{"name":"%s","path":"%s"}' "$name" "$f"
+  done
+  printf ']\n'
+}
+
+share_backup() {
+  local file="$1"
+  [ ! -f "$file" ] && { echo "ERROR: not found"; return 1; }
+  local name; name=$(basename "$file")
+  local pub="/data/local/tmp/$name"
+  cp "$file" "$pub" && chmod 644 "$pub"
+  am start -a android.intent.action.SEND \
+    --eu android.intent.extra.STREAM "file://$pub" \
+    --et android.intent.extra.SUBJECT "$name" \
+    -t application/json \
+    -f 0x10000001 2>/dev/null
+  echo "$pub"
+}
+
+# GMS Categories
 freeze_category() {
   local target="$1" count=0 fail=0
   if [ ! -f "$GMS_LIST" ]; then
@@ -557,53 +595,32 @@ unfreeze_category() {
   echo "{\"status\":\"ok\",\"enabled\":$count,\"failed\":$fail}"
 }
 
-kill_logs() {
-  local k=0
-  for svc in logcat logcatd logd tcpdump cnss_diag statsd traced traced_perf traced_probes \
-             idd-logreader idd-logreadermain dumpstate aplogd vendor.tcpdump vendor_tcpdump vendor.cnss_diag; do
-    pid=$(pidof "$svc" 2>/dev/null)
-    if [ -n "$pid" ]; then
-      kill -9 "$pid" 2>/dev/null
-      k=$((k + 1))
-    fi
-  done
-  logcat -c 2>/dev/null
-  dmesg -c >/dev/null 2>&1
-
-  # Disable DropBox diagnostic categories
-  for tag in dumpsys:procstats dumpsys:usagestats procstats usagestats \
-             data_app_wtf keymaster system_server_wtf system_app_strictmode \
-             system_app_wtf system_server_strictmode data_app_strictmode \
-             netstats data_app_anr data_app_crash system_server_anr \
-             system_server_watchdog system_server_crash system_server_native_crash \
-             system_server_lowmem system_app_crash system_app_anr storage_trim \
-             SYSTEM_AUDIT SYSTEM_BOOT SYSTEM_LAST_KMSG system_app_native_crash \
-             SYSTEM_TOMBSTONE SYSTEM_TOMBSTONE_PROTO data_app_native_crash \
-             SYSTEM_RESTART; do
-    content call --uri content://settings/global --method PUT_value \
-      --arg "dropbox:$tag" --extra value:s:disabled 2>/dev/null >/dev/null &
-  done
-  wait
-
-  echo "{\"status\":\"ok\",\"killed\":$k}"
+# DexOpt
+execute_dexopt() {
+  if cmd package bg-dexopt-job >/dev/null 2>&1; then
+    log_service "[OK] DEX files optimized"
+  else
+    log_service "[FAIL] Could not optimize DEX files"
+  fi
 }
 
 case "$1" in
   freeze)             freeze_services ;;
   stock)              stock_services ;;
-  apply_sysprops)     apply_system_props ;;
   apply_kernel)       apply_kernel ;;
   revert_kernel)      revert_kernel ;;
-  freeze_category)    freeze_category "$2" ;;
-  unfreeze_category)  unfreeze_category "$2" ;;
+  apply_sysprops)     apply_system_props ;;
   ram_optimizer)      apply_ram_optimizer ;;
   ram_restore)        revert_ram_optimizer ;;
   kill_logs)          kill_logs ;;
+  freeze_category)    freeze_category "$2" ;;
+  unfreeze_category)  unfreeze_category "$2" ;;
+  dexopt)             execute_dexopt ;;
   export)             backup_settings ;;
   import)             restore_settings "$2" ;;
   list_backups)       list_backups ;;
-  share)              share_backup "$2" ;;
-  *)                  echo "Usage: frosty.sh [freeze|stock|apply_sysprops|apply_kernel|revert_kernel|freeze_category|unfreeze_category|ram_optimizer|ram_restore|kill_logs|export|import|list_backups|share]" ;;
+  share_backup)       share_backup "$2" ;;
+  *)                  echo "Usage: frosty.sh [freeze|stock|apply_kernel|revert_kernel|apply_sysprops|ram_optimizer|ram_restore|kill_logs|freeze_category|unfreeze_category|dexopt|export|import|list_backups|share_backup]" ;;
 esac
 
 exit 0

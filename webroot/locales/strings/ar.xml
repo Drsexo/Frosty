@@ -42,6 +42,10 @@
   <string name="cat_wearables_tag">يوقف Wear OS و Google Fit</string>
   <string name="cat_games">الألعاب (Games)</string>
   <string name="cat_games_tag">يوقف إنجازات Play Games</string>
+  <string name="sec_misc">متفرقات (Miscellaneous)</string>
+  <string name="cat_dexopt">ديكسوبت (DEX Optimization)</string>
+  <string name="cat_dexopt_desc">يحسن ملفات DEX (Dalvik Executable) لتحسين الأداء</string>
+  <string name="btn_optimize">تحسين</string>
   <string name="sec_log">سجل النشاط (Activity Log)</string>
   <string name="wl_title">قائمة Doze البيضاء</string>
   <string name="wl_notice">التطبيقات المضافة هنا تتخطى قيود وضع Deep Doze. أضف تطبيقات المراسلة، البنوك، والمنبهات لتجنب توقفها.</string>
@@ -129,6 +133,9 @@
   <string name="log_toggle_off">تم تعطيل {0}</string>
   <string name="log_webui_ready">واجهة WebUI جاهزة</string>
   <string name="log_load_failed">فشل التحميل: {0}</string>
+  <string name="executing">جارٍ التشغيل: {0}</string>
+  <string name="log_executed">تم التشغيل بنجاح: {0}</string>
+  <string name="log_execution_failed">فشل في التشغيل: {0}</string>
   <string name="log_reboot_effect">قم بإعادة التشغيل لتطبيق التأثير بالكامل</string>
   <string name="log_reverting_all">استعادة الوضع الافتراضي للكل...</string>
   <string name="log_freeze_all">تفعيل كل شيء...</string>

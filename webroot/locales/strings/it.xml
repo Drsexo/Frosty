@@ -42,6 +42,10 @@
   <string name="cat_wearables_tag">Disabilita Wear OS e Google Fit</string>
   <string name="cat_games">Giochi (Games)</string>
   <string name="cat_games_tag">Disabilita Play Games e salvataggi in cloud</string>
+  <string name="sec_misc">Varie</string>
+  <string name="cat_dexopt">Optimizzazione DEX</string>
+  <string name="cat_dexopt_desc">Optimizza i file DEX (Dalvik Executable) per migliorare le prestazioni</string>
+  <string name="btn_optimize">Ottimizza</string>
   <string name="sec_log">Registro attività</string>
   <string name="wl_title">Whitelist del Doze</string>
   <string name="wl_notice">Le app in questa lista aggireranno le restrizioni del Deep Doze. Aggiungi qui le tue app di messaggistica, banche e sveglie.</string>
@@ -129,6 +133,9 @@
   <string name="log_toggle_off">{0} è stato disattivato</string>
   <string name="log_webui_ready">WebUI pronta all'uso</string>
   <string name="log_load_failed">Caricamento fallito: {0}</string>
+  <string name="executing">Esecuzione in corso: {0}</string>
+  <string name="log_executed">Eseguito con successo: {0}</string>
+  <string name="log_execution_failed">Esecuzione fallita: {0}</string>
   <string name="log_reboot_effect">Riavvia il dispositivo per ottenere l'effetto completo</string>
   <string name="log_reverting_all">Ripristino delle impostazioni predefinite in corso...</string>
   <string name="log_freeze_all">Attivazione di tutte le impostazioni in corso...</string>
