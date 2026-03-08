@@ -3,6 +3,7 @@
 # Author: Drsexo (GitHub)
 
 TIMEOUT=30
+module_path="/data/adb/modules/Frosty"
 
 COLS=$(stty size 2>/dev/null | awk '{print $2}')
 case "$COLS" in ''|*[!0-9]*) COLS=40 ;; esac
@@ -173,6 +174,7 @@ fi
 # Translation helper, returns localised string for current INSTALL_LANG, falls back to English.
 s() {
   local key="$1"
+  local log_path="$module_path/logs/"
   case "${INSTALL_LANG}:${key}" in
 
     # EXISTING CONFIG
@@ -434,20 +436,20 @@ s() {
     ar:done_off)      echo "     (كل شيء معطل افتراضياً)" ;;
      *:done_off)      echo "     features, everything starts OFF by default" ;;
 
-    fr:done_logs)     echo "  📄 Journaux : /data/adb/modules/Frosty/logs/" ;;
-    de:done_logs)     echo "  📄 Logs: /data/adb/modules/Frosty/logs/" ;;
-    pl:done_logs)     echo "  📄 Logi: /data/adb/modules/Frosty/logs/" ;;
-    it:done_logs)     echo "  📄 Log: /data/adb/modules/Frosty/logs/" ;;
-    es:done_logs)     echo "  📄 Registros: /data/adb/modules/Frosty/logs/" ;;
-    pt:done_logs)     echo "  📄 Logs: /data/adb/modules/Frosty/logs/" ;;
-    tr:done_logs)     echo "  📄 Günlükler: /data/adb/modules/Frosty/logs/" ;;
-    id:done_logs)     echo "  📄 Log: /data/adb/modules/Frosty/logs/" ;;
-    ru:done_logs)     echo "  📄 Логи: /data/adb/modules/Frosty/logs/" ;;
-    uk:done_logs)     echo "  📄 Логи: /data/adb/modules/Frosty/logs/" ;;
-    zh:done_logs)     echo "  📄 日志: /data/adb/modules/Frosty/logs/" ;;
-    ja:done_logs)     echo "  📄 ログ: /data/adb/modules/Frosty/logs/" ;;
-    ar:done_logs)     echo "  📄 السجلات: /data/adb/modules/Frosty/logs/" ;;
-     *:done_logs)     echo "  📄 Logs: /data/adb/modules/Frosty/logs/" ;;
+    fr:done_logs)     echo "  📄 Journaux : $log_path" ;;
+    de:done_logs)     echo "  📄 Logs: $log_path" ;;
+    pl:done_logs)     echo "  📄 Logi: $log_path" ;;
+    it:done_logs)     echo "  📄 Log: $log_path" ;;
+    es:done_logs)     echo "  📄 Registros: $log_path" ;;
+    pt:done_logs)     echo "  📄 Logs: $log_path" ;;
+    tr:done_logs)     echo "  📄 Günlükler: $log_path" ;;
+    id:done_logs)     echo "  📄 Log: $log_path" ;;
+    ru:done_logs)     echo "  📄 Логи: $log_path" ;;
+    uk:done_logs)     echo "  📄 Логи: $log_path" ;;
+    zh:done_logs)     echo "  📄 日志: $log_path" ;;
+    ja:done_logs)     echo "  📄 ログ: $log_path" ;;
+    ar:done_logs)     echo "  📄 السجلات: $log_path" ;;
+     *:done_logs)     echo "  📄 Logs: $log_path" ;;
 
     fr:stay_frosty)   echo "❆  Reste au frais !  ❆" ;;
     de:stay_frosty)   echo "❆  Bleib cool!  ❆" ;;
@@ -920,8 +922,8 @@ s() {
 }
 
 # Existing config detection
-EXISTING_PREFS="/data/adb/modules/Frosty/config/user_prefs"
-EXISTING_WHITELIST="/data/adb/modules/Frosty/config/doze_whitelist.txt"
+EXISTING_PREFS="$module_path/config/user_prefs"
+EXISTING_WHITELIST="$module_path/config/doze_whitelist.txt"
 USE_EXISTING=0
 
 if [ -f "$EXISTING_PREFS" ]; then
