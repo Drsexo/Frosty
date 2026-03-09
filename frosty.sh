@@ -595,15 +595,6 @@ unfreeze_category() {
   echo "{\"status\":\"ok\",\"enabled\":$count,\"failed\":$fail}"
 }
 
-# DexOpt
-execute_dexopt() {
-  if cmd package bg-dexopt-job >/dev/null 2>&1; then
-    log_service "[OK] DEX files optimized"
-  else
-    log_service "[FAIL] Could not optimize DEX files"
-  fi
-}
-
 case "$1" in
   freeze)             freeze_services ;;
   stock)              stock_services ;;
@@ -615,12 +606,11 @@ case "$1" in
   kill_logs)          kill_logs ;;
   freeze_category)    freeze_category "$2" ;;
   unfreeze_category)  unfreeze_category "$2" ;;
-  dexopt)             execute_dexopt ;;
   export)             backup_settings ;;
   import)             restore_settings "$2" ;;
   list_backups)       list_backups ;;
   share_backup)       share_backup "$2" ;;
-  *)                  echo "Usage: frosty.sh [freeze|stock|apply_kernel|revert_kernel|apply_sysprops|ram_optimizer|ram_restore|kill_logs|freeze_category|unfreeze_category|dexopt|export|import|list_backups|share_backup]" ;;
+  *)                  echo "Usage: frosty.sh [freeze|stock|apply_kernel|revert_kernel|apply_sysprops|ram_optimizer|ram_restore|kill_logs|freeze_category|unfreeze_category|export|import|list_backups|share_backup]" ;;
 esac
 
 exit 0

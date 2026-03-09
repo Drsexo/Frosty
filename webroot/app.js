@@ -1273,20 +1273,6 @@
       if (el) el.addEventListener('change', function () { toggleCategory(cat); });
     });
 
-    // ── Miscellaneous ──
-    $('btn-dexopt').addEventListener('click', async function () {
-      showLoading(tf('executing', t("cat_dexopt")));
-      try {
-        await API.executeDexOpt();
-        log(tf('log_executed', t("cat_dexopt")), 'ok');
-        toast(tf('log_executed', t("cat_dexopt")), 'ok');
-      } catch (e) {
-        log(tf('log_execution_failed', e.message), 'err');
-        toast(tf('log_execution_failed', e.message), 'err');
-      }
-      hideLoading();
-    });
-
     // ── Activity Log ──
     $('btn-copy-log').addEventListener('click', function () {
       var box = $('log-box');
