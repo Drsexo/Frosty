@@ -59,32 +59,34 @@ Otwórz WebUI z menedżera root. Znajdziesz tam:
 ## 🧊 Kategorie GMS
 
 #### Bezpieczne do wyłączenia
-| Kategoria | Wpływ |
-|-----------|-------|
-| 📊 **Telemetria** | Żaden. Zatrzymuje reklamy, analitykę i śledzenie Google. |
+
+| Kategoria               | Wpływ                                                     |
+| ----------------------- | --------------------------------------------------------- |
+| 📊 **Telemetria**       | Żaden. Zatrzymuje reklamy, analitykę i śledzenie Google.  |
 | 🔄 **Tło (Background)** | Automatyczne aktualizacje aplikacji mogą ulec opóźnieniu. |
 
 #### Co przestanie działać
-| Kategoria | Wpływ na funkcje |
-|-----------|------------------|
-| 📍 **Lokalizacja** | Google Maps, nawigacja GPS, funkcja "Znajdź moje urządzenie". |
-| 📡 **Łączność** | Chromecast, Quick Share, Fast Pair. |
-| ☁️ **Chmura (Cloud)** | Logowanie kontem Google, autouzupełnianie haseł, kopie zapasowe. |
-| 💳 **Płatności** | Google Pay, płatności zbliżeniowe NFC. |
-| ⌚ **Urządzenia noszone** | Wear OS, Google Fit, monitorowanie kondycji. |
-| 🎮 **Gry** | Osiągnięcia w Google Play Games, rankingi, zapisy w chmurze. |
+
+| Kategoria                 | Wpływ na funkcje                                                 |
+| ------------------------- | ---------------------------------------------------------------- |
+| 📍 **Lokalizacja**        | Google Maps, nawigacja GPS, funkcja "Znajdź moje urządzenie".    |
+| 📡 **Łączność**           | Chromecast, Quick Share, Fast Pair.                              |
+| ☁️ **Chmura (Cloud)**     | Logowanie kontem Google, autouzupełnianie haseł, kopie zapasowe. |
+| 💳 **Płatności**          | Google Pay, płatności zbliżeniowe NFC.                           |
+| ⌚ **Urządzenia noszone** | Wear OS, Google Fit, monitorowanie kondycji.                     |
+| 🎮 **Gry**                | Osiągnięcia w Google Play Games, rankingi, zapisy w chmurze.     |
 
 ## 🔋 Poziomy Deep Doze
 
-| Funkcja | Umiarkowane | Maksymalne |
-|---------|:-----------:|:----------:|
-| Agresywne stałe Doze | ✅ | ✅ |
-| Koszyki oczekiwania aplikacji (App Standby Buckets)| ✅ | ✅ |
-| Blokada RUN_IN_BACKGROUND | ✅ | ✅ |
-| Deep Idle (Przy zgaszonym ekranie) | ✅ | ✅ |
-| Blokada WAKE_LOCK | ❌ | ✅ |
-| Wakelock Killer | ❌ | ✅ |
-| Restrykcyjne limity alarmów (budzików)| ❌ | ✅ |
+| Funkcja                                             | Umiarkowane | Maksymalne |
+| --------------------------------------------------- | :---------: | :--------: |
+| Agresywne stałe Doze                                |     ✅      |     ✅     |
+| Koszyki oczekiwania aplikacji (App Standby Buckets) |     ✅      |     ✅     |
+| Blokada RUN_IN_BACKGROUND                           |     ✅      |     ✅     |
+| Deep Idle (Przy zgaszonym ekranie)                  |     ✅      |     ✅     |
+| Blokada WAKE_LOCK                                   |     ❌      |     ✅     |
+| Wakelock Killer                                     |     ❌      |     ✅     |
+| Restrykcyjne limity alarmów (budzików)              |     ❌      |     ✅     |
 
 ## ❓ FAQ (Często zadawane pytania)
 

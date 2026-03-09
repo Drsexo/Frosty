@@ -61,32 +61,34 @@ Buka WebUI dari manajer root Anda. Anda akan menemukan:
 ## 🧊 Kategori GMS
 
 #### Aman untuk dinonaktifkan
-| Kategori | Dampak |
-|----------|--------|
-| 📊 **Telemetri** | Tidak ada. Menghentikan iklan, analitik, dan pelacakan oleh Google. |
-| 🔄 **Latar Belakang** | Pembaruan aplikasi otomatis mungkin tertunda. |
+
+| Kategori              | Dampak                                                              |
+| --------------------- | ------------------------------------------------------------------- |
+| 📊 **Telemetri**      | Tidak ada. Menghentikan iklan, analitik, dan pelacakan oleh Google. |
+| 🔄 **Latar Belakang** | Pembaruan aplikasi otomatis mungkin tertunda.                       |
 
 #### Yang akan berhenti berfungsi
-| Kategori | Fitur yang terdampak |
-|----------|---------------------|
-| 📍 **Lokasi** | Google Maps, navigasi GPS, Temukan Perangkat Saya. |
-| 📡 **Konektivitas** | Chromecast, Quick Share, Fast Pair. |
-| ☁️ **Cloud** | Login Google, isi otomatis (Autofill), kata sandi, dan cadangan. |
-| 💳 **Pembayaran** | Google Pay, pembayaran via NFC. |
-| ⌚ **Wearable** | Wear OS, Google Fit, pelacakan kebugaran. |
-| 🎮 **Game** | Pencapaian Google Play Games, papan peringkat, penyimpanan cloud. |
+
+| Kategori            | Fitur yang terdampak                                              |
+| ------------------- | ----------------------------------------------------------------- |
+| 📍 **Lokasi**       | Google Maps, navigasi GPS, Temukan Perangkat Saya.                |
+| 📡 **Konektivitas** | Chromecast, Quick Share, Fast Pair.                               |
+| ☁️ **Cloud**        | Login Google, isi otomatis (Autofill), kata sandi, dan cadangan.  |
+| 💳 **Pembayaran**   | Google Pay, pembayaran via NFC.                                   |
+| ⌚ **Wearable**     | Wear OS, Google Fit, pelacakan kebugaran.                         |
+| 🎮 **Game**         | Pencapaian Google Play Games, papan peringkat, penyimpanan cloud. |
 
 ## 🔋 Level Deep Doze
 
-| Fitur | Sedang | Maksimum |
-|-------|:------:|:--------:|
-| Konstanta Doze yang Agresif | ✅ | ✅ |
-| App Standby Buckets | ✅ | ✅ |
-| Tolak RUN_IN_BACKGROUND | ✅ | ✅ |
-| Deep Idle (Saat Layar Mati) | ✅ | ✅ |
-| Tolak WAKE_LOCK | ❌ | ✅ |
-| Wakelock Killer | ❌ | ✅ |
-| Pembatasan ketat pada Alarm | ❌ | ✅ |
+| Fitur                       | Sedang | Maksimum |
+| --------------------------- | :----: | :------: |
+| Konstanta Doze yang Agresif |   ✅   |    ✅    |
+| App Standby Buckets         |   ✅   |    ✅    |
+| Tolak RUN_IN_BACKGROUND     |   ✅   |    ✅    |
+| Deep Idle (Saat Layar Mati) |   ✅   |    ✅    |
+| Tolak WAKE_LOCK             |   ❌   |    ✅    |
+| Wakelock Killer             |   ❌   |    ✅    |
+| Pembatasan ketat pada Alarm |   ❌   |    ✅    |
 
 ## ❓ FAQ (Pertanyaan yang Sering Diajukan)
 

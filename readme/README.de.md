@@ -45,7 +45,7 @@ Frosty optimiert die Akkulaufzeit durch das selektive Einfrieren von Google Mobi
 3. Starte das Gerät neu.
 4. Öffne die WebUI, um die gewünschten Funktionen zu aktivieren — standardmäßig ist alles **DEAKTIVIERT**.
 
->[!NOTE]
+> [!NOTE]
 > Magisk-Nutzer können die App [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) verwenden, um auf die WebUI zuzugreifen.
 
 ## 📖 Verwendung
@@ -61,32 +61,34 @@ Frosty optimiert die Akkulaufzeit durch das selektive Einfrieren von Google Mobi
 ## 🧊 GMS-Kategorien
 
 #### Sicher zu deaktivieren
-| Kategorie | Auswirkung |
-|-----------|------------|
-| 📊 **Telemetrie** | Keine. Stoppt Werbung, Analytics und das Tracking durch Google. |
-| 🔄 **Hintergrund** | Automatische Updates können verzögert werden. |
+
+| Kategorie          | Auswirkung                                                      |
+| ------------------ | --------------------------------------------------------------- |
+| 📊 **Telemetrie**  | Keine. Stoppt Werbung, Analytics und das Tracking durch Google. |
+| 🔄 **Hintergrund** | Automatische Updates können verzögert werden.                   |
 
 #### Was nicht mehr funktioniert
-| Kategorie | Betroffene Funktionen |
-|-----------|----------------------|
-| 📍 **Standort** | Google Maps, GPS-Navigation, „Gerät finden“. |
-| 📡 **Konnektivität** | Chromecast, Quick Share, Fast Pair. |
-| ☁️ **Cloud** | Google-Anmeldung, Autofill für Passwörter, Backups. |
-| 💳 **Zahlungen** | Google Pay, NFC-Zahlungen. |
-| ⌚ **Wearables** | Wear OS, Google Fit, Fitness-Tracking. |
-| 🎮 **Spiele** | Google Play Games Erfolge, Bestenlisten, Cloud-Speicher. |
+
+| Kategorie            | Betroffene Funktionen                                    |
+| -------------------- | -------------------------------------------------------- |
+| 📍 **Standort**      | Google Maps, GPS-Navigation, „Gerät finden“.             |
+| 📡 **Konnektivität** | Chromecast, Quick Share, Fast Pair.                      |
+| ☁️ **Cloud**         | Google-Anmeldung, Autofill für Passwörter, Backups.      |
+| 💳 **Zahlungen**     | Google Pay, NFC-Zahlungen.                               |
+| ⌚ **Wearables**     | Wear OS, Google Fit, Fitness-Tracking.                   |
+| 🎮 **Spiele**        | Google Play Games Erfolge, Bestenlisten, Cloud-Speicher. |
 
 ## 🔋 Deep Doze Stufen
 
-| Funktion | Moderat | Maximum |
-|----------|:-------:|:-------:|
-| Aggressive Doze-Konstanten | ✅ | ✅ |
-| App Standby Buckets | ✅ | ✅ |
-| RUN_IN_BACKGROUND blockieren | ✅ | ✅ |
-| Deep Idle bei ausgeschaltetem Bildschirm | ✅ | ✅ |
-| WAKE_LOCK blockieren | ❌ | ✅ |
-| Wakelock Killer | ❌ | ✅ |
-| Strikte Alarm-Einschränkungen | ❌ | ✅ |
+| Funktion                                 | Moderat | Maximum |
+| ---------------------------------------- | :-----: | :-----: |
+| Aggressive Doze-Konstanten               |   ✅    |   ✅    |
+| App Standby Buckets                      |   ✅    |   ✅    |
+| RUN_IN_BACKGROUND blockieren             |   ✅    |   ✅    |
+| Deep Idle bei ausgeschaltetem Bildschirm |   ✅    |   ✅    |
+| WAKE_LOCK blockieren                     |   ❌    |   ✅    |
+| Wakelock Killer                          |   ❌    |   ✅    |
+| Strikte Alarm-Einschränkungen            |   ❌    |   ✅    |
 
 ## ❓ FAQ (Häufige Fragen)
 

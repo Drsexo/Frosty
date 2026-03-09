@@ -61,32 +61,34 @@ Apri la WebUI dal tuo gestore root. Troverai:
 ## 🧊 Categorie GMS
 
 #### Sicure da disabilitare
-| Categoria | Impatto |
-|-----------|---------|
-| 📊 **Telemetria** | Nessuno. Blocca pubblicità, analytics e tracciamento. |
+
+| Categoria         | Impatto                                                   |
+| ----------------- | --------------------------------------------------------- |
+| 📊 **Telemetria** | Nessuno. Blocca pubblicità, analytics e tracciamento.     |
 | 🔄 **Background** | Gli aggiornamenti automatici potrebbero essere ritardati. |
 
 #### Funzionalità compromesse
-| Categoria | Cosa smetterà di funzionare |
-|-----------|-----------------------------|
-| 📍 **Posizione** | Google Maps, navigazione GPS, Trova il mio dispositivo. |
-| 📡 **Connettività** | Chromecast, Quick Share, Fast Pair. |
-| ☁️ **Cloud** | Accesso Google, compilazione automatica, password, backup. |
-| 💳 **Pagamenti** | Google Pay, pagamenti NFC. |
-| ⌚ **Wearables** | Wear OS, Google Fit, tracciamento fitness. |
-| 🎮 **Giochi** | Obiettivi Play Games, classifiche, salvataggi in cloud. |
+
+| Categoria           | Cosa smetterà di funzionare                                |
+| ------------------- | ---------------------------------------------------------- |
+| 📍 **Posizione**    | Google Maps, navigazione GPS, Trova il mio dispositivo.    |
+| 📡 **Connettività** | Chromecast, Quick Share, Fast Pair.                        |
+| ☁️ **Cloud**        | Accesso Google, compilazione automatica, password, backup. |
+| 💳 **Pagamenti**    | Google Pay, pagamenti NFC.                                 |
+| ⌚ **Wearables**    | Wear OS, Google Fit, tracciamento fitness.                 |
+| 🎮 **Giochi**       | Obiettivi Play Games, classifiche, salvataggi in cloud.    |
 
 ## 🔋 Livelli Deep Doze
 
-| Funzionalità | Moderato | Massimo |
-|--------------|:--------:|:-------:|
-| Costanti Doze aggressive | ✅ | ✅ |
-| App Standby Buckets | ✅ | ✅ |
-| Nega RUN_IN_BACKGROUND | ✅ | ✅ |
-| Deep Idle a schermo spento | ✅ | ✅ |
-| Nega WAKE_LOCK | ❌ | ✅ |
-| Wakelock Killer | ❌ | ✅ |
-| Restrizioni rigide per allarmi | ❌ | ✅ |
+| Funzionalità                   | Moderato | Massimo |
+| ------------------------------ | :------: | :-----: |
+| Costanti Doze aggressive       |    ✅    |   ✅    |
+| App Standby Buckets            |    ✅    |   ✅    |
+| Nega RUN_IN_BACKGROUND         |    ✅    |   ✅    |
+| Deep Idle a schermo spento     |    ✅    |   ✅    |
+| Nega WAKE_LOCK                 |    ❌    |   ✅    |
+| Wakelock Killer                |    ❌    |   ✅    |
+| Restrizioni rigide per allarmi |    ❌    |   ✅    |
 
 ## ❓ FAQ (Domande Frequenti)
 

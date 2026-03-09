@@ -61,32 +61,34 @@ Abre la WebUI desde tu gestor root. Encontrarás:
 ## 🧊 Categorías GMS
 
 #### Seguras para desactivar
-| Categoría | Impacto |
-|-----------|---------|
-| 📊 **Telemetría** | Ninguno. Detiene publicidad, estadísticas y rastreo de Google. |
-| 🔄 **Segundo Plano** | Las actualizaciones automáticas pueden sufrir retrasos. |
+
+| Categoría            | Impacto                                                        |
+| -------------------- | -------------------------------------------------------------- |
+| 📊 **Telemetría**    | Ninguno. Detiene publicidad, estadísticas y rastreo de Google. |
+| 🔄 **Segundo Plano** | Las actualizaciones automáticas pueden sufrir retrasos.        |
 
 #### Qué dejará de funcionar
-| Categoría | Funciones afectadas |
-|-----------|--------------------|
-| 📍 **Ubicación** | Google Maps, navegación GPS, Encontrar mi dispositivo. |
-| 📡 **Conectividad** | Chromecast, Quick Share, Fast Pair. |
-| ☁️ **Nube** | Inicio de sesión en Google, autocompletado de contraseñas, copias de seguridad. |
-| 💳 **Pagos** | Google Pay, pagos inalámbricos por NFC. |
-| ⌚ **Wearables** | Wear OS, Google Fit, seguimiento de actividad. |
-| 🎮 **Juegos** | Logros de Google Play Games, tablas de clasificación, guardado en la nube. |
+
+| Categoría           | Funciones afectadas                                                             |
+| ------------------- | ------------------------------------------------------------------------------- |
+| 📍 **Ubicación**    | Google Maps, navegación GPS, Encontrar mi dispositivo.                          |
+| 📡 **Conectividad** | Chromecast, Quick Share, Fast Pair.                                             |
+| ☁️ **Nube**         | Inicio de sesión en Google, autocompletado de contraseñas, copias de seguridad. |
+| 💳 **Pagos**        | Google Pay, pagos inalámbricos por NFC.                                         |
+| ⌚ **Wearables**    | Wear OS, Google Fit, seguimiento de actividad.                                  |
+| 🎮 **Juegos**       | Logros de Google Play Games, tablas de clasificación, guardado en la nube.      |
 
 ## 🔋 Niveles de Deep Doze
 
-| Función | Moderado | Máximo |
-|---------|:--------:|:------:|
-| Constantes Doze agresivas | ✅ | ✅ |
-| App Standby Buckets | ✅ | ✅ |
-| Bloquear RUN_IN_BACKGROUND | ✅ | ✅ |
-| Deep Idle (Con pantalla apagada) | ✅ | ✅ |
-| Bloquear WAKE_LOCK | ❌ | ✅ |
-| Wakelock Killer | ❌ | ✅ |
-| Restricciones estrictas en Alarmas | ❌ | ✅ |
+| Función                            | Moderado | Máximo |
+| ---------------------------------- | :------: | :----: |
+| Constantes Doze agresivas          |    ✅    |   ✅   |
+| App Standby Buckets                |    ✅    |   ✅   |
+| Bloquear RUN_IN_BACKGROUND         |    ✅    |   ✅   |
+| Deep Idle (Con pantalla apagada)   |    ✅    |   ✅   |
+| Bloquear WAKE_LOCK                 |    ❌    |   ✅   |
+| Wakelock Killer                    |    ❌    |   ✅   |
+| Restricciones estrictas en Alarmas |    ❌    |   ✅   |
 
 ## ❓ FAQ (Preguntas Frecuentes)
 

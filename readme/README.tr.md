@@ -40,10 +40,7 @@ Frosty, Google Mobil Hizmetleri (GMS) bileşenlerini seçici bir şekilde dondur
 
 **Gereksinimler:** Android 9+, Magisk 20.4+ / KernelSU / APatch, Google Play Hizmetleri.
 
-1.[Releases (Sürümler)](https://github.com/Drsexo/Frosty/releases) sayfasından indirin.
-2. Kullandığınız Root yöneticisi üzerinden yükleyin.
-3. Cihazınızı yeniden başlatın.
-4. Özellikleri aktifleştirmek için WebUI'yi açın — varsayılan olarak her şey **KAPALI** gelir.
+1.[Releases (Sürümler)](https://github.com/Drsexo/Frosty/releases) sayfasından indirin. 2. Kullandığınız Root yöneticisi üzerinden yükleyin. 3. Cihazınızı yeniden başlatın. 4. Özellikleri aktifleştirmek için WebUI'yi açın — varsayılan olarak her şey **KAPALI** gelir.
 
 > [!NOTE]
 > Magisk kullanıcıları WebUI arayüzüne erişmek için [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) uygulamasını kullanabilirler.
@@ -61,32 +58,34 @@ WebUI arayüzünü root yöneticinizden açın. Şunları bulacaksınız:
 ## 🧊 GMS Kategorileri
 
 #### Devre Dışı Bırakması Güvenli
-| Kategori | Etki |
-|----------|------|
+
+| Kategori         | Etki                                                                      |
+| ---------------- | ------------------------------------------------------------------------- |
 | 📊 **Telemetri** | Herhangi bir bozulma yapmaz. Reklamları, analizleri ve izlemeyi durdurur. |
-| 🔄 **Arka Plan** | Otomatik güncellemeler gecikebilir. |
+| 🔄 **Arka Plan** | Otomatik güncellemeler gecikebilir.                                       |
 
 #### Bozulacak / Etkilenen Özellikler
-| Kategori | Çalışmayı Durduracak Şeyler |
-|----------|----------------------------|
-| 📍 **Konum** | Google Haritalar, GPS Navigasyon, Cihazımı Bul. |
-| 📡 **Bağlantı** | Chromecast, Quick Share, Fast Pair. |
-| ☁️ **Bulut (Cloud)** | Google hesabı ile giriş, otomatik parola tamamlama, yedeklemeler. |
-| 💳 **Ödemeler** | Google Pay, NFC ile ödemeler. |
-| ⌚ **Giyilebilir Cihazlar**| Wear OS, Google Fit, fitness izleme. |
-| 🎮 **Oyunlar** | Play Oyunlar (Games) başarımları, liderlik tabloları ve bulut kayıtları. |
+
+| Kategori                    | Çalışmayı Durduracak Şeyler                                              |
+| --------------------------- | ------------------------------------------------------------------------ |
+| 📍 **Konum**                | Google Haritalar, GPS Navigasyon, Cihazımı Bul.                          |
+| 📡 **Bağlantı**             | Chromecast, Quick Share, Fast Pair.                                      |
+| ☁️ **Bulut (Cloud)**        | Google hesabı ile giriş, otomatik parola tamamlama, yedeklemeler.        |
+| 💳 **Ödemeler**             | Google Pay, NFC ile ödemeler.                                            |
+| ⌚ **Giyilebilir Cihazlar** | Wear OS, Google Fit, fitness izleme.                                     |
+| 🎮 **Oyunlar**              | Play Oyunlar (Games) başarımları, liderlik tabloları ve bulut kayıtları. |
 
 ## 🔋 Deep Doze Seviyeleri
 
-| Özellik | Orta | Maksimum |
-|---------|:----:|:--------:|
-| Agresif Doze Sabitleri | ✅ | ✅ |
-| Uygulama Bekleme Grupları (App Standby Buckets)| ✅ | ✅ |
-| RUN_IN_BACKGROUND İzni Engelleme | ✅ | ✅ |
-| Deep Idle (Ekran kapalıyken derin uyku)| ✅ | ✅ |
-| WAKE_LOCK İzni Engelleme | ❌ | ✅ |
-| Wakelock Killer (Wakelock durdurucu) | ❌ | ✅ |
-| Alarm (Zamanlayıcı) Kısıtlamaları | ❌ | ✅ |
+| Özellik                                         | Orta | Maksimum |
+| ----------------------------------------------- | :--: | :------: |
+| Agresif Doze Sabitleri                          |  ✅  |    ✅    |
+| Uygulama Bekleme Grupları (App Standby Buckets) |  ✅  |    ✅    |
+| RUN_IN_BACKGROUND İzni Engelleme                |  ✅  |    ✅    |
+| Deep Idle (Ekran kapalıyken derin uyku)         |  ✅  |    ✅    |
+| WAKE_LOCK İzni Engelleme                        |  ❌  |    ✅    |
+| Wakelock Killer (Wakelock durdurucu)            |  ❌  |    ✅    |
+| Alarm (Zamanlayıcı) Kısıtlamaları               |  ❌  |    ✅    |
 
 ## ❓ SSS (Sıkça Sorulan Sorular)
 

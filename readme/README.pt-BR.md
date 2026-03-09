@@ -45,7 +45,7 @@ O Frosty otimiza a duração da bateria congelando seletivamente componentes do 
 3. Reinicie o dispositivo.
 4. Abra a WebUI para ativar os recursos — tudo começa **DESATIVADO** por padrão.
 
->[!NOTE]
+> [!NOTE]
 > Usuários do Magisk podem utilizar o aplicativo [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) para acessar a WebUI.
 
 ## 📖 Uso
@@ -61,32 +61,34 @@ Abra a WebUI pelo seu gerenciador root. Você encontrará:
 ## 🧊 Categorias GMS
 
 #### Seguras para desativar
-| Categoria | Impacto |
-|-----------|---------|
-| 📊 **Telemetria** | Nenhum. Interrompe publicidade, análises estatísticas e rastreamento. |
-| 🔄 **Segundo Plano** | As atualizações automáticas podem sofrer atrasos. |
+
+| Categoria            | Impacto                                                               |
+| -------------------- | --------------------------------------------------------------------- |
+| 📊 **Telemetria**    | Nenhum. Interrompe publicidade, análises estatísticas e rastreamento. |
+| 🔄 **Segundo Plano** | As atualizações automáticas podem sofrer atrasos.                     |
 
 #### O que deixará de funcionar
-| Categoria | Funcionalidades afetadas |
-|-----------|-------------------------|
-| 📍 **Localização** | Google Maps, navegação GPS, Encontre Meu Dispositivo. |
-| 📡 **Conectividade** | Chromecast, Quick Share, Fast Pair. |
-| ☁️ **Nuvem** | Login do Google, preenchimento automático, senhas e backups. |
-| 💳 **Pagamentos** | Google Pay, pagamentos via NFC. |
-| ⌚ **Wearables** | Wear OS, Google Fit, rastreamento de fitness. |
-| 🎮 **Jogos** | Conquistas do Google Play Games, placares, salvamento em nuvem. |
+
+| Categoria            | Funcionalidades afetadas                                        |
+| -------------------- | --------------------------------------------------------------- |
+| 📍 **Localização**   | Google Maps, navegação GPS, Encontre Meu Dispositivo.           |
+| 📡 **Conectividade** | Chromecast, Quick Share, Fast Pair.                             |
+| ☁️ **Nuvem**         | Login do Google, preenchimento automático, senhas e backups.    |
+| 💳 **Pagamentos**    | Google Pay, pagamentos via NFC.                                 |
+| ⌚ **Wearables**     | Wear OS, Google Fit, rastreamento de fitness.                   |
+| 🎮 **Jogos**         | Conquistas do Google Play Games, placares, salvamento em nuvem. |
 
 ## 🔋 Níveis de Deep Doze
 
-| Recurso | Moderado | Máximo |
-|---------|:--------:|:------:|
-| Constantes Doze agressivas | ✅ | ✅ |
-| App Standby Buckets | ✅ | ✅ |
-| Bloquear RUN_IN_BACKGROUND | ✅ | ✅ |
-| Deep Idle (Tela Desligada) | ✅ | ✅ |
-| Bloquear WAKE_LOCK | ❌ | ✅ |
-| Wakelock Killer | ❌ | ✅ |
-| Restrições rigorosas em Alarmes| ❌ | ✅ |
+| Recurso                         | Moderado | Máximo |
+| ------------------------------- | :------: | :----: |
+| Constantes Doze agressivas      |    ✅    |   ✅   |
+| App Standby Buckets             |    ✅    |   ✅   |
+| Bloquear RUN_IN_BACKGROUND      |    ✅    |   ✅   |
+| Deep Idle (Tela Desligada)      |    ✅    |   ✅   |
+| Bloquear WAKE_LOCK              |    ❌    |   ✅   |
+| Wakelock Killer                 |    ❌    |   ✅   |
+| Restrições rigorosas em Alarmes |    ❌    |   ✅   |
 
 ## ❓ FAQ (Perguntas Frequentes)
 
