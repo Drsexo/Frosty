@@ -40,7 +40,7 @@
     kernel_tweaks: 'tgl_kernel', system_props: 'tgl_sysprops',
     blur_disable: 'tgl_blur', log_killing: 'tgl_logs',
     ram_optimizer: 'tgl_ram_optimizer',
-    gms_doze: 'tgl_gms_doze', deep_doze: 'tgl_deep_doze',
+    gms_doze: 'tgl_gms_doze', deep_doze: 'tgl_deep_doze', battery_saver: 'tgl_bss',
     telemetry: 'cat_telemetry', background: 'cat_background',
     location: 'cat_location', connectivity: 'cat_connectivity',
     cloud: 'cat_cloud', payments: 'cat_payments',
@@ -265,6 +265,14 @@
     if (mod) { if (p.deep_doze_level === 'moderate') mod.classList.add('on'); else mod.classList.remove('on'); }
     if (max) { if (p.deep_doze_level === 'maximum') max.classList.add('on'); else max.classList.remove('on'); }
 
+    setChk('t-bss', p.battery_saver);
+    var bssx = $('bss-extras');
+    if (bssx) {
+      if (p.battery_saver) bssx.classList.add('on');
+      else bssx.classList.remove('on');
+    }
+
+    // ── GMS Categories ──
     var cats = ['telemetry', 'background', 'location', 'connectivity', 'cloud', 'payments', 'wearables', 'games'];
     cats.forEach(function (cat) { setChk('t-' + cat, c[cat]); });
   }
@@ -313,11 +321,13 @@
           updateLoading(t('loading_killing_logs'));
           var rl = await API.killLogs();
           if (rl.status === 'ok') logAction(tf('log_killed_logs', rl.killed), 'ok');
+        } else {
+          logAction(tf('log_toggle_off', tkey(key)), 'ok');
         }
         log(t('log_reboot_effect'), 'warn');
       } else if (key === 'system_props') {
         updateLoading((nv ? t('loading_applying_sysprops') : t('loading_disabling_sysprops')));
-        var rsp = await API.toggleSystemProps(nv);
+        var rsp = await API.toggleSystemProps();
         if (rsp.status === 'ok') {
           logAction(t(nv ? 'log_sysprops_enabled' : 'log_sysprops_disabled'), 'ok');
         } else {
@@ -354,10 +364,19 @@
           await API.revertRamOptimizer();
           logAction(t('log_ram_reverted'), 'ok');
         }
+      } else if (key === 'battery_saver') {
+        if (nv) {
+          updateLoading(t('loading_applying_bss'));
+          await API.applyBatterySaver();
+          logAction(t('log_bss_applied'), 'ok');
+        } else {
+          updateLoading(t('loading_reverting_bss'));
+          await API.revertBatterySaver();
+          logAction(t('log_bss_reverted'), 'ok');
+        }
       }
 
       toast(tkey(key) + ': ' + (nv ? t('toast_on') : t('toast_off')), 'ok');
-      logAction(tf(nv ? 'log_toggle_on' : 'log_toggle_off', tkey(key)), 'ok');
 
       // Update local state and re-render without a shell round-trip
       state.prefs[key] = nv;
@@ -421,7 +440,7 @@
     try {
       var res = await API.setPref('deep_doze_level', level);
       if (res.status === 'ok') {
-        toast('Level: ' + level, 'ok');
+        toast(tf('log_deep_doze_level', level), 'ok');
         logAction(tf('log_deep_doze_level', level), 'info');
 
         if (state.prefs.deep_doze) {
@@ -434,7 +453,62 @@
         state.prefs.deep_doze_level = level;
         render();
       }
-    } catch (e) { toast('Error', 'err'); }
+    } catch (e) { toast(t('toast_error'), 'err'); }
+    hideLoading();
+    busy = false;
+  }
+
+  // ── BSS Modal ──
+
+  var _bssGpsSelected = 0;
+
+  function openBssModal() {
+    var p = state.prefs;
+    setChk('bss-t-datasaver',     p.bss_datasaver);
+    setChk('bss-t-soundtrigger',  p.bss_soundtrigger_disabled);
+    setChk('bss-t-fullbackup',    p.bss_fullbackup_deferred);
+    setChk('bss-t-keybackup',     p.bss_keyvaluebackup_deferred);
+    setChk('bss-t-force-standby', p.bss_force_standby);
+    setChk('bss-t-force-bg',      p.bss_force_bg_check);
+    setChk('bss-t-sensors',       p.bss_sensors_disabled);
+
+    var gpsMode = p.bss_gps_mode || 0;
+    _bssGpsSelected = gpsMode;
+    for (var g = 0; g <= 4; g++) {
+      var grow = $('bss-gps-' + g);
+      if (grow) { if (g === gpsMode) grow.classList.add('on'); else grow.classList.remove('on'); }
+    }
+    $('bss-modal').classList.add('open');
+  }
+
+  function closeBssModal() {
+    $('bss-modal').classList.remove('open');
+  }
+
+  async function saveBssOptions() {
+    if (busy) return;
+    busy = true;
+    showLoading(t('loading_applying_bss'));
+    try {
+      var opts = {
+        bss_datasaver:              $('bss-t-datasaver').checked       ? 1 : 0,
+        bss_soundtrigger_disabled:  $('bss-t-soundtrigger').checked   ? 1 : 0,
+        bss_fullbackup_deferred:    $('bss-t-fullbackup').checked    ? 1 : 0,
+        bss_keyvaluebackup_deferred:$('bss-t-keybackup').checked     ? 1 : 0,
+        bss_force_standby:          $('bss-t-force-standby').checked ? 1 : 0,
+        bss_force_bg_check:         $('bss-t-force-bg').checked      ? 1 : 0,
+        bss_sensors_disabled:       $('bss-t-sensors').checked       ? 1 : 0,
+        bss_gps_mode:               _bssGpsSelected
+      };
+      for (var k in opts) { await API.setPref(k, opts[k]); state.prefs[k] = opts[k]; }
+      if (state.prefs.battery_saver) {
+        await API.applyBatterySaver();
+        logAction(t('log_bss_reapplied'), 'ok');
+      }
+      toast(t('log_bss_applied'), 'ok');
+      closeBssModal();
+      render();
+    } catch (e) { toast(t('toast_error') + ': ' + e.message, 'err'); }
     hideLoading();
     busy = false;
   }
@@ -456,7 +530,7 @@
     try {
       // Step 1: Turn ON all prefs
       await yieldFrame(t('loading_enabling_toggles'));
-      var allPrefs = ['kernel_tweaks', 'system_props', 'blur_disable', 'log_killing', 'ram_optimizer', 'gms_doze', 'deep_doze'];
+      var allPrefs = ['kernel_tweaks', 'system_props', 'blur_disable', 'log_killing', 'ram_optimizer', 'gms_doze', 'deep_doze', 'battery_saver'];
       for (var i = 0; i < allPrefs.length; i++) {
         await API.setPref(allPrefs[i], 1);
       }
@@ -485,7 +559,7 @@
 
       // Step 5: Enable system props (rename .old → system.prop if needed)
       await yieldFrame(t('loading_applying_sysprops'));
-      var rsp = await API.toggleSystemProps(1);
+      var rsp = await API.toggleSystemProps();
       if (rsp.status === 'ok') logAction(t('log_sysprops_enabled'), 'ok');
       else logAction(tf('log_sysprops_failed', rsp.action || rsp.message || ''), 'err');
 
@@ -514,6 +588,11 @@
       await API.applyDeepDoze();
       logAction(t('log_deep_doze_applied'), 'ok');
 
+      // Step 11: Apply Battery Saver profile
+      await yieldFrame(t('loading_applying_bss'));
+      await API.applyBatterySaver();
+      logAction(t('log_bss_applied'), 'ok');
+
       toast(t('toast_frozen'), 'ok');
       log(t('log_reboot_effect'), 'warn');
       await loadPrefs();
@@ -536,7 +615,7 @@
     try {
       // Step 1: Turn OFF all prefs
       await yieldFrame(t('loading_disabling_toggles'));
-      var allPrefs = ['kernel_tweaks', 'system_props', 'blur_disable', 'log_killing', 'ram_optimizer', 'gms_doze', 'deep_doze'];
+      var allPrefs = ['kernel_tweaks', 'system_props', 'blur_disable', 'log_killing', 'ram_optimizer', 'gms_doze', 'deep_doze', 'battery_saver'];
       for (var i = 0; i < allPrefs.length; i++) {
         await API.setPref(allPrefs[i], 0);
       }
@@ -557,7 +636,7 @@
 
       // Step 4: Disable system props (rename system.prop → .old)
       await yieldFrame(t('loading_disabling_sysprops'));
-      var rsp2 = await API.toggleSystemProps(0);
+      var rsp2 = await API.toggleSystemProps();
       if (rsp2.status === 'ok') logAction(t('log_sysprops_disabled'), 'ok');
       else logAction(tf('log_sysprops_failed', rsp2.action || rsp2.message || ''), 'err');
 
@@ -588,6 +667,11 @@
       await yieldFrame(t('loading_reverting_deep_doze'));
       await API.revertDeepDoze();
       logAction(t('log_deep_doze_reverted'), 'ok');
+
+      // Step 10: Revert Battery Saver
+      await yieldFrame(t('loading_reverting_bss'));
+      await API.revertBatterySaver();
+      logAction(t('log_bss_reverted'), 'ok');
 
       toast(t('toast_reverted'), 'ok');
       log(t('log_reboot_effect'), 'warn');
@@ -991,7 +1075,7 @@
   async function openAbout() {
     $('about-modal').classList.add('open');
     try {
-      var raw = await API.run('cat /data/adb/modules/Frosty/module.prop 2>/dev/null');
+      var raw = await API.run('cat ' + API.MODDIR + '/module.prop 2>/dev/null');
       var lines = {};
       raw.split('\n').forEach(function(l) {
         var eq = l.indexOf('=');
@@ -1024,7 +1108,7 @@
         var acts = document.createElement('div'); acts.className = 'io-item-acts';
         var importBtn = document.createElement('button'); importBtn.className = 'io-item-import ripple';
         importBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 14-5-5 1.41-1.41L11 13.17V7h2v6.17l2.59-2.58L17 12l-5 5z"/></svg>';
-        importBtn.title = 'Import';
+        importBtn.title = t('io_btn_import');
         importBtn.addEventListener('click', (function(path) { return async function() {
           importBtn.disabled = true;
           var ok = await API.importSettings(path);
@@ -1033,7 +1117,7 @@
         }; })(b.path));
         var delBtn = document.createElement('button'); delBtn.className = 'io-item-del ripple';
         delBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12 1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
-        delBtn.title = 'Delete';
+        delBtn.title = t('io_btn_delete');
         delBtn.addEventListener('click', (function(path, el) { return async function() {
           delBtn.disabled = true;
           await API.run('rm -f "' + path + '"');
@@ -1043,11 +1127,11 @@
         }; })(b.path, item));
         var renameBtn = document.createElement('button'); renameBtn.className = 'io-item-rename ripple';
         renameBtn.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
-        renameBtn.title = 'Rename';
+        renameBtn.title = t('io_btn_rename');
         renameBtn.addEventListener('click', (function(path, spanEl, bObj) { return function() {
           var dir = path.substring(0, path.lastIndexOf('/') + 1);
           var curName = spanEl.textContent;
-          var newName = window.prompt('Rename backup:', curName);
+          var newName = window.prompt(t('io_rename_prompt'), curName);
           if (!newName || newName === curName) return;
           var newPath = dir + 'frosty_' + newName.replace(/[\/\:*?"<>|]/g, '_') + '.json';
           API.run('mv "' + path + '" "' + newPath + '"').then(function() {
@@ -1120,105 +1204,6 @@
   function bind() {
     $('btn-freeze').addEventListener('click', applyFreeze);
     $('btn-stock').addEventListener('click', applyStock);
-    $('btn-reapply').addEventListener('click', async function () {
-      if (busy) return;
-      var rp = state.prefs || {}, rc = state.categories || {};
-      var hasAnyCat = Object.keys(rc).some(function(k) { return rc[k] === 1; });
-      var hasAny = Object.keys(rp).some(function(k) {
-        return k !== 'deep_doze_level' && rp[k] === 1;
-      }) || hasAnyCat;
-      if (!hasAny) { toast(t('toast_nothing_to_apply'), 'info'); return; }
-      busy = true;
-
-      // Build step list based on what's enabled
-      var _steps = [];
-      if (rp.kernel_tweaks) _steps.push('loading_applying_kernel');
-      if (rp.ram_optimizer)  _steps.push('loading_applying_ram');
-      if (rp.system_props)  _steps.push('loading_applying_sysprops');
-      if (rp.blur_disable)  _steps.push('loading_applying_blur');
-      if (rp.log_killing)   _steps.push('loading_killing_logs');
-      if (hasAnyCat)        _steps.push('loading_freezing_services');
-      if (rp.gms_doze)      _steps.push('loading_applying_gms_doze');
-      if (rp.deep_doze)     _steps.push('loading_applying_deep_doze');
-      var _total = _steps.length, _cur = 0;
-
-      function stepLoad(key) {
-        _cur++;
-        updateLoading('[' + _cur + '/' + _total + '] ' + t(key));
-        return new Promise(function(r) { requestAnimationFrame(function() { setTimeout(r, 0); }); });
-      }
-
-      function yieldFrame(msg) {
-        updateLoading(msg);
-        return new Promise(function(r) { requestAnimationFrame(function() { setTimeout(r, 0); }); });
-      }
-
-      showLoading(t('loading_reapplying'));
-      logAction(t('log_reapply_start'), 'info');
-
-      try {
-        if (rp.kernel_tweaks) {
-          await stepLoad('loading_applying_kernel');
-          var rk = await API.applyKernelTweaks();
-          if (rk.status === 'ok') logAction(tf('log_kernel_applied', rk.applied, rk.failed, rk.skipped || 0), rk.failed > 0 ? 'warn' : 'ok');
-          else logAction(rk.message || 'Kernel: error', 'err');
-        }
-
-        if (rp.ram_optimizer) {
-          await stepLoad('loading_applying_ram');
-          await API.applyRamOptimizer();
-          logAction(t('log_ram_applied'), 'ok');
-        }
-
-        if (rp.system_props) {
-          await stepLoad('loading_applying_sysprops');
-          var rsp = await API.toggleSystemProps(1);
-          if (rsp.status === 'ok') logAction(t('log_sysprops_enabled'), 'ok');
-          else logAction(tf('log_sysprops_failed', rsp.message || ''), 'err');
-        }
-
-        if (rp.blur_disable) {
-          await stepLoad('loading_applying_blur');
-          var rb = await API.applyBlur();
-          if (rb.status === 'ok') logAction(tf('log_blur_state', t('word_disabled')), 'ok');
-        }
-
-        if (rp.log_killing) {
-          await stepLoad('loading_killing_logs');
-          var rl = await API.killLogs();
-          if (rl.status === 'ok') logAction(tf('log_killed_logs', rl.killed), 'ok');
-        }
-
-        if (hasAnyCat) {
-          await stepLoad('loading_freezing_services');
-          var res = await API.applyFreeze();
-          if (res.status === 'ok') {
-            logAction(tf('log_gms_frozen', res.disabled, res.enabled, res.failed),
-              res.failed > 0 ? 'warn' : 'ok');
-          }
-        }
-
-        if (rp.gms_doze) {
-          await stepLoad('loading_applying_gms_doze');
-          await API.applyGmsDoze();
-          logAction(t('log_gms_doze_applied'), 'ok');
-        }
-
-        if (rp.deep_doze) {
-          await stepLoad('loading_applying_deep_doze');
-          await API.applyDeepDoze();
-          logAction(t('log_deep_doze_applied'), 'ok');
-        }
-
-        toast(t('toast_reapplied'), 'ok');
-        log(t('log_reboot_effect'), 'warn');
-      } catch (e) {
-        toast(tf('log_load_failed', e.message), 'err');
-        log(tf('log_load_failed', e.message), 'err');
-      }
-      hideLoading();
-      busy = false;
-    });
 
     // ── System Tweaks ──
     $('t-kernel').addEventListener('change', function () { togglePref('kernel_tweaks'); });
@@ -1228,7 +1213,8 @@
     $('t-ram-optimizer').addEventListener('change', function () { togglePref('ram_optimizer'); });
     $('t-gms-doze').addEventListener('change', function () { togglePref('gms_doze'); });
     $('t-deep-doze').addEventListener('change', function () { togglePref('deep_doze'); });
-    document.querySelectorAll('.tgl-row, .cat-row').forEach(function (row) {
+    $('t-bss').addEventListener('change', function () { togglePref('battery_saver'); });
+    document.querySelectorAll('.tgl-row, .cat-row, .bss-opt-row').forEach(function (row) {
       row.addEventListener('click', function (e) {
         if (e.target.closest('.tgl')) return;
         var chk = row.querySelector('input[type="checkbox"]');
@@ -1240,6 +1226,30 @@
     $('lvl-mod').addEventListener('click', function () { setDozeLevel('moderate'); });
     $('lvl-max').addEventListener('click', function () { setDozeLevel('maximum'); });
 
+    // ── Battery Saver Tuner ──
+    $('bss-open').addEventListener('click', openBssModal);
+    $('bss-close').addEventListener('click', closeBssModal);
+    $('bss-modal').addEventListener('click', function (e) {
+      if (e.target === this) closeBssModal();
+    });
+    $('bss-apply').addEventListener('click', saveBssOptions);
+
+    // BSS location mode rows
+    for (var _gi = 0; _gi <= 4; _gi++) {
+      (function (gi) {
+        var grow = $('bss-gps-' + gi);
+        if (!grow) return;
+        grow.addEventListener('click', function () {
+          _bssGpsSelected = gi;
+          for (var x = 0; x <= 4; x++) {
+            var gr = $('bss-gps-' + x);
+            if (gr) { if (x === gi) gr.classList.add('on'); else gr.classList.remove('on'); }
+          }
+        });
+      })(_gi);
+    }
+
+    // ── Whitelist ──
     $('wl-open').addEventListener('click', openWhitelist);
     $('wl-close').addEventListener('click', closeWhitelist);
     $('wl-modal').addEventListener('click', function (e) {
@@ -1273,43 +1283,6 @@
       if (el) el.addEventListener('change', function () { toggleCategory(cat); });
     });
 
-    // ── Activity Log ──
-    $('btn-copy-log').addEventListener('click', function () {
-      var box = $('log-box');
-      if (!box || !box.children.length) return;
-      var lines = Array.from(box.children).map(function (row) {
-        var ts  = row.querySelector('.log-ts');
-        var msg = row.querySelector('.log-msg');
-        return (ts ? ts.textContent + '  ' : '') + (msg ? msg.textContent : '');
-      });
-      var text = lines.join('\n');
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(function () {
-          toast(t('toast_log_copied'), 'ok');
-        }).catch(function () {
-          toast(t('toast_copy_failed'), 'err');
-        });
-      } else {
-        var ta = document.createElement('textarea');
-        ta.value = text;
-        ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
-        document.body.appendChild(ta);
-        ta.focus(); ta.select();
-        try { document.execCommand('copy'); toast(t('toast_log_copied'), 'ok'); }
-        catch (e) { toast(t('toast_copy_failed'), 'err'); }
-        document.body.removeChild(ta);
-      }
-    });
-    $('btn-clear-log').addEventListener('click', function () {
-      localLogs = [];
-      var box = $('log-box');
-      if (box) box.innerHTML = '';
-    });
-    $('btn-expand-log').addEventListener('click', function () {
-      $('log-box').classList.toggle('expanded');
-      this.classList.toggle('expanded');
-    });
-
     // ── 3-dots menu ──
     var dropdown = $('hdr-dropdown');
     $('hdr-dots-btn').addEventListener('click', function (e) {
@@ -1328,6 +1301,23 @@
       if (dropdown.contains(e.target)) return;
       dropdown.classList.remove('open');
     }, { passive: true });
+
+    // ── About ──
+    $('menu-about').addEventListener('click', function () {
+      dropdown.classList.remove('open');
+      openAbout();
+    });
+    $('about-close').addEventListener('click', function () {
+      $('about-modal').classList.remove('open');
+    });
+    $('about-modal').addEventListener('click', function (e) {
+      if (e.target === this) this.classList.remove('open');
+    });
+    $('about-gh-btn').addEventListener('click', function (e) {
+      e.preventDefault();
+      try { API.run('am start -a android.intent.action.VIEW -d "https://github.com/Drsexo/Frosty"'); }
+      catch (err) { window.open('https://github.com/Drsexo/Frosty', '_blank'); }
+    });
 
     // ── Import / Export ──
     $('menu-io').addEventListener('click', function () {
@@ -1367,21 +1357,145 @@
       if (e.target === this) this.classList.remove('open');
     });
 
-    // ── About ──
-    $('menu-about').addEventListener('click', function () {
-      dropdown.classList.remove('open');
-      openAbout();
+    // ── Activity Log ──
+    $('log-clear-btn').addEventListener('click', function () {
+      localLogs = [];
+      var box = $('log-box');
+      if (box) box.innerHTML = '';
     });
-    $('about-close').addEventListener('click', function () {
-      $('about-modal').classList.remove('open');
+
+    $('log-expand-btn').addEventListener('click', function () {
+      $('log-box').classList.toggle('expanded');
+      this.classList.toggle('expanded');
     });
-    $('about-modal').addEventListener('click', function (e) {
-      if (e.target === this) this.classList.remove('open');
+
+    $('btn-reapply').addEventListener('click', async function () {
+      if (busy) return;
+      var rp = state.prefs || {}, rc = state.categories || {};
+      var hasAnyCat = Object.keys(rc).some(function(k) { return rc[k] === 1; });
+      var hasAny = Object.keys(rp).some(function(k) {
+        return k !== 'deep_doze_level' && rp[k] === 1;
+      }) || hasAnyCat;
+      if (!hasAny) { toast(t('toast_nothing_to_apply'), 'info'); return; }
+      busy = true;
+
+      // Build step list based on what's enabled
+      var _steps = [];
+      if (rp.kernel_tweaks) _steps.push('loading_applying_kernel');
+      if (rp.ram_optimizer)  _steps.push('loading_applying_ram');
+      if (rp.system_props)  _steps.push('loading_applying_sysprops');
+      if (rp.blur_disable)  _steps.push('loading_applying_blur');
+      if (rp.log_killing)   _steps.push('loading_killing_logs');
+      if (hasAnyCat)        _steps.push('loading_freezing_services');
+      if (rp.gms_doze)         _steps.push('loading_applying_gms_doze');
+      if (rp.deep_doze)        _steps.push('loading_applying_deep_doze');
+      if (rp.battery_saver)    _steps.push('loading_applying_bss');
+      var _total = _steps.length, _cur = 0;
+
+      function stepLoad(key) {
+        _cur++;
+        updateLoading('[' + _cur + '/' + _total + '] ' + t(key));
+        return new Promise(function(r) { requestAnimationFrame(function() { setTimeout(r, 0); }); });
+      }
+
+      showLoading(t('loading_reapplying'));
+      logAction(t('log_reapply_start'), 'info');
+
+      try {
+        if (rp.kernel_tweaks) {
+          await stepLoad('loading_applying_kernel');
+          var rk = await API.applyKernelTweaks();
+          if (rk.status === 'ok') logAction(tf('log_kernel_applied', rk.applied, rk.failed, rk.skipped || 0), rk.failed > 0 ? 'warn' : 'ok');
+          else logAction(rk.message || 'Kernel: error', 'err');
+        }
+
+        if (rp.ram_optimizer) {
+          await stepLoad('loading_applying_ram');
+          await API.applyRamOptimizer();
+          logAction(t('log_ram_applied'), 'ok');
+        }
+
+        if (rp.system_props) {
+          await stepLoad('loading_applying_sysprops');
+          var rsp = await API.toggleSystemProps();
+          if (rsp.status === 'ok') logAction(t('log_sysprops_enabled'), 'ok');
+          else logAction(tf('log_sysprops_failed', rsp.message || ''), 'err');
+        }
+
+        if (rp.blur_disable) {
+          await stepLoad('loading_applying_blur');
+          var rb = await API.applyBlur();
+          if (rb.status === 'ok') logAction(tf('log_blur_state', t('word_disabled')), 'ok');
+        }
+
+        if (rp.log_killing) {
+          await stepLoad('loading_killing_logs');
+          var rl = await API.killLogs();
+          if (rl.status === 'ok') logAction(tf('log_killed_logs', rl.killed), 'ok');
+        }
+
+        if (hasAnyCat) {
+          await stepLoad('loading_freezing_services');
+          var res = await API.applyFreeze();
+          if (res.status === 'ok') {
+            logAction(tf('log_gms_frozen', res.disabled, res.enabled, res.failed),
+              res.failed > 0 ? 'warn' : 'ok');
+          }
+        }
+
+        if (rp.gms_doze) {
+          await stepLoad('loading_applying_gms_doze');
+          await API.applyGmsDoze();
+          logAction(t('log_gms_doze_applied'), 'ok');
+        }
+
+        if (rp.deep_doze) {
+          await stepLoad('loading_applying_deep_doze');
+          await API.applyDeepDoze();
+          logAction(t('log_deep_doze_applied'), 'ok');
+        }
+
+        if (rp.battery_saver) {
+          await stepLoad('loading_applying_bss');
+          await API.applyBatterySaver();
+          logAction(t('log_bss_applied'), 'ok');
+        }
+
+        toast(t('toast_reapplied'), 'ok');
+        log(t('log_reboot_effect'), 'warn');
+      } catch (e) {
+        toast(tf('log_load_failed', e.message), 'err');
+        log(tf('log_load_failed', e.message), 'err');
+      }
+      hideLoading();
+      busy = false;
     });
-    $('about-gh-btn').addEventListener('click', function (e) {
-      e.preventDefault();
-      try { API.run('am start -a android.intent.action.VIEW -d "https://github.com/Drsexo/Frosty"'); }
-      catch (err) { window.open('https://github.com/Drsexo/Frosty', '_blank'); }
+
+    $('log-copy-btn').addEventListener('click', function () {
+      var box = $('log-box');
+      if (!box || !box.children.length) return;
+      var lines = Array.from(box.children).map(function (row) {
+        var ts  = row.querySelector('.log-ts');
+        var msg = row.querySelector('.log-msg');
+        return (ts ? ts.textContent + '  ' : '') + (msg ? msg.textContent : '');
+      });
+      var text = lines.join('\n');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () {
+          toast(t('toast_log_copied'), 'ok');
+        }).catch(function () {
+          toast(t('toast_copy_failed'), 'err');
+        });
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        try { document.execCommand('copy'); toast(t('toast_log_copied'), 'ok'); }
+        catch (e) { toast(t('toast_copy_failed'), 'err'); }
+        document.body.removeChild(ta);
+      }
     });
 
     // Pause polling when app is backgrounded, resume when foregrounded
@@ -1432,7 +1546,7 @@
     var appEl = null;
 
     function isModalOpen() {
-      var ids = ['wl-modal', 'about-modal', 'io-modal', 'lang-modal', 'lang-confirm-backdrop'];
+      var ids = ['wl-modal', 'bss-modal', 'about-modal', 'io-modal', 'lang-modal', 'lang-confirm-backdrop'];
       for (var i = 0; i < ids.length; i++) {
         var m = document.getElementById(ids[i]);
         if (m && m.classList.contains('open')) return true;

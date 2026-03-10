@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.4] - 2026-03-10
+### New feature: Battery Saver Tuner!
+Configure exactly what Android's battery saver mode does when it's active. Individual toggles for: background data (data saver), hotword detection, backups, force standby, background checks, sensors, and GPS behavior. These only take effect when battery saver is on.
+### WebUI + Backend
+- Dead `GMS_LIST`, `SYSPROP`, `SYSPROP_OLD` variables removed, no longer referenced.
+- Renamed `applyTweaks` / `revertTweaks` / `.log-copy-btn` to `applyKernelTweaks` / `revertKernelTweaks` / `.log-action-btn` for more accurate naming.
+- Fixed Enable All / Revert All not applying RAM Optimizer in rare cases.
+- Fixed some shell errors being silently swallowed instead of reported.
+- `max-height: 50vh` added to `.hdr-banner` to fix the overflow on small screens. Also added **`object-position: center` to `.hdr-banner-img` to fix the banner image cropping from the top.
+### Bug Fixes
+- Removed hardcoded `/data/adb/modules/Frosty` paths from different shell files and WebUI backend.
+- Removed `restrict_alarms()` and `force-idle deep` from maximum level of Deep Doze since they were delaying alarm triggers in some cases.
+- Fixed disabling Deep Doze not reverting some settings.
+- Changed the standby bucket restricted → rare for better multitasking.
+- Swappiness and `extra_free_kbytes` are no longer hardcoded in  `ram_tweaks.txt`, they're now handled by tiered logic in `apply_ram_optimizer()` based on actual device RAM for more general compatibility.
+- Adjusted `watermark_scale_factor` to fix the aggressive RAM killing for bigger apps. 
+- Added TCP Congestion Control selection which picks the best available network algorithm in order: `bbr3 → bbr2 → bbrplus → bbr → westwood → cubic`. Original algorithm backed up and restored on revert.
+- And many more code cleanup for better readability.
+
 ## [3.3] - 2026-03-07
 ### WebUI
 - Restyled Deep Doze level buttons.

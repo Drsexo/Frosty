@@ -90,13 +90,22 @@ for user_id in $user_ids; do
 done
 log "GMS Doze reverted"
 
-# Revert Deep Doze
+# Revert Battery Saver
+log "Reverting Battery Saver..."
+settings delete global battery_saver_constants 2>/dev/null
+settings put global low_power_sticky 0 2>/dev/null
+settings put global low_power_sticky_auto_disable_enabled 0 2>/dev/null
+settings put global low_power 0 2>/dev/null
+log "Battery Saver reverted"
+
 log "Reverting Deep Doze..."
 settings delete global device_idle_constants 2>/dev/null
 settings put global forced_app_standby_enabled 0 2>/dev/null
+settings put global app_auto_restriction_enabled false 2>/dev/null
+settings delete global app_standby_enabled 2>/dev/null
+settings delete global adaptive_battery_management_enabled 2>/dev/null
 
 for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
-  appops set "$pkg" RUN_IN_BACKGROUND allow 2>/dev/null
   appops set "$pkg" WAKE_LOCK allow 2>/dev/null
   appops set "$pkg" SCHEDULE_EXACT_ALARM allow 2>/dev/null
   appops set "$pkg" USE_EXACT_ALARM allow 2>/dev/null
@@ -121,14 +130,16 @@ for tag in dumpsys:procstats dumpsys:usagestats procstats usagestats \
   content call --uri content://settings/global --method DELETE_value \
       --arg "dropbox:$tag" 2>/dev/null
 done
-log "DropBox settings reverted"
+settings delete global battery_stats_constants 2>/dev/null
+log "DropBox and battery stats settings reverted"
 
 # Re-enable GMS services
 if [ -f "$GMS_LIST" ]; then
   log "Re-enabling GMS services..."
   count=0
   while IFS='|' read -r service category || [ -n "$service" ]; do
-    case "$service" in '#'*|'') continue ;; esac   service=$(echo "$service" | tr -d ' ')
+    case "$service" in '#'*|'') continue ;; esac
+    service=$(echo "$service" | tr -d ' ')
     pm enable "$service" >/dev/null 2>&1 && count=$((count + 1))
   done < "$GMS_LIST"
   log "Re-enabled $count services"

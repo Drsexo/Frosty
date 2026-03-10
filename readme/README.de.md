@@ -32,8 +32,10 @@ Frosty optimiert die Akkulaufzeit durch das selektive Einfrieren von Google Mobi
 - **GMS Doze**: Entfernt GMS aus der Energiespar-Whitelist (Ausnahmeliste).
 - **Deep Doze**: Aggressive Hintergrundbeschränkungen für alle Apps (Moderat / Maximum).
 - **Kernel-Tweaks**: Optimierungen für Scheduler, VM und Netzwerk.
+- **RAM-Optimierer**: Passt Prozesslimits und sysfs-Speichereinstellungen an.
 - **Kill Logs**: Stoppt akku- und RAM-fressende Protokollierungsdienste im Hintergrund.
 - **System Props**: Deaktiviert Debug-Eigenschaften, um zusätzlichen RAM freizugeben.
+- **Energiespar-Tuner**: Passe das Verhalten des Android-Energiesparmodus an, steuere die Verzögerung von Backups, die Deaktivierung von Sensoren, das GPS-Verhalten, den Datensparmodus und mehr. Diese Einstellungen sind nur wirksam, wenn der Android-Energiesparmodus AKTIVIERT ist.
 - **Live-Konfiguration**: Vollständige Kontrolle in Echtzeit über die WebUI.
 
 ## 📦 Installation
@@ -61,34 +63,52 @@ Frosty optimiert die Akkulaufzeit durch das selektive Einfrieren von Google Mobi
 ## 🧊 GMS-Kategorien
 
 #### Sicher zu deaktivieren
-
-| Kategorie          | Auswirkung                                                      |
-| ------------------ | --------------------------------------------------------------- |
-| 📊 **Telemetrie**  | Keine. Stoppt Werbung, Analytics und das Tracking durch Google. |
-| 🔄 **Hintergrund** | Automatische Updates können verzögert werden.                   |
+| Kategorie | Auswirkung |
+|-----------|------------|
+| 📊 **Telemetrie** | Keine. Stoppt Werbung, Analytics und das Tracking durch Google. |
+| 🔄 **Hintergrund** | Automatische Updates können verzögert werden. |
 
 #### Was nicht mehr funktioniert
-
-| Kategorie            | Betroffene Funktionen                                    |
-| -------------------- | -------------------------------------------------------- |
-| 📍 **Standort**      | Google Maps, GPS-Navigation, „Gerät finden“.             |
-| 📡 **Konnektivität** | Chromecast, Quick Share, Fast Pair.                      |
-| ☁️ **Cloud**         | Google-Anmeldung, Autofill für Passwörter, Backups.      |
-| 💳 **Zahlungen**     | Google Pay, NFC-Zahlungen.                               |
-| ⌚ **Wearables**     | Wear OS, Google Fit, Fitness-Tracking.                   |
-| 🎮 **Spiele**        | Google Play Games Erfolge, Bestenlisten, Cloud-Speicher. |
+| Kategorie | Betroffene Funktionen |
+|-----------|----------------------|
+| 📍 **Standort** | Google Maps, GPS-Navigation, „Gerät finden“. |
+| 📡 **Konnektivität** | Chromecast, Quick Share, Fast Pair. |
+| ☁️ **Cloud** | Google-Anmeldung, Autofill für Passwörter, Backups. |
+| 💳 **Zahlungen** | Google Pay, NFC-Zahlungen. |
+| ⌚ **Wearables** | Wear OS, Google Fit, Fitness-Tracking. |
+| 🎮 **Spiele** | Google Play Games Erfolge, Bestenlisten, Cloud-Speicher. |
 
 ## 🔋 Deep Doze Stufen
 
-| Funktion                                 | Moderat | Maximum |
-| ---------------------------------------- | :-----: | :-----: |
-| Aggressive Doze-Konstanten               |   ✅    |   ✅    |
-| App Standby Buckets                      |   ✅    |   ✅    |
-| RUN_IN_BACKGROUND blockieren             |   ✅    |   ✅    |
-| Deep Idle bei ausgeschaltetem Bildschirm |   ✅    |   ✅    |
-| WAKE_LOCK blockieren                     |   ❌    |   ✅    |
-| Wakelock Killer                          |   ❌    |   ✅    |
-| Strikte Alarm-Einschränkungen            |   ❌    |   ✅    |
+| Funktion | Moderat | Maximum |
+|----------|:-------:|:-------:|
+| Aggressive Doze-Konstanten | ✅ | ✅ |
+| App Standby Buckets | ✅ | ✅ |
+| RUN_IN_BACKGROUND blockieren | ✅ | ✅ |
+| Deep Idle bei ausgeschaltetem Bildschirm | ✅ | ✅ |
+| WAKE_LOCK blockieren | ❌ | ✅ |
+| Wakelock Killer | ❌ | ✅ |
+| Strikte Alarm-Einschränkungen | ❌ | ✅ |
+
+## 🚀 RAM-Optimierer
+
+Passt den Android-Prozessmanager und das Speicher-Subsystem basierend auf dem gesamten RAM deines Geräts an.  
+Aktiviert außerdem den USAP-Pool für schnellere App-Kaltstarts und wendet sysfs-Tweaks an (`swappiness`, `page-cluster`). Alle Werte werden gesichert und bei Deaktivierung vollständig wiederhergestellt.
+
+## ⚙️ Energiespar-Tuner
+
+Konfiguriert das Verhalten des integrierten Android-Energiesparmodus, wenn dieser aktiv ist.
+
+| Option | Beschreibung |
+|--------|-------------|
+| **Datensparmodus** | Beschränkt Hintergrunddaten für die meisten Apps |
+| **Sprachaktivierung** | Deaktiviert die Hotword-Erkennung (z. B. "Hey Google") |
+| **Vollständiges Backup** | Verschiebt vollständige Geräte-Backups |
+| **Daten-Backup** | Verschiebt Key-Value-Backups (App-Einstellungen) |
+| **App-Standby erzwingen** | Versetzt alle Hintergrund-Apps sofort in den Standby-Modus |
+| **Hintergrundprüfung** | Erzwingt strengere Prüfungen für Hintergrundprozesse |
+| **Sensoren** | Deaktiviert optionale Sensoren im Hintergrund |
+| **GPS-Modus** | Steuert den Standortzugriff bei aktivem Energiesparmodus |
 
 ## ❓ FAQ (Häufige Fragen)
 
@@ -109,3 +129,4 @@ Füge deine Messenger-, Banking- und Wecker-Apps hinzu, um keine wichtigen Benac
 - **gloeyisk** — [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze)
 - **Azyrn** — [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** — [GMS Component Disable Script](https://t.me/MoZoiDStack/137)
+- **s1m** — [SaverTuner](https://codeberg.org/s1m/savertuner)

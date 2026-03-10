@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  
   <string name="menu_io">Importa / Esporta</string>
   <string name="menu_lang">Lingua</string>
   <string name="menu_about">Informazioni</string>
@@ -129,9 +128,6 @@
   <string name="log_toggle_off">{0} è stato disattivato</string>
   <string name="log_webui_ready">WebUI pronta all'uso</string>
   <string name="log_load_failed">Caricamento fallito: {0}</string>
-  <string name="executing">Esecuzione in corso: {0}</string>
-  <string name="log_executed">Eseguito con successo: {0}</string>
-  <string name="log_execution_failed">Esecuzione fallita: {0}</string>
   <string name="log_reboot_effect">Riavvia il dispositivo per ottenere l'effetto completo</string>
   <string name="log_reverting_all">Ripristino delle impostazioni predefinite in corso...</string>
   <string name="log_freeze_all">Attivazione di tutte le impostazioni in corso...</string>
@@ -149,4 +145,44 @@
   <string name="log_ram_reverted">Ottimizzatore RAM annullato</string>
   <string name="loading_applying_ram">Applicazione ottimizzatore RAM in corso...</string>
   <string name="loading_reverting_ram">Ripristino ottimizzatore RAM in corso...</string>
+  <string name="tgl_bss">Ottimizzatore Risparmio Batteria</string>
+  <string name="tgl_bss_desc">Personalizza il comportamento del risparmio energetico di Android</string>
+  <string name="loading_applying_bss">Applicazione profilo di risparmio energetico...</string>
+  <string name="loading_reverting_bss">Ripristino risparmio energetico...</string>
+  <string name="log_bss_applied">Profilo di risparmio energetico applicato</string>
+  <string name="log_bss_reverted">Risparmio energetico ripristinato</string>
+  <string name="log_bss_reapplied">Risparmio energetico riapplicato</string>
+  <string name="bss_modal_title">Opzioni Risparmio Batteria</string>
+  <string name="bss_modal_notice">Le impostazioni hanno effetto quando il Risparmio Batteria è attivo.</string>
+  <string name="bss_configure">Configura opzioni</string>
+  <string name="bss_opt_hotword">Disabilita rilevamento hotword</string>
+  <string name="bss_opt_hotword_desc">Impedisce al microfono di restare sempre in ascolto per "Hey Google".</string>
+  <string name="bss_opt_fullbackup">Rimanda i backup completi</string>
+  <string name="bss_opt_fullbackup_desc">Mette in pausa i backup completi mentre il risparmio energetico è attivo.</string>
+  <string name="bss_opt_keybackup">Rimanda il backup dei dati app</string>
+  <string name="bss_opt_keybackup_desc">Mette in pausa la sincronizzazione delle impostazioni delle app sul cloud.</string>
+  <string name="bss_opt_force_standby">Forza standby app</string>
+  <string name="bss_opt_force_standby_desc">Sposta le app in background nel bucket di standby ristretto, limitando pesantemente i risvegli.</string>
+  <string name="bss_opt_force_bg">Forza controlli in background</string>
+  <string name="bss_opt_force_bg_desc">Applica in modo più restrittivo i limiti di esecuzione in background per tutte le app.</string>
+  <string name="bss_opt_sensors">Disabilita sensori secondari</string>
+  <string name="bss_opt_sensors_desc">Spegne i sensori non critici come barometro, contapassi e vettore di rotazione.</string>
+  <string name="bss_opt_gps">Modalità posizione</string>
+  <string name="bss_apply">Applica &amp; Chiudi</string>
+  <string name="bss_gps_0">Nessuna restrizione</string>
+  <string name="bss_gps_1">GPS spento (a schermo spento)</string>
+  <string name="bss_gps_2">Tutto spento (a schermo spento)</string>
+  <string name="bss_gps_3">Solo in primo piano</string>
+  <string name="bss_gps_4">Limitato (a schermo spento)</string>
+  <string name="bss_gps_hint_0">Il GPS e i servizi di posizione funzionano normalmente in ogni momento.</string>
+  <string name="bss_gps_hint_1">Il chip GPS si spegne quando lo schermo si spegne. La localizzazione Wi-Fi/rete mobile continua a precisione inferiore.</string>
+  <string name="bss_gps_hint_2">Qualsiasi fornitore di posizione si ferma con lo schermo spento.</string>
+  <string name="bss_gps_hint_3">Solo l'app in uso può accedere alla posizione. Le app in background vengono completamente bloccate.</string>
+  <string name="bss_gps_hint_4">Le app in background possono ancora accedere, ma gli aggiornamenti sono rallentati a schermo spento.</string>
+  <string name="io_btn_import">Importa</string>
+  <string name="io_btn_delete">Elimina</string>
+  <string name="io_btn_rename">Rinomina</string>
+  <string name="io_rename_prompt">Rinomina backup:</string>
+  <string name="bss_opt_datasaver">Abilita risparmio dati</string>
+  <string name="bss_opt_datasaver_desc">Limita l'uso dei dati in background per tutte le app mentre il risparmio energetico è attivo.</string>
 </resources>

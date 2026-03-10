@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
   <string name="menu_io">Import / Export</string>
   <string name="menu_lang">Sprache</string>
   <string name="menu_about">Über das Modul</string>
@@ -129,9 +128,6 @@
   <string name="log_toggle_off">{0} wurde deaktiviert</string>
   <string name="log_webui_ready">WebUI ist bereit</string>
   <string name="log_load_failed">Fehler beim Laden: {0}</string>
-  <string name="executing">Wird ausgeführt: {0}</string>
-  <string name="log_executed">Erfolgreich ausgeführt: {0}</string>
-  <string name="log_execution_failed">Fehler beim Ausführen: {0}</string>
   <string name="log_reboot_effect">Für die volle Wirkung ist ein Neustart erforderlich</string>
   <string name="log_reverting_all">Alles wird auf Standard zurückgesetzt...</string>
   <string name="log_freeze_all">Alles wird aktiviert...</string>
@@ -149,4 +145,44 @@
   <string name="log_ram_reverted">RAM-Optimierer zurückgesetzt</string>
   <string name="loading_applying_ram">RAM-Optimierer wird angewendet...</string>
   <string name="loading_reverting_ram">RAM-Optimierer wird zurückgesetzt...</string>
+  <string name="tgl_bss">Energiespar-Tuner</string>
+  <string name="tgl_bss_desc">Passe das Verhalten des integrierten Android-Energiesparmodus an</string>
+  <string name="loading_applying_bss">Energiesparprofil wird angewendet...</string>
+  <string name="loading_reverting_bss">Energiesparmodus wird zurückgesetzt...</string>
+  <string name="log_bss_applied">Energiesparprofil angewendet</string>
+  <string name="log_bss_reverted">Energiesparmodus zurückgesetzt</string>
+  <string name="log_bss_reapplied">Energiesparmodus erneut angewendet</string>
+  <string name="bss_modal_title">Energiespar-Optionen</string>
+  <string name="bss_modal_notice">Einstellungen gelten, während der Energiesparmodus aktiv ist.</string>
+  <string name="bss_configure">Optionen konfigurieren</string>
+  <string name="bss_opt_hotword">Sprachaktivierung deaktivieren</string>
+  <string name="bss_opt_hotword_desc">Stoppt das permanente Zuhören des Mikrofons nach "Hey Google".</string>
+  <string name="bss_opt_fullbackup">Geräte-Backup verschieben</string>
+  <string name="bss_opt_fullbackup_desc">Pausiert vollständige Geräte-Backups im Energiesparmodus. Wird nach Deaktivierung fortgesetzt.</string>
+  <string name="bss_opt_keybackup">Daten-Backup verschieben</string>
+  <string name="bss_opt_keybackup_desc">Pausiert die Synchronisierung von App-Einstellungen und kleinen Backups in der Cloud.</string>
+  <string name="bss_opt_force_standby">App-Standby erzwingen</string>
+  <string name="bss_opt_force_standby_desc">Verschiebt alle Hintergrund-Apps in den eingeschränkten Standby-Bucket, was ihr Aufwecken stark begrenzt.</string>
+  <string name="bss_opt_force_bg">Hintergrundprüfung erzwingen</string>
+  <string name="bss_opt_force_bg_desc">Wendet strengere Ausführungslimits im Hintergrund für alle Apps an.</string>
+  <string name="bss_opt_sensors">Optionale Sensoren deaktivieren</string>
+  <string name="bss_opt_sensors_desc">Schaltet nicht-kritische Sensoren wie Barometer, Schrittzähler und Rotationsvektor ab.</string>
+  <string name="bss_opt_gps">Standortmodus</string>
+  <string name="bss_apply">Anwenden &amp; Schließen</string>
+  <string name="bss_gps_0">Keine Beschränkung</string>
+  <string name="bss_gps_1">GPS aus (Bildschirm aus)</string>
+  <string name="bss_gps_2">Alles aus (Bildschirm aus)</string>
+  <string name="bss_gps_3">Nur Vordergrund</string>
+  <string name="bss_gps_4">Gedrosselt (Bildschirm aus)</string>
+  <string name="bss_gps_hint_0">GPS und alle Ortungsdienste funktionieren jederzeit normal. Keine Einschränkung.</string>
+  <string name="bss_gps_hint_1">Der GPS-Chip schaltet sich ab, wenn der Bildschirm ausgeht. WLAN- und Mobilfunkortung funktionieren mit geringerer Genauigkeit weiter.</string>
+  <string name="bss_gps_hint_2">Jeder Standortanbieter (GPS, WLAN, Mobilfunk) stoppt, wenn der Bildschirm ausgeht. Wetter-Widgets und Tracker aktualisieren nicht mehr im Hintergrund.</string>
+  <string name="bss_gps_hint_3">Nur die App auf dem Bildschirm hat Zugriff auf den Standort. Hintergrund-Apps werden vollständig blockiert.</string>
+  <string name="bss_gps_hint_4">Hintergrund-Apps erhalten weiterhin den Standort, aber die Aktualisierungsrate ist bei ausgeschaltetem Bildschirm begrenzt.</string>
+  <string name="io_btn_import">Importieren</string>
+  <string name="io_btn_delete">Löschen</string>
+  <string name="io_btn_rename">Umbenennen</string>
+  <string name="io_rename_prompt">Backup umbenennen:</string>
+  <string name="bss_opt_datasaver">Datensparmodus aktivieren</string>
+  <string name="bss_opt_datasaver_desc">Beschränkt die Hintergrunddatennutzung für alle Apps, während der Energiesparmodus aktiv ist</string>
 </resources>

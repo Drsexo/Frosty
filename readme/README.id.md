@@ -32,8 +32,10 @@ Frosty mengoptimalkan masa pakai baterai dengan membekukan komponen Google Mobil
 - **GMS Doze**: Menghapus GMS dari daftar pengecualian (Whitelist) hemat daya.
 - **Deep Doze**: Pembatasan aktivitas latar belakang yang sangat agresif untuk semua aplikasi (Sedang / Maksimum).
 - **Tweak Kernel**: Optimasi pada penjadwal (Scheduler), mesin virtual (VM), dan jaringan.
+- **Pengoptimal RAM**: Menyesuaikan batas proses dan pengaturan memori sysfs.
 - **Kill Logs**: Menghentikan proses pencatatan log di latar belakang untuk menghemat baterai dan RAM.
 - **System Props**: Menonaktifkan properti debugging untuk membebaskan lebih banyak RAM.
+- **Penyesuaian Penghemat Baterai**: Sesuaikan fungsi mode penghemat baterai Android, kontrol penundaan cadangan, penonaktifan sensor, perilaku GPS, penghemat data, dan lainnya. Pengaturan ini hanya akan memiliki efek yang terlihat saat penghemat baterai Android AKTIF.
 - **Konfigurasi Langsung**: Kontrol penuh secara real-time melalui WebUI.
 
 ## 📦 Instalasi
@@ -61,34 +63,51 @@ Buka WebUI dari manajer root Anda. Anda akan menemukan:
 ## 🧊 Kategori GMS
 
 #### Aman untuk dinonaktifkan
-
-| Kategori              | Dampak                                                              |
-| --------------------- | ------------------------------------------------------------------- |
-| 📊 **Telemetri**      | Tidak ada. Menghentikan iklan, analitik, dan pelacakan oleh Google. |
-| 🔄 **Latar Belakang** | Pembaruan aplikasi otomatis mungkin tertunda.                       |
+| Kategori | Dampak |
+|----------|--------|
+| 📊 **Telemetri** | Tidak ada. Menghentikan iklan, analitik, dan pelacakan oleh Google. |
+| 🔄 **Latar Belakang** | Pembaruan aplikasi otomatis mungkin tertunda. |
 
 #### Yang akan berhenti berfungsi
-
-| Kategori            | Fitur yang terdampak                                              |
-| ------------------- | ----------------------------------------------------------------- |
-| 📍 **Lokasi**       | Google Maps, navigasi GPS, Temukan Perangkat Saya.                |
-| 📡 **Konektivitas** | Chromecast, Quick Share, Fast Pair.                               |
-| ☁️ **Cloud**        | Login Google, isi otomatis (Autofill), kata sandi, dan cadangan.  |
-| 💳 **Pembayaran**   | Google Pay, pembayaran via NFC.                                   |
-| ⌚ **Wearable**     | Wear OS, Google Fit, pelacakan kebugaran.                         |
-| 🎮 **Game**         | Pencapaian Google Play Games, papan peringkat, penyimpanan cloud. |
+| Kategori | Fitur yang terdampak |
+|----------|---------------------|
+| 📍 **Lokasi** | Google Maps, navigasi GPS, Temukan Perangkat Saya. |
+| 📡 **Konektivitas** | Chromecast, Quick Share, Fast Pair. |
+| ☁️ **Cloud** | Login Google, isi otomatis (Autofill), kata sandi, dan cadangan. |
+| 💳 **Pembayaran** | Google Pay, pembayaran via NFC. |
+| ⌚ **Wearable** | Wear OS, Google Fit, pelacakan kebugaran. |
+| 🎮 **Game** | Pencapaian Google Play Games, papan peringkat, penyimpanan cloud. |
 
 ## 🔋 Level Deep Doze
 
-| Fitur                       | Sedang | Maksimum |
-| --------------------------- | :----: | :------: |
-| Konstanta Doze yang Agresif |   ✅   |    ✅    |
-| App Standby Buckets         |   ✅   |    ✅    |
-| Tolak RUN_IN_BACKGROUND     |   ✅   |    ✅    |
-| Deep Idle (Saat Layar Mati) |   ✅   |    ✅    |
-| Tolak WAKE_LOCK             |   ❌   |    ✅    |
-| Wakelock Killer             |   ❌   |    ✅    |
-| Pembatasan ketat pada Alarm |   ❌   |    ✅    |
+| Fitur | Sedang | Maksimum |
+|-------|:------:|:--------:|
+| Konstanta Doze yang Agresif | ✅ | ✅ |
+| App Standby Buckets | ✅ | ✅ |
+| Tolak RUN_IN_BACKGROUND | ✅ | ✅ |
+| Deep Idle (Saat Layar Mati) | ✅ | ✅ |
+| Tolak WAKE_LOCK | ❌ | ✅ |
+| Wakelock Killer | ❌ | ✅ |
+
+## 🚀 Pengoptimal RAM
+
+Menyesuaikan manajer proses dan subsistem memori Android berdasarkan total RAM perangkat Anda.  
+Juga mengaktifkan USAP pool untuk peluncuran awal aplikasi (cold boot) yang lebih cepat dan menerapkan tweak sysfs (`swappiness`, `page-cluster`). Semua nilai dicadangkan dan dipulihkan sepenuhnya saat dinonaktifkan.
+
+## ⚙️ Penyesuaian Penghemat Baterai
+
+Mengonfigurasi apa yang dilakukan mode penghemat baterai bawaan Android saat aktif.
+
+| Opsi | Deskripsi |
+|--------|-------------|
+| **Penghemat Data** | Membatasi data latar belakang untuk sebagian besar aplikasi |
+| **Pemicu Suara** | Menonaktifkan deteksi kata kunci (misal "Hey Google") |
+| **Cadangan Penuh** | Menunda pencadangan penuh perangkat |
+| **Cadangan Data** | Menunda pencadangan nilai-kunci (pengaturan aplikasi) |
+| **Paksa Standby** | Langsung menempatkan semua aplikasi latar belakang ke mode standby |
+| **Pemeriksaan Latar** | Menerapkan pemeriksaan proses latar belakang yang lebih ketat |
+| **Sensor** | Menonaktifkan sensor opsional di latar belakang |
+| **Mode GPS** | Mengontrol akses lokasi saat penghemat baterai aktif |
 
 ## ❓ FAQ (Pertanyaan yang Sering Diajukan)
 
@@ -109,3 +128,4 @@ Tambahkan aplikasi pesan, aplikasi perbankan, dan alarm Anda di sini agar tidak 
 - **gloeyisk** — [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze)
 - **Azyrn** — [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** — [GMS Component Disable Script](https://t.me/MoZoiDStack/137)
+- **s1m** — [SaverTuner](https://codeberg.org/s1m/savertuner)

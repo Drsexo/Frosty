@@ -32,8 +32,10 @@ Frosty optimise l'autonomie de la batterie en gelant sélectivement les composan
 - **GMS Doze** : Retire les GMS des listes blanches (Whitelist) d'économie d'énergie.
 - **Deep Doze** : Restrictions d'arrière-plan très agressives pour toutes les applications (Modéré/Maximum).
 - **Kernel Tweaks** : Optimisations de l'ordonnanceur (Scheduler), de la VM et du réseau.
+- **Optimiseur de RAM** : Ajuste les limites de processus et les paramètres de mémoire sysfs.
 - **Kill Logs** : Arrêt des processus de journalisation en arrière-plan (économise la batterie et la RAM).
 - **System Props** : Désactive les propriétés de débogage pour économiser la RAM.
+- **Ajustements de l'Économiseur (Battery Saver Tuner)** : Personnalisez le comportement du mode économie d'énergie d'Android, contrôlez le report des sauvegardes, la désactivation des capteurs, le comportement du GPS, l'économiseur de données, etc. Ces paramètres ne prennent effet que lorsque l'économiseur de batterie d'Android est ACTIVÉ.
 - **Configuration en direct** : Contrôle total via WebUI avec des interrupteurs en temps réel.
 
 ## 📦 Installation
@@ -61,34 +63,51 @@ Ouvrez la WebUI depuis votre gestionnaire root :
 ## 🧊 Catégories GMS
 
 #### Sûr à désactiver
-
-| Catégorie           | Impact                                                     |
-| ------------------- | ---------------------------------------------------------- |
-| 📊 **Télémétrie**   | Aucun. Arrête les publicités, les analytics et le pistage. |
-| 🔄 **Arrière-plan** | Les mises à jour automatiques peuvent être retardées.      |
+| Catégorie | Impact |
+|-----------|--------|
+| 📊 **Télémétrie** | Aucun. Arrête les publicités, les analytics et le pistage. |
+| 🔄 **Arrière-plan** | Les mises à jour automatiques peuvent être retardées. |
 
 #### Fonctions impactées
-
-| Catégorie           | Ce qui ne fonctionnera plus                                       |
-| ------------------- | ----------------------------------------------------------------- |
-| 📍 **Localisation** | Maps, GPS, navigation, Localiser mon appareil.                    |
-| 📡 **Connectivité** | Chromecast, Quick Share, Fast Pair.                               |
-| ☁️ **Cloud**        | Connexion Google, saisie automatique, mots de passe, sauvegardes. |
-| 💳 **Paiements**    | Google Pay, paiements sans contact NFC.                           |
-| ⌚ **Wearables**    | Wear OS, Google Fit, suivi d'activité.                            |
-| 🎮 **Jeux**         | Google Play Jeux (succès, classements, sauvegardes cloud).        |
+| Catégorie | Ce qui ne fonctionnera plus |
+|-----------|-----------------------------|
+| 📍 **Localisation** | Maps, GPS, navigation, Localiser mon appareil. |
+| 📡 **Connectivité** | Chromecast, Quick Share, Fast Pair. |
+| ☁️ **Cloud** | Connexion Google, saisie automatique, mots de passe, sauvegardes. |
+| 💳 **Paiements** | Google Pay, paiements sans contact NFC. |
+| ⌚ **Wearables** | Wear OS, Google Fit, suivi d'activité. |
+| 🎮 **Jeux** | Google Play Jeux (succès, classements, sauvegardes cloud). |
 
 ## 🔋 Niveaux de Deep Doze
 
-| Fonctionnalité             | Modéré | Maximum |
-| -------------------------- | :----: | :-----: |
-| Constantes Doze agressives |   ✅   |   ✅    |
-| App Standby Buckets        |   ✅   |   ✅    |
-| Refuser RUN_IN_BACKGROUND  |   ✅   |   ✅    |
-| Deep Idle (Écran éteint)   |   ✅   |   ✅    |
-| Refuser WAKE_LOCK          |   ❌   |   ✅    |
-| Wakelock Killer            |   ❌   |   ✅    |
-| Restrictions des alarmes   |   ❌   |   ✅    |
+| Fonctionnalité | Modéré | Maximum |
+|----------------|:------:|:-------:|
+| Constantes Doze agressives | ✅ | ✅ |
+| App Standby Buckets | ✅ | ✅ |
+| Refuser RUN_IN_BACKGROUND | ✅ | ✅ |
+| Deep Idle (Écran éteint) | ✅ | ✅ |
+| Refuser WAKE_LOCK | ❌ | ✅ |
+| Wakelock Killer | ❌ | ✅ |
+
+## 🚀 Optimiseur de RAM
+
+Ajuste le gestionnaire de processus et le sous-système de mémoire d'Android en fonction de la RAM totale de votre appareil.  
+Active également l'USAP pool pour accélérer les lancements à froid des applications et applique des tweaks sysfs (`swappiness`, `page-cluster`). Toutes les valeurs sont sauvegardées et entièrement restaurées lors de la désactivation.
+
+## ⚙️ Ajustements de l'Économiseur
+
+Configure ce que fait le mode d'économie d'énergie intégré d'Android lorsqu'il est actif.
+
+| Option | Description |
+|--------|-------------|
+| **Économiseur de données** | Restreint les données en arrière-plan pour la plupart des applications |
+| **Détection vocale** | Désactive la détection du mot clé (ex. "Hey Google") |
+| **Sauvegarde complète** | Diffère les sauvegardes complètes de l'appareil |
+| **Sauvegarde des données** | Diffère les sauvegardes de type clé-valeur (paramètres) |
+| **Forcer la mise en veille** | Met immédiatement toutes les applications en arrière-plan en veille |
+| **Contrôle en arrière-plan** | Applique des vérifications plus strictes des processus en arrière-plan |
+| **Capteurs** | Désactive les capteurs optionnels en arrière-plan |
+| **Mode de localisation** | Contrôle l'accès à la localisation lorsque l'économiseur est actif |
 
 ## ❓ FAQ
 
@@ -109,3 +128,4 @@ Ajoutez vos applications de messagerie, banques et alarmes pour éviter de manqu
 - **gloeyisk** — [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze)
 - **Azyrn** — [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** — [GMS Component Disable Script](https://t.me/MoZoiDStack/137)
+- **s1m** — [SaverTuner](https://codeberg.org/s1m/savertuner)

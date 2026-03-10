@@ -32,8 +32,10 @@ Frosty ottimizza la durata della batteria congelando selettivamente i componenti
 - **GMS Doze**: Rimuove i GMS dalle whitelist (liste di esclusione) del risparmio energetico.
 - **Deep Doze**: Restrizioni aggressive in background per tutte le app (Moderato / Massimo).
 - **Kernel Tweaks**: Ottimizzazioni per Scheduler, VM e rete.
+- **Ottimizzatore RAM**: Regola i limiti dei processi e le impostazioni di memoria sysfs.
 - **Kill Logs**: Ferma i processi di registrazione in background che consumano batteria e RAM.
 - **System Props**: Disabilita le proprietà di debug per risparmiare ulteriore RAM.
+- **Ottimizzatore Risparmio Batteria**: Personalizza il comportamento della modalità di risparmio energetico di Android, controlla il rinvio dei backup, la disattivazione dei sensori, il comportamento del GPS, il risparmio dati e altro ancora. Queste impostazioni hanno effetto solo quando il risparmio energetico di Android è ATTIVO.
 - **Configurazione Live**: Controllo completo in tempo reale tramite WebUI.
 
 ## 📦 Installazione
@@ -61,34 +63,51 @@ Apri la WebUI dal tuo gestore root. Troverai:
 ## 🧊 Categorie GMS
 
 #### Sicure da disabilitare
-
-| Categoria         | Impatto                                                   |
-| ----------------- | --------------------------------------------------------- |
-| 📊 **Telemetria** | Nessuno. Blocca pubblicità, analytics e tracciamento.     |
+| Categoria | Impatto |
+|-----------|---------|
+| 📊 **Telemetria** | Nessuno. Blocca pubblicità, analytics e tracciamento. |
 | 🔄 **Background** | Gli aggiornamenti automatici potrebbero essere ritardati. |
 
 #### Funzionalità compromesse
-
-| Categoria           | Cosa smetterà di funzionare                                |
-| ------------------- | ---------------------------------------------------------- |
-| 📍 **Posizione**    | Google Maps, navigazione GPS, Trova il mio dispositivo.    |
-| 📡 **Connettività** | Chromecast, Quick Share, Fast Pair.                        |
-| ☁️ **Cloud**        | Accesso Google, compilazione automatica, password, backup. |
-| 💳 **Pagamenti**    | Google Pay, pagamenti NFC.                                 |
-| ⌚ **Wearables**    | Wear OS, Google Fit, tracciamento fitness.                 |
-| 🎮 **Giochi**       | Obiettivi Play Games, classifiche, salvataggi in cloud.    |
+| Categoria | Cosa smetterà di funzionare |
+|-----------|-----------------------------|
+| 📍 **Posizione** | Google Maps, navigazione GPS, Trova il mio dispositivo. |
+| 📡 **Connettività** | Chromecast, Quick Share, Fast Pair. |
+| ☁️ **Cloud** | Accesso Google, compilazione automatica, password, backup. |
+| 💳 **Pagamenti** | Google Pay, pagamenti NFC. |
+| ⌚ **Wearables** | Wear OS, Google Fit, tracciamento fitness. |
+| 🎮 **Giochi** | Obiettivi Play Games, classifiche, salvataggi in cloud. |
 
 ## 🔋 Livelli Deep Doze
 
-| Funzionalità                   | Moderato | Massimo |
-| ------------------------------ | :------: | :-----: |
-| Costanti Doze aggressive       |    ✅    |   ✅    |
-| App Standby Buckets            |    ✅    |   ✅    |
-| Nega RUN_IN_BACKGROUND         |    ✅    |   ✅    |
-| Deep Idle a schermo spento     |    ✅    |   ✅    |
-| Nega WAKE_LOCK                 |    ❌    |   ✅    |
-| Wakelock Killer                |    ❌    |   ✅    |
-| Restrizioni rigide per allarmi |    ❌    |   ✅    |
+| Funzionalità | Moderato | Massimo |
+|--------------|:--------:|:-------:|
+| Costanti Doze aggressive | ✅ | ✅ |
+| App Standby Buckets | ✅ | ✅ |
+| Nega RUN_IN_BACKGROUND | ✅ | ✅ |
+| Deep Idle a schermo spento | ✅ | ✅ |
+| Nega WAKE_LOCK | ❌ | ✅ |
+| Wakelock Killer | ❌ | ✅ |
+
+## 🚀 Ottimizzatore RAM
+
+Ottimizza il gestore dei processi di Android e il sottosistema di memoria in base alla RAM totale del tuo dispositivo.  
+Abilita inoltre l'USAP pool per avvii a freddo delle app più rapidi e applica tweak a sysfs (`swappiness`, `page-cluster`). Tutti i valori vengono sottoposti a backup e completamente ripristinati in caso di disattivazione.
+
+## ⚙️ Ottimizzatore Risparmio Batteria
+
+Configura le azioni eseguite dalla modalità di risparmio energetico integrata di Android quando è attiva.
+
+| Opzione | Descrizione |
+|--------|-------------|
+| **Risparmio Dati** | Limita i dati in background per la maggior parte delle app |
+| **Rilevamento vocale** | Disabilita il rilevamento delle hotword (es. "Hey Google") |
+| **Backup completo** | Rimanda i backup completi del dispositivo |
+| **Backup dati (Key/Value)** | Rimanda i backup dei dati delle app (chiave-valore) |
+| **Forza Standby** | Mette immediatamente in standby tutte le app in background |
+| **Controllo in background** | Applica controlli più severi sui processi in background |
+| **Sensori** | Disabilita i sensori opzionali in background |
+| **Modalità GPS** | Controlla l'accesso alla posizione quando il risparmio energetico è attivo |
 
 ## ❓ FAQ (Domande Frequenti)
 
@@ -109,3 +128,4 @@ Aggiungi le tue app di messaggistica, banche e sveglie per non perdere notifiche
 - **gloeyisk** — [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze)
 - **Azyrn** — [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** — [GMS Component Disable Script](https://t.me/MoZoiDStack/137)
+- **s1m** — [SaverTuner](https://codeberg.org/s1m/savertuner)

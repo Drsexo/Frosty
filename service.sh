@@ -9,15 +9,12 @@ BOOT_LOG="$LOGDIR/boot.log"
 TWEAKS_LOG="$LOGDIR/tweaks.log"
 PROPS_LOG="$LOGDIR/props.log"
 RAM_LOG="$LOGDIR/ram.log"
+BS_LOG="$LOGDIR/battery_saver.log"
 KERNEL_BACKUP="$BACKUP_DIR/kernel_values.txt"
 KERNEL_TWEAKS="$MODDIR/config/kernel_tweaks.txt"
 RAM_BACKUP="$BACKUP_DIR/ram_values.txt"
 RAM_TWEAKS="$MODDIR/config/ram_tweaks.txt"
 
-# Timeout fallback
-if ! command -v timeout >/dev/null 2>&1; then
-  timeout() { shift; "$@"; }
-fi
 
 # Log rotation
 for log in "$LOGDIR"/*.log; do
@@ -30,12 +27,12 @@ done
 log_boot()  { echo "[$(date '+%H:%M:%S')] $1" >> "$BOOT_LOG"; }
 log_tweak() { echo "$1" >> "$TWEAKS_LOG"; }
 log_props() { echo "[$(date '+%H:%M:%S')] $1" >> "$PROPS_LOG"; }
-log_ram()   { echo "$1" >> "$RAM_LOG"; }
 
 echo "Frosty Boot - $(date '+%Y-%m-%d %H:%M:%S')" > "$BOOT_LOG"
 echo "Frosty Tweaks - $(date '+%Y-%m-%d %H:%M:%S')" > "$TWEAKS_LOG"
 echo "Frosty Props - $(date '+%Y-%m-%d %H:%M:%S')" > "$PROPS_LOG"
 echo "Frosty RAM - $(date '+%Y-%m-%d %H:%M:%S')" > "$RAM_LOG"
+echo "Frosty Battery Saver - $(date '+%Y-%m-%d %H:%M:%S')" > "$BS_LOG"
 
 # Wait for boot
 until [ "$(getprop sys.boot_completed)" = "1" ] && [ -d /sdcard ]; do
@@ -43,10 +40,6 @@ until [ "$(getprop sys.boot_completed)" = "1" ] && [ -d /sdcard ]; do
 done
 sleep 10
 log_boot "Boot initialized"
-
-# Device info
-log_boot "Device: $(getprop ro.product.model)"
-log_boot "Android: $(getprop ro.build.version.release) SDK$(getprop ro.build.version.sdk)"
 
 mkdir -p "$MODDIR/config"
 
@@ -107,7 +100,7 @@ backup_kernel() {
     [ -z "$path" ] || [ ! -f "$path" ] && continue
     name=$(basename "$path")
     val=$(cat "$path" 2>/dev/null)
-    echo "$name=$val=$path" >> "$KERNEL_BACKUP"
+    printf '%s=%s=%s\n' "$name" "$val" "$path" >> "$KERNEL_BACKUP"
   done < "$KERNEL_TWEAKS"
 
   log_boot "Kernel backup saved"
@@ -129,7 +122,7 @@ backup_ram() {
     [ -z "$path" ] || [ ! -f "$path" ] && continue
     name=$(basename "$path")
     val=$(cat "$path" 2>/dev/null)
-    echo "$name=$val=$path" >> "$RAM_BACKUP"
+    printf '%s=%s=%s\n' "$name" "$val" "$path" >> "$RAM_BACKUP"
   done < "$RAM_TWEAKS"
 
   log_boot "RAM backup saved"
@@ -200,7 +193,7 @@ fi
 if [ "$ENABLE_RAM_OPTIMIZER" = "1" ]; then
   log_boot "Applying RAM optimizer..."
   backup_ram
-  sh "$MODDIR/frosty.sh" ram_optimizer 2>/dev/null | grep -v '^{' >> "$RAM_LOG"
+  sh "$MODDIR/frosty.sh" ram_optimizer >/dev/null 2>&1
 else
   log_boot "RAM optimizer SKIPPED"
 fi
@@ -208,7 +201,7 @@ fi
 # Kill log processes
 if [ "$ENABLE_LOG_KILLING" = "1" ]; then
   log_boot "Killing log processes..."
-  sh "$MODDIR/frosty.sh" kill_logs >/dev/null 2>/dev/null
+  sh "$MODDIR/frosty.sh" kill_logs >/dev/null 2>&1
   log_boot "Log processes killed"
 else
   log_boot "Log killing SKIPPED"
@@ -224,7 +217,7 @@ done
 if [ "$has_frozen_cats" = "1" ]; then
   log_boot "GMS categories enabled — applying freeze..."
   chmod +x "$MODDIR/frosty.sh"
-  "$MODDIR/frosty.sh" freeze
+  "$MODDIR/frosty.sh" freeze >/dev/null 2>&1
 else
   log_boot "No GMS categories enabled, skipping GMS freeze"
 fi
@@ -233,7 +226,7 @@ fi
 if [ "$ENABLE_GMS_DOZE" = "1" ]; then
   log_boot "Applying GMS Doze..."
   chmod +x "$MODDIR/gms_doze.sh"
-  "$MODDIR/gms_doze.sh" apply
+  "$MODDIR/gms_doze.sh" apply >/dev/null 2>&1
 else
   log_boot "GMS Doze SKIPPED"
 fi
@@ -242,11 +235,21 @@ fi
 if [ "$ENABLE_DEEP_DOZE" = "1" ]; then
   log_boot "Applying Deep Doze..."
   chmod +x "$MODDIR/deep_doze.sh"
-  "$MODDIR/deep_doze.sh" freeze
+  "$MODDIR/deep_doze.sh" freeze >/dev/null 2>&1
 else
   log_boot "Deep Doze SKIPPED"
 fi
 
+# Battery Saver Tuner
+if [ "$ENABLE_BATTERY_SAVER" = "1" ]; then
+  log_boot "Applying Battery Saver Tuner..."
+  sh "$MODDIR/frosty.sh" bss_apply >/dev/null 2>&1
+  log_boot "Battery Saver applied"
+else
+  log_boot "Battery Saver SKIPPED"
+fi
+
 log_boot "Boot complete at $(date '+%Y-%m-%d %H:%M:%S')"
+
 
 exit 0

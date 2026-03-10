@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  
   <string name="menu_io">Імпорт / Експорт</string>
   <string name="menu_lang">Мова</string>
   <string name="menu_about">Про модуль</string>
@@ -119,8 +118,8 @@
   <string name="log_deep_doze_reapplied">Режим Deep Doze застосовано повторно</string>
   <string name="log_toggles_enabled">Всі системні перемикачі увімкнено</string>
   <string name="log_toggles_disabled">Всі системні перемикачі вимкнено</string>
-  <string name="log_cats_enabled">Всі категорії GMS активовано</string>
-  <string name="log_cats_disabled">Всі категорії GMS деактивовано</string>
+  <string name="log_cats_enabled">Всі категорії GMS увімкнено</string>
+  <string name="log_cats_disabled">Всі категорії GMS вимкнено</string>
   <string name="log_cat_frozen">{0}: {1} служб вимкнено, {2} помилок</string>
   <string name="log_cat_restored">{0}: {1} служб знову увімкнено, {2} помилок</string>
   <string name="log_gms_frozen">GMS: {0} вимкнено, {1} знову увімкнено, {2} помилок</string>
@@ -129,9 +128,6 @@
   <string name="log_toggle_off">{0} вимкнено</string>
   <string name="log_webui_ready">Інтерфейс WebUI повністю готовий</string>
   <string name="log_load_failed">Помилка при завантаженні: {0}</string>
-  <string name="executing">Виконується: {0}</string>
-  <string name="log_executed">Успішно виконано: {0}</string>
-  <string name="log_execution_failed">Помилка при виконанні: {0}</string>
   <string name="log_reboot_effect">Перезавантажте пристрій для повного застосування змін</string>
   <string name="log_reverting_all">Скидання всіх налаштувань до значень за замовчуванням...</string>
   <string name="log_freeze_all">Активація всіх налаштувань...</string>
@@ -149,4 +145,44 @@
   <string name="log_ram_reverted">Оптимізатор RAM скасовано</string>
   <string name="loading_applying_ram">Застосування оптимізатора RAM...</string>
   <string name="loading_reverting_ram">Скасування оптимізатора RAM...</string>
+  <string name="tgl_bss">Налаштування енергозбереження</string>
+  <string name="tgl_bss_desc">Тонке налаштування вбудованого режиму енергозбереження Android</string>
+  <string name="loading_applying_bss">Застосування профілю енергозбереження...</string>
+  <string name="loading_reverting_bss">Скасування налаштувань енергозбереження...</string>
+  <string name="log_bss_applied">Профіль енергозбереження застосовано</string>
+  <string name="log_bss_reverted">Налаштування енергозбереження скасовано</string>
+  <string name="log_bss_reapplied">Налаштування енергозбереження застосовано повторно</string>
+  <string name="bss_modal_title">Параметри енергозбереження</string>
+  <string name="bss_modal_notice">Налаштування діють лише під час активного режиму енергозбереження.</string>
+  <string name="bss_configure">Налаштувати параметри</string>
+  <string name="bss_opt_hotword">Вимкнути голосову активацію</string>
+  <string name="bss_opt_hotword_desc">Зупиняє постійне прослуховування мікрофоном фрази "Окей, Google".</string>
+  <string name="bss_opt_fullbackup">Відкласти повне резервне копіювання</string>
+  <string name="bss_opt_fullbackup_desc">Призупиняє повне резервне копіювання пристрою, доки ввімкнено енергозбереження.</string>
+  <string name="bss_opt_keybackup">Відкласти резервне копіювання даних</string>
+  <string name="bss_opt_keybackup_desc">Призупиняє синхронізацію налаштувань програм до хмари.</string>
+  <string name="bss_opt_force_standby">Примусовий режим очікування</string>
+  <string name="bss_opt_force_standby_desc">Переміщує фонові програми до кошика обмеженого доступу (restricted), сильно обмежуючи їхнє пробудження.</string>
+  <string name="bss_opt_force_bg">Сувора перевірка фону</string>
+  <string name="bss_opt_force_bg_desc">Застосовує жорсткіші обмеження на виконання у фоновому режимі для всіх програм.</string>
+  <string name="bss_opt_sensors">Вимкнути другорядні датчики</string>
+  <string name="bss_opt_sensors_desc">Вимикає некритичні датчики, такі як барометр, крокомір і вектор обертання.</string>
+  <string name="bss_opt_gps">Режим геолокації</string>
+  <string name="bss_apply">Застосувати та закрити</string>
+  <string name="bss_gps_0">Без обмежень</string>
+  <string name="bss_gps_1">GPS вимк. (при вимк. екрані)</string>
+  <string name="bss_gps_2">Все вимк. (при вимк. екрані)</string>
+  <string name="bss_gps_3">Лише активні програми</string>
+  <string name="bss_gps_4">Обмеження (при вимк. екрані)</string>
+  <string name="bss_gps_hint_0">GPS та всі служби локації працюють у звичайному режимі в будь-який час.</string>
+  <string name="bss_gps_hint_1">Чіп GPS вимикається при вимкненому екрані. Локація через Wi-Fi та стільникові мережі продовжує працювати.</string>
+  <string name="bss_gps_hint_2">Усі джерела геолокації зупиняються при вимкненні екрана. Віджети погоди не оновлюються.</string>
+  <string name="bss_gps_hint_3">Лише програма на екрані може отримувати геолокацію. Фоновим програмам відмовлено в доступі.</string>
+  <string name="bss_gps_hint_4">Фонові програми можуть отримувати локацію, але частота оновлень знижена при вимкненому екрані.</string>
+  <string name="io_btn_import">Імпорт</string>
+  <string name="io_btn_delete">Видалити</string>
+  <string name="io_btn_rename">Перейменувати</string>
+  <string name="io_rename_prompt">Перейменувати бекап:</string>
+  <string name="bss_opt_datasaver">Увімкнути економію трафіку</string>
+  <string name="bss_opt_datasaver_desc">Обмежує фонове використання даних для всіх додатків під час активного енергозбереження.</string>
 </resources>

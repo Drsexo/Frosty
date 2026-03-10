@@ -32,8 +32,10 @@ Frosty optimizes battery life by selectively freezing Google Mobile Services (GM
 - **GMS Doze**: Remove GMS from power-save whitelists so Android can optimize it
 - **Deep Doze**: Aggressive background restrictions for all apps (Moderate/Maximum)
 - **Kernel Tweaks**: Scheduler, VM, network, and debug optimizations
+- **RAM Optimizer**: Tunes process limits and sysfs memory settings
 - **Log Killing**: Stop battery-draining log/debug processes
 - **System Props**: Disable debug properties to save RAM and battery
+- **Battery Saver Tuner**: Customize what Android's battery saver mode does, control backup deferral, sensor disabling, GPS behavior, data saver, and more. They only have visible effect when Android battery saver is ON
 - **Live Configuration**: Full control via WebUI with real-time toggles
 
 ## 📦 Installation
@@ -82,11 +84,29 @@ Open the WebUI from your root manager. You'll find:
 |---------|:--------:|:-------:|
 | Aggressive Doze Constants | ✅ | ✅ |
 | App Standby Buckets | ✅ | ✅ |
-| Deny RUN_IN_BACKGROUND | ✅ | ✅ |
 | Screen-off Deep Idle | ✅ | ✅ |
 | Deny WAKE_LOCK | ❌ | ✅ |
 | Wakelock Killer | ❌ | ✅ |
-| Alarm Restrictions | ❌ | ✅ |
+
+## 🚀 RAM Optimizer
+
+Tunes Android's process manager and memory subsystem based on your device's total RAM.  
+Also enables the USAP pool for faster cold app launches and applies sysfs tweaks (`swappiness`, `page-cluster`). All values are backed up and fully restored on disable.
+
+## ⚙️ Battery Saver Tuner
+
+Configures what Android's built-in battery saver mode does when active. 
+
+| Option | Description |
+|--------|-------------|
+| **Data Saver** | Restrict background data for most apps |
+| **Sound Trigger** | Disable hotword detection (e.g. "Hey Google") |
+| **Full Backup** | Defer full device backups |
+| **Key/Value Backup** | Defer key-value backups |
+| **Force Standby** | Put all background apps in standby immediately |
+| **Background Check** | Enforce stricter background process checks |
+| **Sensors** | Disable optional sensors in background |
+| **GPS Mode** | Control location access when battery saver is active |
 
 ## ❓ FAQ
 

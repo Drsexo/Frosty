@@ -32,15 +32,20 @@ Frosty, Google Mobil Hizmetleri (GMS) bileşenlerini seçici bir şekilde dondur
 - **GMS Doze**: GMS'yi sistemin pil tasarrufu beyaz listesinden (Whitelist) çıkartır.
 - **Deep Doze**: Tüm uygulamalar için oldukça agresif arka plan kısıtlamaları (Orta / Maksimum seviye).
 - **Kernel Tweaks**: Zamanlayıcı (Scheduler), sanal bellek (VM) ve ağ optimizasyonları içerir.
+- **RAM Optimize Edici**: Süreç sınırlarını ve sysfs bellek ayarlarını düzenler.
 - **Kill Logs (Logları Durdurma)**: Pil ve RAM tüketen arka plan log/kayıt süreçlerini zorla durdurur.
 - **System Props**: RAM tasarrufu yapmak adına gereksiz hata ayıklama (debug) özelliklerini kapatır.
+- **Pil Tasarrufu Ayarlayıcı (Tuner)**: Android'in pil tasarrufu modunun neler yapacağını özelleştirin; yedekleme erteleme, sensör devre dışı bırakma, GPS davranışı, veri tasarrufu ve daha fazlasını kontrol edin. Bunlar yalnızca Android pil tasarrufu AÇIK olduğunda gözle görülür bir etki gösterir.
 - **Canlı Yapılandırma**: WebUI üzerinden her şeyi gerçek zamanlı (anında) kontrol edin.
 
 ## 📦 Kurulum
 
 **Gereksinimler:** Android 9+, Magisk 20.4+ / KernelSU / APatch, Google Play Hizmetleri.
 
-1.[Releases (Sürümler)](https://github.com/Drsexo/Frosty/releases) sayfasından indirin. 2. Kullandığınız Root yöneticisi üzerinden yükleyin. 3. Cihazınızı yeniden başlatın. 4. Özellikleri aktifleştirmek için WebUI'yi açın — varsayılan olarak her şey **KAPALI** gelir.
+1.[Releases (Sürümler)](https://github.com/Drsexo/Frosty/releases) sayfasından indirin.
+2. Kullandığınız Root yöneticisi üzerinden yükleyin.
+3. Cihazınızı yeniden başlatın.
+4. Özellikleri aktifleştirmek için WebUI'yi açın — varsayılan olarak her şey **KAPALI** gelir.
 
 > [!NOTE]
 > Magisk kullanıcıları WebUI arayüzüne erişmek için [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) uygulamasını kullanabilirler.
@@ -58,34 +63,51 @@ WebUI arayüzünü root yöneticinizden açın. Şunları bulacaksınız:
 ## 🧊 GMS Kategorileri
 
 #### Devre Dışı Bırakması Güvenli
-
-| Kategori         | Etki                                                                      |
-| ---------------- | ------------------------------------------------------------------------- |
+| Kategori | Etki |
+|----------|------|
 | 📊 **Telemetri** | Herhangi bir bozulma yapmaz. Reklamları, analizleri ve izlemeyi durdurur. |
-| 🔄 **Arka Plan** | Otomatik güncellemeler gecikebilir.                                       |
+| 🔄 **Arka Plan** | Otomatik güncellemeler gecikebilir. |
 
 #### Bozulacak / Etkilenen Özellikler
-
-| Kategori                    | Çalışmayı Durduracak Şeyler                                              |
-| --------------------------- | ------------------------------------------------------------------------ |
-| 📍 **Konum**                | Google Haritalar, GPS Navigasyon, Cihazımı Bul.                          |
-| 📡 **Bağlantı**             | Chromecast, Quick Share, Fast Pair.                                      |
-| ☁️ **Bulut (Cloud)**        | Google hesabı ile giriş, otomatik parola tamamlama, yedeklemeler.        |
-| 💳 **Ödemeler**             | Google Pay, NFC ile ödemeler.                                            |
-| ⌚ **Giyilebilir Cihazlar** | Wear OS, Google Fit, fitness izleme.                                     |
-| 🎮 **Oyunlar**              | Play Oyunlar (Games) başarımları, liderlik tabloları ve bulut kayıtları. |
+| Kategori | Çalışmayı Durduracak Şeyler |
+|----------|----------------------------|
+| 📍 **Konum** | Google Haritalar, GPS Navigasyon, Cihazımı Bul. |
+| 📡 **Bağlantı** | Chromecast, Quick Share, Fast Pair. |
+| ☁️ **Bulut (Cloud)** | Google hesabı ile giriş, otomatik parola tamamlama, yedeklemeler. |
+| 💳 **Ödemeler** | Google Pay, NFC ile ödemeler. |
+| ⌚ **Giyilebilir Cihazlar**| Wear OS, Google Fit, fitness izleme. |
+| 🎮 **Oyunlar** | Play Oyunlar (Games) başarımları, liderlik tabloları ve bulut kayıtları. |
 
 ## 🔋 Deep Doze Seviyeleri
 
-| Özellik                                         | Orta | Maksimum |
-| ----------------------------------------------- | :--: | :------: |
-| Agresif Doze Sabitleri                          |  ✅  |    ✅    |
-| Uygulama Bekleme Grupları (App Standby Buckets) |  ✅  |    ✅    |
-| RUN_IN_BACKGROUND İzni Engelleme                |  ✅  |    ✅    |
-| Deep Idle (Ekran kapalıyken derin uyku)         |  ✅  |    ✅    |
-| WAKE_LOCK İzni Engelleme                        |  ❌  |    ✅    |
-| Wakelock Killer (Wakelock durdurucu)            |  ❌  |    ✅    |
-| Alarm (Zamanlayıcı) Kısıtlamaları               |  ❌  |    ✅    |
+| Özellik | Orta | Maksimum |
+|---------|:----:|:--------:|
+| Agresif Doze Sabitleri | ✅ | ✅ |
+| Uygulama Bekleme Grupları (App Standby Buckets)| ✅ | ✅ |
+| RUN_IN_BACKGROUND İzni Engelleme | ✅ | ✅ |
+| Deep Idle (Ekran kapalıyken derin uyku)| ✅ | ✅ |
+| WAKE_LOCK İzni Engelleme | ❌ | ✅ |
+| Wakelock Killer (Wakelock durdurucu) | ❌ | ✅ |
+
+## 🚀 RAM Optimize Edici
+
+Cihazınızın toplam RAM miktarına göre Android'in süreç yöneticisini ve bellek alt sistemini ayarlar.  
+Ayrıca daha hızlı soğuk uygulama başlatmaları (cold launch) için USAP havuzunu etkinleştirir ve sysfs ayarlarını (`swappiness`, `page-cluster`) uygular. Tüm değerler yedeklenir ve devre dışı bırakıldığında tamamen geri yüklenir.
+
+## ⚙️ Pil Tasarrufu Ayarlayıcı
+
+Android'in yerleşik pil tasarrufu modunun etkinleştirildiğinde ne yapacağını yapılandırır.
+
+| Seçenek | Açıklama |
+|--------|-------------|
+| **Veri Tasarrufu** | Çoğu uygulama için arka plan verilerini kısıtlar |
+| **Sesli Uyanma** | Sesli komut algılamasını devre dışı bırakır (ör. "Hey Google") |
+| **Tam Yedekleme** | Cihazın tam yedekleme işlemlerini erteler |
+| **Veri Yedeklemesi** | Uygulama ayarları (Key/Value) yedeklemelerini erteler |
+| **Beklemeyi Zorla** | Tüm arka plan uygulamalarını anında bekleme (standby) moduna geçirir |
+| **Arka Plan Denetimi** | Arka plan işlemlerine daha sıkı kısıtlamalar uygular |
+| **Sensörler** | Arka planda kritik olmayan sensörleri devre dışı bırakır |
+| **GPS Modu** | Pil tasarrufu etkinken konum erişimini kontrol eder |
 
 ## ❓ SSS (Sıkça Sorulan Sorular)
 
@@ -106,3 +128,4 @@ Bildirimleri kaçırmamak için kritik banka, alarm ve mesajlaşma uygulamaları
 - **gloeyisk** — [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze)
 - **Azyrn** — [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** — [GMS Component Disable Script](https://t.me/MoZoiDStack/137)
+- **s1m** — [SaverTuner](https://codeberg.org/s1m/savertuner)

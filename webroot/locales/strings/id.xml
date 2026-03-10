@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  
   <string name="menu_io">Impor / Ekspor</string>
   <string name="menu_lang">Bahasa</string>
   <string name="menu_about">Tentang</string>
@@ -104,7 +103,7 @@
   <string name="toast_cat_frozen">dibekukan</string>
   <string name="toast_cat_restored">dipulihkan</string>
   <string name="toast_rename_failed">Gagal mengganti nama</string>
-  <string name="log_kernel_applied">Kernel: {0} diterapkan, {1} gagal/tidak ditemukan, {2} dilewati</string>
+  <string name="log_kernel_applied">Kernel: {0} berhasil diterapkan, {1} gagal/tidak ditemukan, {2} dilewati</string>
   <string name="log_kernel_restored">Kernel: {0} nilai dipulihkan</string>
   <string name="log_kernel_vals_restored">Kernel: {0} nilai berhasil dipulihkan</string>
   <string name="log_killed_logs">{0} proses log telah dihentikan</string>
@@ -129,9 +128,6 @@
   <string name="log_toggle_off">{0} telah dinonaktifkan</string>
   <string name="log_webui_ready">WebUI siap digunakan</string>
   <string name="log_load_failed">Gagal memuat: {0}</string>
-  <string name="executing">Mengeksekusi: {0}</string>
-  <string name="log_executed">Berhasil dieksekusi: {0}</string>
-  <string name="log_execution_failed">Gagal mengeksekusi: {0}</string>
   <string name="log_reboot_effect">Reboot perangkat untuk mendapatkan efek penuh</string>
   <string name="log_reverting_all">Mengembalikan semua konfigurasi ke default...</string>
   <string name="log_freeze_all">Mengaktifkan semua konfigurasi...</string>
@@ -149,4 +145,44 @@
   <string name="log_ram_reverted">Pengoptimal RAM dikembalikan</string>
   <string name="loading_applying_ram">Menerapkan pengoptimal RAM...</string>
   <string name="loading_reverting_ram">Mengembalikan pengoptimal RAM...</string>
+  <string name="tgl_bss">Penyesuaian Penghemat Baterai</string>
+  <string name="tgl_bss_desc">Sesuaikan perilaku penghemat baterai bawaan Android</string>
+  <string name="loading_applying_bss">Menerapkan profil Penghemat Baterai...</string>
+  <string name="loading_reverting_bss">Mengembalikan Penghemat Baterai...</string>
+  <string name="log_bss_applied">Profil Penghemat Baterai diterapkan</string>
+  <string name="log_bss_reverted">Penghemat Baterai dikembalikan</string>
+  <string name="log_bss_reapplied">Penghemat Baterai diterapkan ulang</string>
+  <string name="bss_modal_title">Opsi Penghemat Baterai</string>
+  <string name="bss_modal_notice">Pengaturan berlaku saat Penghemat Baterai aktif.</string>
+  <string name="bss_configure">Konfigurasi Opsi</string>
+  <string name="bss_opt_hotword">Nonaktifkan deteksi kata kunci</string>
+  <string name="bss_opt_hotword_desc">Menghentikan mikrofon agar tidak selalu mendengarkan "Hey Google".</string>
+  <string name="bss_opt_fullbackup">Tunda cadangan penuh</string>
+  <string name="bss_opt_fullbackup_desc">Menjeda pencadangan penuh perangkat saat penghemat baterai menyala.</string>
+  <string name="bss_opt_keybackup">Tunda cadangan data</string>
+  <string name="bss_opt_keybackup_desc">Menjeda sinkronisasi pengaturan aplikasi dan cadangan kecil ke cloud.</string>
+  <string name="bss_opt_force_standby">Paksa aplikasi standby</string>
+  <string name="bss_opt_force_standby_desc">Memindahkan aplikasi latar belakang ke kategori sangat dibatasi, mengurangi aktivitas bangun.</string>
+  <string name="bss_opt_force_bg">Paksa pemeriksaan latar</string>
+  <string name="bss_opt_force_bg_desc">Menerapkan batasan eksekusi latar belakang yang lebih ketat pada semua aplikasi.</string>
+  <string name="bss_opt_sensors">Nonaktifkan sensor opsional</string>
+  <string name="bss_opt_sensors_desc">Mematikan sensor non-kritis seperti barometer, penghitung langkah, dan vektor rotasi.</string>
+  <string name="bss_opt_gps">Mode lokasi</string>
+  <string name="bss_apply">Terapkan &amp; Tutup</string>
+  <string name="bss_gps_0">Tanpa batasan</string>
+  <string name="bss_gps_1">GPS mati (layar mati)</string>
+  <string name="bss_gps_2">Semua mati (layar mati)</string>
+  <string name="bss_gps_3">Hanya latar depan</string>
+  <string name="bss_gps_4">Dibatasi (layar mati)</string>
+  <string name="bss_gps_hint_0">GPS dan layanan lokasi bekerja normal setiap saat.</string>
+  <string name="bss_gps_hint_1">Chip GPS mati saat layar mati. Lokasi Wi-Fi dan menara seluler tetap berfungsi dengan akurasi rendah.</string>
+  <string name="bss_gps_hint_2">Semua penyedia lokasi (GPS, Wi-Fi, jaringan) berhenti saat layar mati.</string>
+  <string name="bss_gps_hint_3">Hanya aplikasi di layar yang dapat mengakses lokasi. Aplikasi di latar belakang sepenuhnya ditolak.</string>
+  <string name="bss_gps_hint_4">Aplikasi latar belakang tetap dapat mengakses lokasi, tetapi dibatasi saat layar mati.</string>
+  <string name="io_btn_import">Impor</string>
+  <string name="io_btn_delete">Hapus</string>
+  <string name="io_btn_rename">Ubah Nama</string>
+  <string name="io_rename_prompt">Ubah nama cadangan:</string>
+  <string name="bss_opt_datasaver">Aktifkan penghemat data</string>
+  <string name="bss_opt_datasaver_desc">Membatasi penggunaan data latar belakang untuk semua aplikasi saat penghemat baterai aktif</string>
 </resources>

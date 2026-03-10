@@ -9,9 +9,6 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body unresolved style="overflow:hidden;position:fixed;inset:0;">
-  <!-- Ultra-lightweight ambient background -->
-  <div class="ambient-bg"></div>
-
   <div id="toast-wrap"></div>
 
   <!-- Loading Overlay -->
@@ -223,6 +220,20 @@
           <span class="wl-count" id="wl-count">0</span>
         </button>
       </div>
+      <div class="divider"></div>
+      <div class="tgl-row ripple" data-key="battery_saver">
+        <div class="tgl-info">
+          <span class="tgl-name" data-i18n="tgl_bss">Battery Saver Tuner</span>
+          <span class="tgl-desc" data-i18n="tgl_bss_desc">Tune Android's built-in battery saver behavior</span>
+        </div>
+        <label class="tgl"><input type="checkbox" id="t-bss"><span class="tgl-sl"></span></label>
+      </div>
+      <div class="bss-extras" id="bss-extras">
+        <button class="bss-cfg-btn ripple" id="bss-open">
+          <span>⚙️</span>
+          <span data-i18n="bss_configure">Configure Options</span>
+        </button>
+      </div>
     </section>
 
     <!-- GMS Categories -->
@@ -267,17 +278,17 @@
       <div class="card-title-row">
         <h2 class="card-title"><span>📄 </span><span data-i18n="sec_log">Activity Log</span></h2>
         <div style="display:flex;gap:6px">
-          <button class="log-action-btn ripple" id="btn-copy-log" title="Copy log">
+          <button class="log-action-btn ripple" id="log-copy-btn" title="Copy log">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
           </button>
-          <button class="log-action-btn ripple" id="btn-clear-log" title="Clear log">
+          <button class="log-action-btn ripple" id="log-clear-btn" title="Clear log">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
           </button>
         </div>
       </div>
       <div class="log-wrap">
         <div class="log-box" id="log-box" data-i18n-empty="log_empty" data-empty="No activity yet"></div>
-        <button class="log-expand-btn" id="btn-expand-log" title="Expand">
+        <button class="log-expand-btn" id="log-expand-btn" title="Expand">
           <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
         </button>
       </div>
@@ -302,5 +313,115 @@
 
   <script src="api.js"></script>
   <script src="app.js"></script>
-</body>
+
+    <!-- BSS Modal -->
+    <div class="modal-overlay" id="bss-modal">
+      <div class="modal bss-modal">
+
+        <div class="modal-head">
+          <h3>⚙️ <span data-i18n="bss_modal_title">Battery Saver Options</span></h3>
+          <button class="modal-x ripple" id="bss-close">✕</button>
+        </div>
+        <div class="bss-opt-list">
+          <div class="bss-opt-row">
+            <div class="bss-opt-info">
+              <span class="bss-opt-name" data-i18n="bss_opt_datasaver">Enable data saver</span>
+              <span class="bss-opt-desc" data-i18n="bss_opt_datasaver_desc">Restricts background data usage for all apps while battery saver is active</span>
+            </div>
+            <label class="tgl"><input type="checkbox" id="bss-t-datasaver"><span class="tgl-sl"></span></label>
+          </div>
+          <div class="bss-opt-row">
+            <div class="bss-opt-info">
+              <span class="bss-opt-name" data-i18n="bss_opt_hotword">Disable hotword detection</span>
+              <span class="bss-opt-desc" data-i18n="bss_opt_hotword_desc">Stops the always-on microphone from listening for "Hey Google"</span>
+            </div>
+            <label class="tgl"><input type="checkbox" id="bss-t-soundtrigger"><span class="tgl-sl"></span></label>
+          </div>
+          <div class="bss-opt-row">
+            <div class="bss-opt-info">
+              <span class="bss-opt-name" data-i18n="bss_opt_fullbackup">Defer full backup</span>
+              <span class="bss-opt-desc" data-i18n="bss_opt_fullbackup_desc">Pauses full device backups while battery saver is on. Resumes when turned off.</span>
+            </div>
+            <label class="tgl"><input type="checkbox" id="bss-t-fullbackup"><span class="tgl-sl"></span></label>
+          </div>
+          <div class="bss-opt-row">
+            <div class="bss-opt-info">
+              <span class="bss-opt-name" data-i18n="bss_opt_keybackup">Defer key-value backup</span>
+              <span class="bss-opt-desc" data-i18n="bss_opt_keybackup_desc">Pauses syncing of app settings and small data backups to the cloud.</span>
+            </div>
+            <label class="tgl"><input type="checkbox" id="bss-t-keybackup"><span class="tgl-sl"></span></label>
+          </div>
+          <div class="bss-opt-row">
+            <div class="bss-opt-info">
+              <span class="bss-opt-name" data-i18n="bss_opt_force_standby">Force apps standby</span>
+              <span class="bss-opt-desc" data-i18n="bss_opt_force_standby_desc">Moves all background apps into the restricted standby bucket, heavily limiting their wakeups.</span>
+            </div>
+            <label class="tgl"><input type="checkbox" id="bss-t-force-standby"><span class="tgl-sl"></span></label>
+          </div>
+          <div class="bss-opt-row">
+            <div class="bss-opt-info">
+              <span class="bss-opt-name" data-i18n="bss_opt_force_bg">Force background check</span>
+              <span class="bss-opt-desc" data-i18n="bss_opt_force_bg_desc">Applies stricter enforcement of background execution limits across all apps.</span>
+            </div>
+            <label class="tgl"><input type="checkbox" id="bss-t-force-bg"><span class="tgl-sl"></span></label>
+          </div>
+          <div class="bss-opt-row">
+            <div class="bss-opt-info">
+              <span class="bss-opt-name" data-i18n="bss_opt_sensors">Disable optional sensors</span>
+              <span class="bss-opt-desc" data-i18n="bss_opt_sensors_desc">Turns off non-critical sensors like barometer, step counter, and rotation vector.</span>
+            </div>
+            <label class="tgl"><input type="checkbox" id="bss-t-sensors"><span class="tgl-sl"></span></label>
+          </div>
+
+          <div class="bss-section-head" data-i18n="bss_opt_gps">Location mode</div>
+
+          <div class="bss-mode-list">
+            <div class="bss-mode-row" id="bss-gps-0" data-gps="0">
+              <div class="bss-mode-dot"></div>
+              <div class="bss-mode-info">
+                <span class="bss-mode-name" data-i18n="bss_gps_0">No restriction</span>
+                <span class="bss-mode-desc" data-i18n="bss_gps_hint_0">GPS and all location services work normally at all times. No restriction applied.</span>
+              </div>
+            </div>
+            <div class="bss-mode-row" id="bss-gps-1" data-gps="1">
+              <div class="bss-mode-dot"></div>
+              <div class="bss-mode-info">
+                <span class="bss-mode-name" data-i18n="bss_gps_1">GPS off (screen off)</span>
+                <span class="bss-mode-desc" data-i18n="bss_gps_hint_1">GPS satellite chip shuts off when the screen goes off. Wi-Fi and cell-tower location keep working at lower accuracy. Safe for most navigation use cases.</span>
+              </div>
+            </div>
+            <div class="bss-mode-row" id="bss-gps-2" data-gps="2">
+              <div class="bss-mode-dot"></div>
+              <div class="bss-mode-info">
+                <span class="bss-mode-name" data-i18n="bss_gps_2">All off (screen off)</span>
+                <span class="bss-mode-desc" data-i18n="bss_gps_hint_2">Every location provider — GPS, Wi-Fi, and cell tower — stops when the screen goes off. Weather widgets, maps, and fitness trackers stop updating in the background.</span>
+              </div>
+            </div>
+            <div class="bss-mode-row" id="bss-gps-3" data-gps="3">
+              <div class="bss-mode-dot"></div>
+              <div class="bss-mode-info">
+                <span class="bss-mode-name" data-i18n="bss_gps_3">Foreground only</span>
+                <span class="bss-mode-desc" data-i18n="bss_gps_hint_3">Only the app on screen can access location. Any app running in the background is fully denied, regardless of permissions granted.</span>
+              </div>
+            </div>
+            <div class="bss-mode-row" id="bss-gps-4" data-gps="4">
+              <div class="bss-mode-dot"></div>
+              <div class="bss-mode-info">
+                <span class="bss-mode-name" data-i18n="bss_gps_4">Throttle (screen off)</span>
+                <span class="bss-mode-desc" data-i18n="bss_gps_hint_4">Background apps can still get location, but updates are rate-limited when the screen is off. Less battery impact with better app compatibility than a full disable.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bss-actions">
+          <button class="bss-apply-btn ripple" id="bss-apply">
+            <span data-i18n="bss_apply">Apply &amp; Close</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </body>
 </html>

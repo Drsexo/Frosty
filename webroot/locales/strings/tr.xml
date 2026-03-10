@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  
   <string name="menu_io">İçe / Dışa Aktar</string>
   <string name="menu_lang">Dil</string>
   <string name="menu_about">Hakkında</string>
@@ -129,9 +128,6 @@
   <string name="log_toggle_off">{0} devre dışı bırakıldı</string>
   <string name="log_webui_ready">WebUI başarıyla yüklendi ve hazır</string>
   <string name="log_load_failed">Yükleme sırasında hata: {0}</string>
-  <string name="executing">Çalıştırılıyor: {0}</string>
-  <string name="log_executed">Başarıyla yürütüldü: {0}</string>
-  <string name="log_execution_failed">Çalıştırma başarısız: {0}</string>
   <string name="log_reboot_effect">Tam etkinin sağlanması için cihazınızı yeniden başlatın</string>
   <string name="log_reverting_all">Tüm ayarlar orijinal fabrika ayarlarına döndürülüyor...</string>
   <string name="log_freeze_all">Tüm ayarlar aktif ediliyor...</string>
@@ -139,7 +135,7 @@
   <string name="word_disabled">devre dışı</string>
   <string name="toast_nothing_to_apply">Uygulanacak bir ayar bulunamadı — lütfen önce bir şeyleri açın</string>
   <string name="about_desc">Maksimum pil tasarrufu ve GMS optimizasyonu. GMS servislerini dondurun, Doze modunu etkinleştirin, logları durdurun ve Kernel Tweaks uygulayın. Ayarları düzenlemek için WebUI düğmesini kullanın.</string>
-<string name="log_sysprops_enabled">System Props etkinleştirildi</string>
+  <string name="log_sysprops_enabled">System Props etkinleştirildi</string>
   <string name="log_sysprops_disabled">System Props devre dışı bırakıldı</string>
   <string name="log_reapply_start">Yeniden uygulama başlatılıyor...</string>
   <string name="log_empty">Henüz bir aktivite yok</string>
@@ -149,4 +145,44 @@
   <string name="log_ram_reverted">RAM optimize edici geri alındı</string>
   <string name="loading_applying_ram">RAM optimize edici uygulanıyor...</string>
   <string name="loading_reverting_ram">RAM optimize edici geri alınıyor...</string>
+  <string name="tgl_bss">Pil Tasarrufu Ayarlayıcı</string>
+  <string name="tgl_bss_desc">Android'in yerleşik pil tasarrufu davranışını yapılandırın</string>
+  <string name="loading_applying_bss">Pil Tasarrufu profili uygulanıyor...</string>
+  <string name="loading_reverting_bss">Pil Tasarrufu geri alınıyor...</string>
+  <string name="log_bss_applied">Pil Tasarrufu profili uygulandı</string>
+  <string name="log_bss_reverted">Pil Tasarrufu geri alındı</string>
+  <string name="log_bss_reapplied">Pil Tasarrufu yeniden uygulandı</string>
+  <string name="bss_modal_title">Pil Tasarrufu Seçenekleri</string>
+  <string name="bss_modal_notice">Ayarlar Pil Tasarrufu etkinken geçerlidir.</string>
+  <string name="bss_configure">Seçenekleri Yapılandır</string>
+  <string name="bss_opt_hotword">Sesli uyanmayı kapat</string>
+  <string name="bss_opt_hotword_desc">Mikrofonun sürekli olarak "Hey Google"ı dinlemesini engeller.</string>
+  <string name="bss_opt_fullbackup">Tam yedeklemeyi ertele</string>
+  <string name="bss_opt_fullbackup_desc">Pil tasarrufu açıkken tam cihaz yedeklemelerini duraklatır.</string>
+  <string name="bss_opt_keybackup">Veri yedeklemesini ertele</string>
+  <string name="bss_opt_keybackup_desc">Uygulama ayarlarının ve küçük verilerin buluta senkronizasyonunu duraklatır.</string>
+  <string name="bss_opt_force_standby">Uygulama beklemeyi zorla</string>
+  <string name="bss_opt_force_standby_desc">Tüm arka plan uygulamalarını kısıtlı bekleme grubuna taşır, uyanmalarını ciddi şekilde sınırlar.</string>
+  <string name="bss_opt_force_bg">Arka plan denetimini zorla</string>
+  <string name="bss_opt_force_bg_desc">Tüm uygulamalarda arka plan yürütme sınırlarının daha sıkı uygulanmasını sağlar.</string>
+  <string name="bss_opt_sensors">İsteğe bağlı sensörleri kapat</string>
+  <string name="bss_opt_sensors_desc">Barometre, adım sayar ve dönüş vektörü gibi kritik olmayan sensörleri kapatır.</string>
+  <string name="bss_opt_gps">Konum modu</string>
+  <string name="bss_apply">Uygula ve Kapat</string>
+  <string name="bss_gps_0">Kısıtlama yok</string>
+  <string name="bss_gps_1">GPS kapalı (ekran kapalı)</string>
+  <string name="bss_gps_2">Tümü kapalı (ekran kapalı)</string>
+  <string name="bss_gps_3">Yalnızca ön plan</string>
+  <string name="bss_gps_4">Sınırlandırılmış (ekran kapalı)</string>
+  <string name="bss_gps_hint_0">GPS ve tüm konum hizmetleri her zaman normal şekilde çalışır.</string>
+  <string name="bss_gps_hint_1">Ekran kapandığında GPS çipi kapanır. Wi-Fi ve baz istasyonu konumu çalışmaya devam eder.</string>
+  <string name="bss_gps_hint_2">Ekran kapandığında konum durur. Hava durumu ve spor izleyicileri arka planda güncellenmez.</string>
+  <string name="bss_gps_hint_3">Yalnızca ekrandaki uygulama konuma erişebilir. Arka plandaki uygulamalar engellenir.</string>
+  <string name="bss_gps_hint_4">Arka plan uygulamaları konumu alabilir, ancak ekran kapalıyken güncellemeler sınırlandırılır.</string>
+  <string name="io_btn_import">İçe Aktar</string>
+  <string name="io_btn_delete">Sil</string>
+  <string name="io_btn_rename">Yeniden Adlandır</string>
+  <string name="io_rename_prompt">Yedeği yeniden adlandır:</string>
+  <string name="bss_opt_datasaver">Veri tasarrufunu etkinleştir</string>
+  <string name="bss_opt_datasaver_desc">Pil tasarrufu etkinken tüm uygulamalar için arka plan veri kullanımını kısıtlar</string>
 </resources>

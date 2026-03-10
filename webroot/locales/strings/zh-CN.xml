@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  
   <string name="menu_io">导入 / 导出</string>
   <string name="menu_lang">语言</string>
   <string name="menu_about">关于</string>
@@ -129,9 +128,6 @@
   <string name="log_toggle_off">{0} 已关闭</string>
   <string name="log_webui_ready">WebUI 界面已就绪</string>
   <string name="log_load_failed">加载时发生错误：{0}</string>
-  <string name="executing">正在执行: {0}</string>
-  <string name="log_executed">执行成功: {0}</string>
-  <string name="log_execution_failed">执行时发生错误：{0}</string>
   <string name="log_reboot_effect">请重启设备以使所有更改完全生效</string>
   <string name="log_reverting_all">正在将所有设置恢复为系统默认状态...</string>
   <string name="log_freeze_all">正在启用所有配置项...</string>
@@ -149,4 +145,44 @@
   <string name="log_ram_reverted">已还原 RAM 优化器</string>
   <string name="loading_applying_ram">正在应用 RAM 优化器...</string>
   <string name="loading_reverting_ram">正在还原 RAM 优化器...</string>
+  <string name="tgl_bss">省电模式调优</string>
+  <string name="tgl_bss_desc">调整 Android 内置省电模式的行为</string>
+  <string name="loading_applying_bss">正在应用省电配置文件...</string>
+  <string name="loading_reverting_bss">正在还原省电设置...</string>
+  <string name="log_bss_applied">已应用省电配置文件</string>
+  <string name="log_bss_reverted">已还原省电设置</string>
+  <string name="log_bss_reapplied">已重新应用省电设置</string>
+  <string name="bss_modal_title">省电模式选项</string>
+  <string name="bss_modal_notice">这些设置仅在系统省电模式开启时生效。</string>
+  <string name="bss_configure">配置选项</string>
+  <string name="bss_opt_hotword">禁用语音唤醒</string>
+  <string name="bss_opt_hotword_desc">停止麦克风在后台持续监听“Hey Google”唤醒词。</string>
+  <string name="bss_opt_fullbackup">推迟完整备份</string>
+  <string name="bss_opt_fullbackup_desc">开启省电模式时暂停设备的完整备份，关闭后恢复。</string>
+  <string name="bss_opt_keybackup">推迟数据备份</string>
+  <string name="bss_opt_keybackup_desc">暂停应用设置及小型云端备份的同步。</string>
+  <string name="bss_opt_force_standby">强制应用待机</string>
+  <string name="bss_opt_force_standby_desc">将后台应用移入严格限制的待机分组，大幅限制其唤醒频率。</string>
+  <string name="bss_opt_force_bg">强制后台检查</string>
+  <string name="bss_opt_force_bg_desc">对所有应用执行更严格的后台运行限制。</string>
+  <string name="bss_opt_sensors">禁用可选传感器</string>
+  <string name="bss_opt_sensors_desc">关闭气压计、计步器和旋转矢量等非关键传感器。</string>
+  <string name="bss_opt_gps">定位模式</string>
+  <string name="bss_apply">应用并关闭</string>
+  <string name="bss_gps_0">无限制</string>
+  <string name="bss_gps_1">息屏关 GPS</string>
+  <string name="bss_gps_2">息屏全关</string>
+  <string name="bss_gps_3">仅限前台</string>
+  <string name="bss_gps_4">息屏限流</string>
+  <string name="bss_gps_hint_0">GPS 和所有定位服务始终正常工作。不应用任何限制。</string>
+  <string name="bss_gps_hint_1">息屏时关闭 GPS 卫星芯片。Wi-Fi 和基站定位继续以较低精度运行。适合多数导航场景。</string>
+  <string name="bss_gps_hint_2">息屏时停止所有定位来源 (GPS、Wi-Fi 和基站)。天气小部件和运动追踪器在后台停止更新。</string>
+  <string name="bss_gps_hint_3">仅允许屏幕上的前台应用访问定位。无论授权与否，完全拒绝所有后台应用访问。</string>
+  <string name="bss_gps_hint_4">后台应用仍可获取定位，但息屏时更新频率受限。兼顾省电与应用兼容性。</string>
+  <string name="io_btn_import">导入</string>
+  <string name="io_btn_delete">删除</string>
+  <string name="io_btn_rename">重命名</string>
+  <string name="io_rename_prompt">备份重命名为：</string>
+  <string name="bss_opt_datasaver">启用流量节省</string>
+  <string name="bss_opt_datasaver_desc">在省电模式处于激活状态时，限制所有应用的后台数据使用</string>
 </resources>

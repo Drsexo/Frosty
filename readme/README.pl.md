@@ -30,8 +30,10 @@ Frosty optymalizuje czas pracy baterii poprzez selektywne zamrażanie komponent�
 - **GMS Doze**: Usuwa GMS z białej listy (Whitelist) oszczędzania energii.
 - **Deep Doze**: Bardzo agresywne ograniczenia działania w tle dla wszystkich aplikacji (Umiarkowane / Maksymalne).
 - **Tweaki Kernel**: Optymalizacje harmonogramu, pamięci wirtualnej (VM) oraz sieci.
+- **Optymalizator RAM**: Dostraja limity procesów i ustawienia pamięci sysfs.  
 - **Kill Logs**: Zatrzymuje logowanie (zapisywanie dzienników) w tle, zwalniając baterię i RAM.
 - **System Props**: Wyłącza właściwości debugowania systemu, aby oszczędzać pamięć RAM.
+- **Tuner Oszczędzania Baterii**: Dostosuj działanie trybu oszczędzania baterii w Androidzie, kontroluj odraczanie kopii zapasowych, wyłączanie czujników, zachowanie GPS, oszczędzanie danych i więcej. Ustawienia te przynoszą zauważalny efekt tylko wtedy, gdy oszczędzanie baterii w Androidzie jest WŁĄCZONE.
 - **Konfiguracja na żywo**: Pełna kontrola w czasie rzeczywistym poprzez panel WebUI.
 
 ## 📦 Instalacja
@@ -59,34 +61,51 @@ Otwórz WebUI z menedżera root. Znajdziesz tam:
 ## 🧊 Kategorie GMS
 
 #### Bezpieczne do wyłączenia
-
-| Kategoria               | Wpływ                                                     |
-| ----------------------- | --------------------------------------------------------- |
-| 📊 **Telemetria**       | Żaden. Zatrzymuje reklamy, analitykę i śledzenie Google.  |
+| Kategoria | Wpływ |
+|-----------|-------|
+| 📊 **Telemetria** | Żaden. Zatrzymuje reklamy, analitykę i śledzenie Google. |
 | 🔄 **Tło (Background)** | Automatyczne aktualizacje aplikacji mogą ulec opóźnieniu. |
 
 #### Co przestanie działać
-
-| Kategoria                 | Wpływ na funkcje                                                 |
-| ------------------------- | ---------------------------------------------------------------- |
-| 📍 **Lokalizacja**        | Google Maps, nawigacja GPS, funkcja "Znajdź moje urządzenie".    |
-| 📡 **Łączność**           | Chromecast, Quick Share, Fast Pair.                              |
-| ☁️ **Chmura (Cloud)**     | Logowanie kontem Google, autouzupełnianie haseł, kopie zapasowe. |
-| 💳 **Płatności**          | Google Pay, płatności zbliżeniowe NFC.                           |
-| ⌚ **Urządzenia noszone** | Wear OS, Google Fit, monitorowanie kondycji.                     |
-| 🎮 **Gry**                | Osiągnięcia w Google Play Games, rankingi, zapisy w chmurze.     |
+| Kategoria | Wpływ na funkcje |
+|-----------|------------------|
+| 📍 **Lokalizacja** | Google Maps, nawigacja GPS, funkcja "Znajdź moje urządzenie". |
+| 📡 **Łączność** | Chromecast, Quick Share, Fast Pair. |
+| ☁️ **Chmura (Cloud)** | Logowanie kontem Google, autouzupełnianie haseł, kopie zapasowe. |
+| 💳 **Płatności** | Google Pay, płatności zbliżeniowe NFC. |
+| ⌚ **Urządzenia noszone** | Wear OS, Google Fit, monitorowanie kondycji. |
+| 🎮 **Gry** | Osiągnięcia w Google Play Games, rankingi, zapisy w chmurze. |
 
 ## 🔋 Poziomy Deep Doze
 
-| Funkcja                                             | Umiarkowane | Maksymalne |
-| --------------------------------------------------- | :---------: | :--------: |
-| Agresywne stałe Doze                                |     ✅      |     ✅     |
-| Koszyki oczekiwania aplikacji (App Standby Buckets) |     ✅      |     ✅     |
-| Blokada RUN_IN_BACKGROUND                           |     ✅      |     ✅     |
-| Deep Idle (Przy zgaszonym ekranie)                  |     ✅      |     ✅     |
-| Blokada WAKE_LOCK                                   |     ❌      |     ✅     |
-| Wakelock Killer                                     |     ❌      |     ✅     |
-| Restrykcyjne limity alarmów (budzików)              |     ❌      |     ✅     |
+| Funkcja | Umiarkowane | Maksymalne |
+|---------|:-----------:|:----------:|
+| Agresywne stałe Doze | ✅ | ✅ |
+| Koszyki oczekiwania aplikacji (App Standby Buckets)| ✅ | ✅ |
+| Blokada RUN_IN_BACKGROUND | ✅ | ✅ |
+| Deep Idle (Przy zgaszonym ekranie) | ✅ | ✅ |
+| Blokada WAKE_LOCK | ❌ | ✅ |
+| Wakelock Killer | ❌ | ✅ |
+
+## 🚀 Optymalizator RAM
+
+Dostraja menedżera procesów Androida i podsystem pamięci na podstawie całkowitej pamięci RAM urządzenia.  
+Włącza również pulę USAP w celu szybszego zimnego startu aplikacji i stosuje tweaki sysfs (`swappiness`, `page-cluster`). Wszystkie wartości są zapisywane i w pełni przywracane po wyłączeniu.
+
+## ⚙️ Tuner Oszczędzania Baterii
+
+Konfiguruje zachowanie wbudowanego w Androida trybu oszczędzania baterii, gdy jest on aktywny.
+
+| Opcja | Opis |
+|--------|-------------|
+| **Oszczędzanie danych** | Ogranicza zużycie danych w tle dla większości aplikacji |
+| **Wykrywanie mowy** | Wyłącza nasłuchiwanie słów kluczowych (np. "Hej Google") |
+| **Pełna kopia zapasowa** | Odracza pełne kopie zapasowe urządzenia |
+| **Kopia danych (Key/Value)** | Odracza kopie zapasowe ustawień aplikacji |
+| **Wymuś uśpienie** | Natychmiast przełącza wszystkie aplikacje w tle w tryb uśpienia |
+| **Sprawdzanie tła** | Wymusza bardziej rygorystyczne kontrole procesów w tle |
+| **Czujniki** | Wyłącza opcjonalne czujniki działające w tle |
+| **Tryb GPS** | Kontroluje dostęp do lokalizacji, gdy oszczędzanie baterii jest włączone |
 
 ## ❓ FAQ (Często zadawane pytania)
 
@@ -107,3 +126,4 @@ Dodaj do niej swoje komunikatory, aplikacje bankowe oraz budziki, by nie pominą
 - **gloeyisk** — [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze)
 - **Azyrn** — [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** — [GMS Component Disable Script](https://t.me/MoZoiDStack/137)
+- **s1m** — [SaverTuner](https://codeberg.org/s1m/savertuner)

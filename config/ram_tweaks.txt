@@ -1,11 +1,20 @@
 # FROSTY RAM Tweaks
 # Format: /path/to/kernel/file|value
 # Applied when RAM Optimizer is enabled. Backed up to backup/ram_values.txt before writing.
+# Note: swappiness and extra_free_kbytes are set dynamically in frosty.sh based on device RAM.
 
 # ZRAM / SWAP
-/proc/sys/vm/swappiness|100
 /proc/sys/vm/page-cluster|0
 
-# MEMORY RECLAIM
-/proc/sys/vm/watermark_scale_factor|30
-/proc/sys/vm/extra_free_kbytes|8192
+# MEMORY WATERMARKS
+/proc/sys/vm/watermark_boost_factor|0
+/proc/sys/vm/watermark_scale_factor|125
+
+# DIRTY PAGE WRITEBACK
+/proc/sys/vm/dirty_ratio|20
+/proc/sys/vm/dirty_background_ratio|5
+/proc/sys/vm/dirty_expire_centisecs|200
+/proc/sys/vm/dirty_writeback_centisecs|500
+
+# CACHE RECLAIM
+/proc/sys/vm/vfs_cache_pressure|150

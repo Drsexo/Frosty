@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  
   <string name="menu_io">Importuj / Eksportuj</string>
   <string name="menu_lang">Język</string>
   <string name="menu_about">O module</string>
@@ -129,9 +128,6 @@
   <string name="log_toggle_off">{0} zostało wyłączone</string>
   <string name="log_webui_ready">Interfejs WebUI jest gotowy do działania</string>
   <string name="log_load_failed">Błąd podczas ładowania: {0}</string>
-  <string name="executing">Wykonywanie: {0}</string>
-  <string name="log_executed">Pomyślnie wykonano: {0}</string>
-  <string name="log_execution_failed">Błąd podczas wykonywania: {0}</string>
   <string name="log_reboot_effect">Uruchom urządzenie ponownie, aby uzyskać pełen efekt</string>
   <string name="log_reverting_all">Przywracanie wszystkich ustawień domyślnych...</string>
   <string name="log_freeze_all">Aktywacja wszystkich opcji konfiguracyjnych...</string>
@@ -149,4 +145,44 @@
   <string name="log_ram_reverted">Optymalizator RAM wycofany</string>
   <string name="loading_applying_ram">Zastosowywanie optymalizatora RAM...</string>
   <string name="loading_reverting_ram">Cofanie optymalizatora RAM...</string>
+  <string name="tgl_bss">Tuner oszczędzania baterii</string>
+  <string name="tgl_bss_desc">Dostosuj wbudowane w Androida oszczędzanie baterii</string>
+  <string name="loading_applying_bss">Zastosowywanie profilu oszczędzania baterii...</string>
+  <string name="loading_reverting_bss">Cofanie oszczędzania baterii...</string>
+  <string name="log_bss_applied">Profil oszczędzania baterii zastosowany</string>
+  <string name="log_bss_reverted">Oszczędzanie baterii wycofane</string>
+  <string name="log_bss_reapplied">Oszczędzanie baterii zastosowane ponownie</string>
+  <string name="bss_modal_title">Opcje oszczędzania baterii</string>
+  <string name="bss_modal_notice">Ustawienia działają, gdy włączone jest Oszczędzanie Baterii.</string>
+  <string name="bss_configure">Skonfiguruj opcje</string>
+  <string name="bss_opt_hotword">Wyłącz wykrywanie słów kluczowych</string>
+  <string name="bss_opt_hotword_desc">Zatrzymuje nasłuchiwanie "Hej Google" przez mikrofon.</string>
+  <string name="bss_opt_fullbackup">Odrocz pełną kopię zapasową</string>
+  <string name="bss_opt_fullbackup_desc">Wstrzymuje pełne kopie zapasowe, gdy oszczędzanie baterii jest włączone.</string>
+  <string name="bss_opt_keybackup">Odrocz kopie zapasowe danych</string>
+  <string name="bss_opt_keybackup_desc">Wstrzymuje synchronizację ustawień aplikacji i małych kopii w chmurze.</string>
+  <string name="bss_opt_force_standby">Wymuś uśpienie aplikacji</string>
+  <string name="bss_opt_force_standby_desc">Przenosi aplikacje w tle do koszyka o ograniczonym dostępie (restricted), mocno tnąc ich wybudzanie.</string>
+  <string name="bss_opt_force_bg">Wymuś sprawdzanie tła</string>
+  <string name="bss_opt_force_bg_desc">Stosuje bardziej rygorystyczne egzekwowanie limitów w tle dla wszystkich aplikacji.</string>
+  <string name="bss_opt_sensors">Wyłącz opcjonalne czujniki</string>
+  <string name="bss_opt_sensors_desc">Wyłącza czujniki typu barometr, krokomierz czy wektor obrotu.</string>
+  <string name="bss_opt_gps">Tryb lokalizacji</string>
+  <string name="bss_apply">Zastosuj i zamknij</string>
+  <string name="bss_gps_0">Brak ograniczeń</string>
+  <string name="bss_gps_1">GPS wył. (ekran wył.)</string>
+  <string name="bss_gps_2">Wszystko wył. (ekran wył.)</string>
+  <string name="bss_gps_3">Tylko na pierwszym planie</string>
+  <string name="bss_gps_4">Dławienie (ekran wył.)</string>
+  <string name="bss_gps_hint_0">GPS i usługi lokalizacyjne działają normalnie.</string>
+  <string name="bss_gps_hint_1">Chip GPS wyłącza się przy zgaszonym ekranie. Lokalizacja Wi-Fi/GSM działa ze słabszą dokładnością.</string>
+  <string name="bss_gps_hint_2">Wszyscy dostawcy lokalizacji zatrzymują się po zgaszeniu ekranu. Widżety pogody i trackery przestają się aktualizować w tle.</string>
+  <string name="bss_gps_hint_3">Tylko aplikacja widoczna na ekranie ma dostęp do lokalizacji. Tło jest całkowicie odcięte.</string>
+  <string name="bss_gps_hint_4">Tło wciąż ma dostęp, ale zapytania są rzadsze przy zgaszonym ekranie. Kompromis dla kompatybilności.</string>
+  <string name="io_btn_import">Importuj</string>
+  <string name="io_btn_delete">Usuń</string>
+  <string name="io_btn_rename">Zmień nazwę</string>
+  <string name="io_rename_prompt">Zmień nazwę kopii:</string>
+  <string name="bss_opt_datasaver">Włącz oszczędzanie danych</string>
+  <string name="bss_opt_datasaver_desc">Ogranicza zużycie danych w tle dla wszystkich aplikacji, gdy oszczędzanie baterii jest aktywne</string>
 </resources>

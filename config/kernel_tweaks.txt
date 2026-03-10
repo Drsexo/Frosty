@@ -1,18 +1,15 @@
 # FROSTY Kernel Tweaks
 # Format: /path/to/kernel/file|value
-# Lines starting with # are comments and blank lines are ignored.
 
 # SCHEDULER
 /proc/sys/kernel/perf_cpu_time_max_percent|2
-/proc/sys/kernel/sched_autogroup_enabled|1
-/proc/sys/kernel/sched_child_runs_first|0
 /proc/sys/kernel/sched_tunable_scaling|0
 /proc/sys/kernel/sched_latency_ns|5000000
 /proc/sys/kernel/sched_min_granularity_ns|1000000
 /proc/sys/kernel/sched_wakeup_granularity_ns|2500000
 /proc/sys/kernel/sched_migration_cost_ns|5000000
 /proc/sys/kernel/sched_min_task_util_for_colocation|0
-/proc/sys/kernel/sched_nr_migrate|256
+/proc/sys/kernel/sched_nr_migrate|32
 /proc/sys/kernel/sched_schedstats|0
 
 # SCHED FEATURES
@@ -34,16 +31,14 @@
 /proc/sys/vm/dirty_ratio|5
 /proc/sys/vm/dirty_expire_centisecs|500
 /proc/sys/vm/dirty_writeback_centisecs|500
-/proc/sys/vm/stat_interval|10
+/proc/sys/vm/stat_interval|15
 /proc/sys/vm/vfs_cache_pressure|100
 /proc/sys/vm/oom_dump_tasks|0
 /proc/sys/vm/block_dump|0
+/proc/sys/vm/compaction_proactiveness|0
 
 # NETWORK
-/proc/sys/net/ipv4/tcp_ecn|1
-/proc/sys/net/ipv4/tcp_fastopen|3
-/proc/sys/net/ipv4/tcp_syncookies|1
-/proc/sys/net/ipv4/tcp_no_metrics_save|1
+/proc/sys/net/ipv4/tcp_low_latency|1
 
 # DEBUG
 /proc/sys/debug/exception-trace|0
@@ -63,3 +58,6 @@
 # RAMDUMPS
 /sys/module/subsystem_restart/parameters/enable_mini_ramdumps|0
 /sys/module/subsystem_restart/parameters/enable_ramdumps|0
+
+# MMC
+/sys/module/mmc_core/parameters/use_spi_crc|0

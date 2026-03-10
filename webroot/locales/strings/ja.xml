@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  
   <string name="menu_io">インポート / エクスポート</string>
   <string name="menu_lang">言語</string>
   <string name="menu_about">アプリについて</string>
@@ -129,9 +128,6 @@
   <string name="log_toggle_off">{0} がオフになりました</string>
   <string name="log_webui_ready">WebUI の準備が完了しました</string>
   <string name="log_load_failed">読み込みエラー: {0}</string>
-  <string name="executing">実行中: {0}</string>
-  <string name="log_executed">実行成功: {0}</string>
-  <string name="log_execution_failed">実行エラー: {0}</string>
   <string name="log_reboot_effect">変更を完全に適用するにはデバイスを再起動してください</string>
   <string name="log_reverting_all">すべての設定をシステムのデフォルト状態に復元しています...</string>
   <string name="log_freeze_all">すべての設定を有効にしています...</string>
@@ -149,4 +145,44 @@
   <string name="log_ram_reverted">RAM オプティマイザを元に戻しました</string>
   <string name="loading_applying_ram">RAM オプティマイザを適用しています...</string>
   <string name="loading_reverting_ram">RAM オプティマイザを元に戻しています...</string>
+  <string name="tgl_bss">バッテリーセーバーチューナー</string>
+  <string name="tgl_bss_desc">Android 内蔵のバッテリーセーバーの動作を調整します</string>
+  <string name="loading_applying_bss">バッテリーセーバープロファイルを適用中...</string>
+  <string name="loading_reverting_bss">バッテリーセーバーの設定を復元中...</string>
+  <string name="log_bss_applied">バッテリーセーバープロファイルを適用しました</string>
+  <string name="log_bss_reverted">バッテリーセーバーを復元しました</string>
+  <string name="log_bss_reapplied">バッテリーセーバーを再適用しました</string>
+  <string name="bss_modal_title">バッテリーセーバーオプション</string>
+  <string name="bss_modal_notice">設定はバッテリーセーバーが有効な間のみ適用されます。</string>
+  <string name="bss_configure">オプションを設定</string>
+  <string name="bss_opt_hotword">音声検出を無効化</string>
+  <string name="bss_opt_hotword_desc">マイクが「OK Google」を常に聞き取るのを停止します。</string>
+  <string name="bss_opt_fullbackup">完全バックアップを延期</string>
+  <string name="bss_opt_fullbackup_desc">セーバー中はデバイスの完全バックアップを一時停止します。</string>
+  <string name="bss_opt_keybackup">データバックアップを延期</string>
+  <string name="bss_opt_keybackup_desc">アプリ設定や小規模なクラウドバックアップの同期を一時停止します。</string>
+  <string name="bss_opt_force_standby">アプリのスタンバイを強制</string>
+  <string name="bss_opt_force_standby_desc">バックグラウンドアプリを制限付きスタンバイバケットに移動し、起動を大幅に制限します。</string>
+  <string name="bss_opt_force_bg">バックグラウンドチェックを強制</string>
+  <string name="bss_opt_force_bg_desc">すべてのアプリに対して、バックグラウンド実行制限をより厳格に適用します。</string>
+  <string name="bss_opt_sensors">オプションセンサーを無効化</string>
+  <string name="bss_opt_sensors_desc">気圧計、歩数計、回転ベクトルなどの重要でないセンサーをオフにします。</string>
+  <string name="bss_opt_gps">位置情報モード</string>
+  <string name="bss_apply">適用して閉じる</string>
+  <string name="bss_gps_0">制限なし</string>
+  <string name="bss_gps_1">GPS オフ (画面オフ時)</string>
+  <string name="bss_gps_2">すべてオフ (画面オフ時)</string>
+  <string name="bss_gps_3">フォアグラウンドのみ</string>
+  <string name="bss_gps_4">制限付き (画面オフ時)</string>
+  <string name="bss_gps_hint_0">GPS およびすべての位置情報サービスは常に正常に機能します。</string>
+  <string name="bss_gps_hint_1">画面オフ時に GPS チップをオフにします。Wi-Fi とモバイルネットワークの測位は低精度で機能し続けます。</string>
+  <string name="bss_gps_hint_2">画面オフ時にすべての測位（GPS、Wi-Fi、ネットワーク）が停止します。天気やフィットネストラッカーは更新されません。</string>
+  <string name="bss_gps_hint_3">画面に表示されているアプリのみ位置情報にアクセスできます。バックグラウンドアプリは完全に拒否されます。</string>
+  <string name="bss_gps_hint_4">バックグラウンドアプリも位置情報を取得できますが、画面オフ時は更新頻度が制限されます。</string>
+  <string name="io_btn_import">インポート</string>
+  <string name="io_btn_delete">削除</string>
+  <string name="io_btn_rename">名前を変更</string>
+  <string name="io_rename_prompt">バックアップの名前を変更:</string>
+  <string name="bss_opt_datasaver">データセーバーを有効にする</string>
+  <string name="bss_opt_datasaver_desc">バッテリーセーバーがアクティブな間、すべてのアプリのバックグラウンドデータ使用を制限します</string>
 </resources>

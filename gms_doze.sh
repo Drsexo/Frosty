@@ -13,7 +13,6 @@ mkdir -p "$LOGDIR"
 log_doze() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$DOZE_LOG"; }
 
 ENABLE_GMS_DOZE=0
-DISABLE_LOCATION=0
 [ -f "$USER_PREFS" ] && . "$USER_PREFS"
 
 GMS_PKG="com.google.android.gms"
@@ -63,11 +62,6 @@ apply() {
     is_optimized="NO"
   fi
 
-  echo ""
-  echo "  💤 GMS DOZE: APPLIED"
-  echo "  Device admins disabled: $admin_count"
-  echo "  GMS optimized: $is_optimized"
-  echo ""
 }
 
 revert() {
@@ -90,11 +84,6 @@ revert() {
   log_doze "Re-enabled $admin_count device admin receiver(s)"
   log_doze "Reboot recommended for full XML overlay removal"
 
-  echo ""
-  echo "  🔥 GMS DOZE: REVERTED"
-  echo "  Device admins re-enabled: $admin_count"
-  echo "  Reboot to fully remove XML patches"
-  echo ""
 }
 
 status() {

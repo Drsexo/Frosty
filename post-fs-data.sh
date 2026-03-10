@@ -25,7 +25,7 @@ if [ "$ENABLE_LOG_KILLING" = "1" ]; then
   resetprop -n dalvik.vm.dex2oat-minidebuginfo false
   resetprop -n dalvik.vm.minidebuginfo false
 
-# RC overlays and bin stubs for log killing
+  # RC overlays and bin stubs for log killing
   # Wi-Fi vendor trace logging (Qualcomm — no-op on other chipsets)
   resetprop -n sys.wifitracing.started 0
   resetprop -n persist.vendor.wifienhancelog 0

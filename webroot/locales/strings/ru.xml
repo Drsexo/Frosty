@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  
   <string name="menu_io">Импорт / Экспорт</string>
   <string name="menu_lang">Язык</string>
   <string name="menu_about">О модуле</string>
@@ -129,9 +128,6 @@
   <string name="log_toggle_off">{0} выключено</string>
   <string name="log_webui_ready">Интерфейс WebUI полностью готов</string>
   <string name="log_load_failed">Ошибка при загрузке: {0}</string>
-  <string name="executing">Выполняется: {0}</string>
-  <string name="log_executed">Успешно выполнено: {0}</string>
-  <string name="log_execution_failed">Ошибка при выполнении: {0}</string>
   <string name="log_reboot_effect">Перезагрузите устройство для полного вступления изменений в силу</string>
   <string name="log_reverting_all">Сброс всех настроек до значений по умолчанию...</string>
   <string name="log_freeze_all">Активация всех настроек...</string>
@@ -149,4 +145,44 @@
   <string name="log_ram_reverted">Оптимизатор RAM отменён</string>
   <string name="loading_applying_ram">Применение оптимизатора RAM...</string>
   <string name="loading_reverting_ram">Отмена оптимизатора RAM...</string>
+  <string name="tgl_bss">Настройка энергосбережения</string>
+  <string name="tgl_bss_desc">Тонкая настройка встроенного режима энергосбережения Android</string>
+  <string name="loading_applying_bss">Применение профиля энергосбережения...</string>
+  <string name="loading_reverting_bss">Отмена настроек энергосбережения...</string>
+  <string name="log_bss_applied">Профиль энергосбережения применён</string>
+  <string name="log_bss_reverted">Настройки энергосбережения отменены</string>
+  <string name="log_bss_reapplied">Настройки энергосбережения применены повторно</string>
+  <string name="bss_modal_title">Параметры энергосбережения</string>
+  <string name="bss_modal_notice">Настройки действуют только при включенном режиме энергосбережения.</string>
+  <string name="bss_configure">Настроить параметры</string>
+  <string name="bss_opt_hotword">Отключить голосовую активацию</string>
+  <string name="bss_opt_hotword_desc">Останавливает постоянное прослушивание микрофоном фразы "Окей, Google".</string>
+  <string name="bss_opt_fullbackup">Отложить полное рез. копирование</string>
+  <string name="bss_opt_fullbackup_desc">Приостанавливает полное резервное копирование устройства, пока включено энергосбережение.</string>
+  <string name="bss_opt_keybackup">Отложить рез. копирование данных</string>
+  <string name="bss_opt_keybackup_desc">Приостанавливает синхронизацию настроек приложений в облако.</string>
+  <string name="bss_opt_force_standby">Принудительный ждущий режим</string>
+  <string name="bss_opt_force_standby_desc">Перемещает фоновые приложения в корзину строгого ограничения, минимизируя их пробуждение.</string>
+  <string name="bss_opt_force_bg">Строгая проверка фона</string>
+  <string name="bss_opt_force_bg_desc">Применяет более жесткие ограничения на выполнение в фоновом режиме для всех приложений.</string>
+  <string name="bss_opt_sensors">Отключить второстепенные датчики</string>
+  <string name="bss_opt_sensors_desc">Отключает некритические датчики, такие как барометр, шагомер и вектор вращения.</string>
+  <string name="bss_opt_gps">Режим геолокации</string>
+  <string name="bss_apply">Применить и закрыть</string>
+  <string name="bss_gps_0">Без ограничений</string>
+  <string name="bss_gps_1">GPS выкл. (при выкл. экране)</string>
+  <string name="bss_gps_2">Всё выкл. (при выкл. экране)</string>
+  <string name="bss_gps_3">Только на экране</string>
+  <string name="bss_gps_4">Ограничение (при выкл. экране)</string>
+  <string name="bss_gps_hint_0">GPS и службы геолокации работают в обычном режиме. Ограничения не применяются.</string>
+  <string name="bss_gps_hint_1">Чип GPS отключается при выключении экрана. Локация по Wi-Fi и вышкам связи продолжает работать.</string>
+  <string name="bss_gps_hint_2">Любые источники локации отключаются при выключении экрана. Погодные виджеты и трекеры не обновляются.</string>
+  <string name="bss_gps_hint_3">Только приложение на экране может получать геолокацию. Любым фоновым приложениям отказано в доступе.</string>
+  <string name="bss_gps_hint_4">Фоновые приложения могут получать локацию, но частота обновлений снижена при выключенном экране.</string>
+  <string name="io_btn_import">Импорт</string>
+  <string name="io_btn_delete">Удалить</string>
+  <string name="io_btn_rename">Переименовать</string>
+  <string name="io_rename_prompt">Переименовать бэкап:</string>
+  <string name="bss_opt_datasaver">Включить экономию трафика</string>
+  <string name="bss_opt_datasaver_desc">Ограничивает фоновое использование данных для всех приложений при активном энергосбережении</string>
 </resources>

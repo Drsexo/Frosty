@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  
   <string name="menu_io">استيراد / تصدير</string>
   <string name="menu_lang">اللغة</string>
   <string name="menu_about">حول الإضافة</string>
@@ -129,9 +128,6 @@
   <string name="log_toggle_off">تم تعطيل {0}</string>
   <string name="log_webui_ready">واجهة WebUI جاهزة</string>
   <string name="log_load_failed">فشل التحميل: {0}</string>
-  <string name="executing">جارٍ التشغيل: {0}</string>
-  <string name="log_executed">تم التشغيل بنجاح: {0}</string>
-  <string name="log_execution_failed">فشل في التشغيل: {0}</string>
   <string name="log_reboot_effect">قم بإعادة التشغيل لتطبيق التأثير بالكامل</string>
   <string name="log_reverting_all">استعادة الوضع الافتراضي للكل...</string>
   <string name="log_freeze_all">تفعيل كل شيء...</string>
@@ -149,4 +145,44 @@
   <string name="log_ram_reverted">تم إلغاء مُحسّن الذاكرة</string>
   <string name="loading_applying_ram">جارٍ تطبيق مُحسّن الذاكرة...</string>
   <string name="loading_reverting_ram">جارٍ إلغاء مُحسّن الذاكرة...</string>
+  <string name="tgl_bss">مُحسّن توفير البطارية</string>
+  <string name="tgl_bss_desc">ضبط سلوك وضع توفير البطارية المدمج في Android</string>
+  <string name="loading_applying_bss">جارٍ تطبيق ملف تعريف توفير البطارية...</string>
+  <string name="loading_reverting_bss">جارٍ إلغاء توفير البطارية...</string>
+  <string name="log_bss_applied">تم تطبيق إعدادات توفير البطارية</string>
+  <string name="log_bss_reverted">تم إلغاء إعدادات توفير البطارية</string>
+  <string name="log_bss_reapplied">تم إعادة تطبيق إعدادات توفير البطارية</string>
+  <string name="bss_modal_title">خيارات توفير البطارية</string>
+  <string name="bss_modal_notice">تدخل الإعدادات حيز التنفيذ أثناء تفعيل وضع توفير البطارية.</string>
+  <string name="bss_configure">تكوين الخيارات</string>
+  <string name="bss_opt_hotword">تعطيل اكتشاف الكلمات الساخنة</string>
+  <string name="bss_opt_hotword_desc">يوقف الميكروفون دائم التشغيل عن الاستماع إلى "Hey Google".</string>
+  <string name="bss_opt_fullbackup">تأجيل النسخ الاحتياطي الكامل</string>
+  <string name="bss_opt_fullbackup_desc">يوقف النسخ الاحتياطي الكامل للجهاز مؤقتاً أثناء توفير البطارية. يُستأنف عند إيقافه.</string>
+  <string name="bss_opt_keybackup">تأجيل نسخ إعدادات التطبيقات</string>
+  <string name="bss_opt_keybackup_desc">يوقف مزامنة إعدادات التطبيقات والنسخ الاحتياطية الصغيرة مؤقتاً إلى السحابة.</string>
+  <string name="bss_opt_force_standby">فرض وضع الاستعداد للتطبيقات</string>
+  <string name="bss_opt_force_standby_desc">ينقل جميع تطبيقات الخلفية إلى وضع الاستعداد المقيّد، مما يحد من إيقاظها بشدة.</string>
+  <string name="bss_opt_force_bg">فرض فحص الخلفية</string>
+  <string name="bss_opt_force_bg_desc">يُطبّق قيود تنفيذ أكثر صرامة في الخلفية على جميع التطبيقات.</string>
+  <string name="bss_opt_sensors">تعطيل المستشعرات الاختيارية</string>
+  <string name="bss_opt_sensors_desc">يوقف المستشعرات غير الضرورية مثل البارومتر وعداد الخطوات ومستشعر الدوران.</string>
+  <string name="bss_opt_gps">وضع الموقع (GPS)</string>
+  <string name="bss_apply">تطبيق وإغلاق</string>
+  <string name="bss_gps_0">بدون قيود</string>
+  <string name="bss_gps_1">إيقاف GPS (الشاشة مطفأة)</string>
+  <string name="bss_gps_2">إيقاف الكل (الشاشة مطفأة)</string>
+  <string name="bss_gps_3">في المقدمة فقط</string>
+  <string name="bss_gps_4">مقيّد (الشاشة مطفأة)</string>
+  <string name="bss_gps_hint_0">يعمل GPS وجميع خدمات الموقع بشكل طبيعي في كل الأوقات. لم يتم تطبيق أي قيود.</string>
+  <string name="bss_gps_hint_1">يتم إيقاف شريحة GPS عند إطفاء الشاشة. تستمر شبكات Wi-Fi وأبراج الاتصالات في العمل بدقة أقل. آمن لمعظم حالات الملاحة.</string>
+  <string name="bss_gps_hint_2">تتوقف جميع خدمات الموقع (GPS وWi-Fi والشبكات) عند إطفاء الشاشة. تتوقف تطبيقات الطقس والخرائط واللياقة عن التحديث في الخلفية.</string>
+  <string name="bss_gps_hint_3">يمكن للتطبيق الذي يظهر على الشاشة فقط الوصول إلى الموقع. يتم رفض تطبيقات الخلفية تمامًا، بغض النظر عن الأذونات الممنوحة.</string>
+  <string name="bss_gps_hint_4">يمكن لتطبيقات الخلفية الحصول على الموقع، ولكن يتم تقليل معدل التحديث عند إطفاء الشاشة. تأثير أقل على البطارية مع توافق أفضل للتطبيقات من الإيقاف الكامل.</string>
+  <string name="io_btn_import">استيراد</string>
+  <string name="io_btn_delete">حذف</string>
+  <string name="io_btn_rename">إعادة تسمية</string>
+  <string name="io_rename_prompt">إعادة تسمية النسخة الاحتياطية:</string>
+  <string name="bss_opt_datasaver">تفعيل توفير البيانات</string>
+  <string name="bss_opt_datasaver_desc">يقيّد استخدام بيانات الخلفية لجميع التطبيقات أثناء تنشيط توفير البطارية</string>
 </resources>

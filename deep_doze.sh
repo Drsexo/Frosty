@@ -79,6 +79,7 @@ apply_doze_constants() {
 
 revert_doze_constants() {
   settings delete global device_idle_constants 2>/dev/null
+  dumpsys deviceidle disable 2>/dev/null
   settings put global forced_app_standby_enabled 0 2>/dev/null
   settings put global app_auto_restriction_enabled false 2>/dev/null
   settings delete global app_standby_enabled 2>/dev/null
@@ -95,8 +96,7 @@ restrict_apps_moderate() {
       skipped=$((skipped + 1))
       continue
     fi
-    appops set "$pkg" RUN_IN_BACKGROUND deny 2>/dev/null
-    am set-standby-bucket "$pkg" restricted 2>/dev/null
+    am set-standby-bucket "$pkg" rare 2>/dev/null
     am set-inactive "$pkg" true 2>/dev/null
     count=$((count + 1))
   done
@@ -112,9 +112,8 @@ restrict_apps_maximum() {
       skipped=$((skipped + 1))
       continue
     fi
-    appops set "$pkg" RUN_IN_BACKGROUND deny 2>/dev/null
     appops set "$pkg" WAKE_LOCK deny 2>/dev/null
-    am set-standby-bucket "$pkg" restricted 2>/dev/null
+    am set-standby-bucket "$pkg" rare 2>/dev/null
     am set-inactive "$pkg" true 2>/dev/null
     count=$((count + 1))
   done
@@ -126,7 +125,6 @@ unrestrict_apps() {
   local count=0
   for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
     [ -z "$pkg" ] && continue
-    appops set "$pkg" RUN_IN_BACKGROUND allow 2>/dev/null
     appops set "$pkg" WAKE_LOCK allow 2>/dev/null
     am set-standby-bucket "$pkg" active 2>/dev/null
     am set-inactive "$pkg" false 2>/dev/null
@@ -159,19 +157,6 @@ kill_wakelocks() {
   done < "$tmpfile"
   rm -f "$tmpfile"
   log_deep "[OK] Killed $killed wakelock holders"
-}
-
-restrict_alarms() {
-  log_deep "Restricting alarms..."
-  local count=0
-  for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
-    [ -z "$pkg" ] && continue
-    is_whitelisted "$pkg" && continue
-    appops set "$pkg" SCHEDULE_EXACT_ALARM deny 2>/dev/null
-    appops set "$pkg" USE_EXACT_ALARM deny 2>/dev/null
-    count=$((count + 1))
-  done
-  log_deep "[OK] Alarms restricted for $count apps"
 }
 
 unrestrict_alarms() {
@@ -217,7 +202,7 @@ get_screen_state() {
 
 start_screen_monitor() {
   stop_screen_monitor
-  log_deep "Starting screen-off monitor (5min delay)..."
+  log_deep "Starting screen-off monitor (5min delay, wakelock killer)..."
   (
     trap 'exit 0' TERM INT
     while true; do
@@ -232,17 +217,15 @@ start_screen_monitor() {
         continue
       fi
 
-      # Screen is off, wait 5 minutes
+      # Screen is off, wait 5 minutes then kill wakelocks
       log_deep "Screen off detected, waiting 5 minutes..."
       sleep 300
 
-      # Re-check before forcing idle
+      # Re-check screen still off before killing
       screen_state=$(get_screen_state)
       if [ "$screen_state" != "ON" ]; then
-        dumpsys deviceidle force-idle deep 2>/dev/null
-        log_deep "[OK] Forced deep idle"
-      else
-        log_deep "Screen back on, skipping"
+        log_deep "Running wakelock killer (screen-off cycle)..."
+        kill_wakelocks
       fi
 
       # Wait for screen on before next cycle
@@ -263,7 +246,6 @@ freeze_deep_doze() {
 
   if [ "$ENABLE_DEEP_DOZE" != "1" ]; then
     log_deep "[SKIP] Deep Doze disabled"
-    echo "  🔋 Deep Doze: SKIPPED"
     return 0
   fi
 
@@ -275,19 +257,12 @@ freeze_deep_doze() {
     maximum)
       restrict_apps_maximum
       kill_wakelocks
-      restrict_alarms
+      start_screen_monitor
       ;;
     *)
       restrict_apps_moderate
       ;;
   esac
-
-  start_screen_monitor
-
-  echo ""
-  echo "  🔋 DEEP DOZE: ENABLED ($DEEP_DOZE_LEVEL)"
-  echo "  Screen-off monitor active (5min delay)"
-  echo ""
 }
 
 stock_deep_doze() {
@@ -301,17 +276,14 @@ stock_deep_doze() {
 
   dumpsys deviceidle unforce 2>/dev/null
   log_deep "[OK] Device idle unforced"
-
-  echo ""
-  echo "  🔥 DEEP DOZE: DISABLED"
-  echo ""
 }
 
 status() {
   local doze_state=$(dumpsys deviceidle 2>/dev/null | grep -m1 "mState=" | cut -d= -f2)
   local restricted=0
   for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
-    appops get "$pkg" RUN_IN_BACKGROUND 2>/dev/null | grep -q "deny" && restricted=$((restricted + 1))
+    bucket=$(am get-standby-bucket "$pkg" 2>/dev/null)
+    [ "$bucket" = "4" ] && restricted=$((restricted + 1))
   done
   local monitor_running="NO"
   if [ -f "$MONITOR_PID_FILE" ]; then
