@@ -110,10 +110,10 @@ Configures what Android's built-in battery saver mode does when active.
 
 ## ❓ FAQ
 
-**Q: Why are my notifications delayed?**
+**Q: Why are my notifications delayed?**  
 A: GMS Doze and Deep Doze restrict background activity. Add your messaging apps to the whitelist.
 
-**Q: Does this work without Google Play Services?**
+**Q: Does this work without Google Play Services?**  
 A: Kernel Tweaks, System Props, Blur Disable, Log Killing, and Deep Doze will work. GMS features require GMS.
 
 

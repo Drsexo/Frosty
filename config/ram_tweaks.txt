@@ -9,12 +9,3 @@
 # MEMORY WATERMARKS
 /proc/sys/vm/watermark_boost_factor|0
 /proc/sys/vm/watermark_scale_factor|125
-
-# DIRTY PAGE WRITEBACK
-/proc/sys/vm/dirty_ratio|20
-/proc/sys/vm/dirty_background_ratio|5
-/proc/sys/vm/dirty_expire_centisecs|200
-/proc/sys/vm/dirty_writeback_centisecs|500
-
-# CACHE RECLAIM
-/proc/sys/vm/vfs_cache_pressure|150

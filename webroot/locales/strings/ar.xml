@@ -16,6 +16,8 @@
   <string name="tgl_logs">إيقاف السجلات (Kill Logs)</string>
   <string name="tgl_logs_desc">يوقف عمليات التسجيل في الخلفية ويحرر الذاكرة</string>
   <string name="reboot_req">⚠ يلزم إعادة التشغيل</string>
+  <string name="tgl_tracking">إيقاف تتبع Google</string>
+  <string name="tgl_tracking_desc">يعطل تحليلات GMS، والقياس عن بعد Clearcut، واستطلاعات Phenotype وتتبع الإعلانات على مستوى التطبيق</string>
   <string name="sec_doze">وضع Doze</string>
   <string name="tgl_gms_doze">وضع GMS Doze</string>
   <string name="tgl_gms_doze_desc">يسمح للنظام بتحسين استهلاك GMS للبطارية · قد يؤخر الإشعارات</string>
@@ -66,6 +68,8 @@
   <string name="loading_reverting_kernel">إلغاء تعديلات الكيرنل...</string>
   <string name="loading_applying_blur">تطبيق إعدادات الضبابية...</string>
   <string name="loading_killing_logs">إيقاف السجلات...</string>
+  <string name="loading_applying_tracking">جارٍ حظر تتبع Google...</string>
+  <string name="loading_reverting_tracking">جارٍ إلغاء حظر تتبع Google...</string>
   <string name="loading_applying_sysprops">تفعيل خصائص النظام...</string>
   <string name="loading_disabling_sysprops">إلغاء خصائص النظام...</string>
   <string name="loading_applying_gms_doze">تفعيل وضع GMS Doze...</string>
@@ -107,6 +111,8 @@
   <string name="log_kernel_restored">الكيرنل: تمت استعادة {0}</string>
   <string name="log_kernel_vals_restored">الكيرنل: تمت استعادة {0} قيم</string>
   <string name="log_killed_logs">تم إيقاف {0} من عمليات السجلات</string>
+  <string name="log_tracking_applied">تم حظر تتبع Google</string>
+  <string name="log_tracking_reverted">تم إلغاء حظر تتبع Google</string>
   <string name="log_sysprops_failed">فشل في خصائص النظام: {0}</string>
   <string name="log_blur_state">الضبابية (Blur): {0}</string>
   <string name="log_blur_restored">تمت استعادة إعدادات الضبابية</string>

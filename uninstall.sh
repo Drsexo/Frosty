@@ -133,6 +133,36 @@ done
 settings delete global battery_stats_constants 2>/dev/null
 log "DropBox and battery stats settings reverted"
 
+# Revert NetworkStats and WiFi scan settings
+log "Reverting NetworkStats and WiFi scan settings..."
+settings delete global netstats_poll_interval 2>/dev/null
+settings delete global netstats_persist_threshold 2>/dev/null
+settings delete global netstats_global_alert_bytes 2>/dev/null
+settings put global wifi_scan_throttle_enabled 1 2>/dev/null
+settings put global wifi_scan_always_enabled 1 2>/dev/null
+log "NetworkStats and WiFi scan settings reverted"
+
+# Revert Kill Google Tracking
+log "Reverting Google tracking settings..."
+settings put global gmscorestat_enabled 1 2>/dev/null
+settings put global play_store_panel_logging_enabled 1 2>/dev/null
+settings put global clearcut_enabled 1 2>/dev/null
+settings put global clearcut_events 1 2>/dev/null
+settings put global clearcut_gcm 1 2>/dev/null
+settings delete global phenotype__debug_bypass_phenotype 2>/dev/null
+settings delete global phenotype_boot_count 2>/dev/null
+settings delete global phenotype_flags 2>/dev/null
+settings put global ga_collection_enabled 1 2>/dev/null
+settings put global analytics_enabled 1 2>/dev/null
+settings put global uploading_enabled 1 2>/dev/null
+settings put global bug_report_in_power_menu 1 2>/dev/null
+settings put global usage_stats_enabled 1 2>/dev/null
+settings put global usagestats_collection_enabled 1 2>/dev/null
+settings put global network_watchlist_enabled 1 2>/dev/null
+settings put global limit_ad_tracking 0 2>/dev/null
+settings put global tron_enabled 1 2>/dev/null
+log "Google tracking settings reverted"
+
 # Re-enable GMS services
 if [ -f "$GMS_LIST" ]; then
   log "Re-enabling GMS services..."

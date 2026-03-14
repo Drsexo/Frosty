@@ -16,6 +16,8 @@
   <string name="tgl_logs">Termina Log (Kill Logs)</string>
   <string name="tgl_logs_desc">Ferma i processi di registrazione in background, liberando RAM</string>
   <string name="reboot_req">⚠ Riavvio necessario</string>
+  <string name="tgl_tracking">Blocca tracciamento Google</string>
+  <string name="tgl_tracking_desc">Disabilita analytics GMS, telemetria Clearcut, polling Phenotype e ad tracking a livello di applicazione</string>
   <string name="sec_doze">Modalità Doze</string>
   <string name="tgl_gms_doze">GMS Doze</string>
   <string name="tgl_gms_doze_desc">Permette ad Android di ottimizzare la batteria per i GMS · Può ritardare le notifiche</string>
@@ -66,6 +68,8 @@
   <string name="loading_reverting_kernel">Ripristino impostazioni del kernel...</string>
   <string name="loading_applying_blur">Applicazione impostazioni di sfocatura (Blur)...</string>
   <string name="loading_killing_logs">Terminazione dei processi di log...</string>
+  <string name="loading_applying_tracking">Blocco del tracciamento Google in corso...</string>
+  <string name="loading_reverting_tracking">Ripristino del tracciamento Google in corso...</string>
   <string name="loading_applying_sysprops">Attivazione System Props...</string>
   <string name="loading_disabling_sysprops">Disattivazione System Props...</string>
   <string name="loading_applying_gms_doze">Applicazione del GMS Doze...</string>
@@ -107,6 +111,8 @@
   <string name="log_kernel_restored">Kernel: {0} valori ripristinati</string>
   <string name="log_kernel_vals_restored">Kernel: {0} valori ripristinati con successo</string>
   <string name="log_killed_logs">{0} processi di log sono stati terminati</string>
+  <string name="log_tracking_applied">Tracciamento Google bloccato</string>
+  <string name="log_tracking_reverted">Tracciamento Google ripristinato</string>
   <string name="log_sysprops_failed">Errore System Props: {0}</string>
   <string name="log_blur_state">Blur (Sfocatura): {0}</string>
   <string name="log_blur_restored">Sfocatura ripristinata ai valori predefiniti</string>

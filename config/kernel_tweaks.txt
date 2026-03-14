@@ -22,17 +22,19 @@
 /proc/sys/vm/panic_on_oom|0
 
 # TIMER & PRINTK
+/proc/sys/kernel/nmi_watchdog|0
 /proc/sys/kernel/timer_migration|0
 /proc/sys/kernel/printk_devkmsg|off
 /proc/sys/kernel/printk|0 0 0 0
 
 # VM
-/proc/sys/vm/dirty_background_ratio|2
-/proc/sys/vm/dirty_ratio|5
+/proc/sys/vm/dirty_background_ratio|5
+/proc/sys/vm/dirty_ratio|20
 /proc/sys/vm/dirty_expire_centisecs|500
 /proc/sys/vm/dirty_writeback_centisecs|500
+/proc/sys/vm/laptop_mode|5
 /proc/sys/vm/stat_interval|15
-/proc/sys/vm/vfs_cache_pressure|100
+/proc/sys/vm/vfs_cache_pressure|150
 /proc/sys/vm/oom_dump_tasks|0
 /proc/sys/vm/block_dump|0
 /proc/sys/vm/compaction_proactiveness|0

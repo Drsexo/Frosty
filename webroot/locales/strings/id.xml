@@ -16,6 +16,8 @@
   <string name="tgl_logs">Hentikan Logs (Kill Logs)</string>
   <string name="tgl_logs_desc">Menghentikan proses pencatatan log di latar belakang untuk membebaskan RAM</string>
   <string name="reboot_req">⚠ Perlu reboot (Mulai ulang)</string>
+  <string name="tgl_tracking">Blokir Pelacakan Google</string>
+  <string name="tgl_tracking_desc">Menonaktifkan analitik GMS, telemetri Clearcut, polling Phenotype, dan pelacakan iklan di tingkat aplikasi</string>
   <string name="sec_doze">Mode Doze</string>
   <string name="tgl_gms_doze">GMS Doze</string>
   <string name="tgl_gms_doze_desc">Membiarkan sistem mengoptimalkan konsumsi baterai GMS · Dapat menunda notifikasi</string>
@@ -66,6 +68,8 @@
   <string name="loading_reverting_kernel">Mengembalikan pengaturan Kernel asli...</string>
   <string name="loading_applying_blur">Menerapkan pengaturan Blur...</string>
   <string name="loading_killing_logs">Menghentikan proses log sistem...</string>
+  <string name="loading_applying_tracking">Memblokir pelacakan Google...</string>
+  <string name="loading_reverting_tracking">Mengembalikan blokir pelacakan Google...</string>
   <string name="loading_applying_sysprops">Mengaktifkan System Props...</string>
   <string name="loading_disabling_sysprops">Menonaktifkan System Props...</string>
   <string name="loading_applying_gms_doze">Menerapkan GMS Doze...</string>
@@ -107,6 +111,8 @@
   <string name="log_kernel_restored">Kernel: {0} nilai dipulihkan</string>
   <string name="log_kernel_vals_restored">Kernel: {0} nilai berhasil dipulihkan</string>
   <string name="log_killed_logs">{0} proses log telah dihentikan</string>
+  <string name="log_tracking_applied">Pelacakan Google diblokir</string>
+  <string name="log_tracking_reverted">Pelacakan Google dikembalikan</string>
   <string name="log_sysprops_failed">Gagal menerapkan System Props: {0}</string>
   <string name="log_blur_state">Blur: {0}</string>
   <string name="log_blur_restored">Blur telah dikembalikan ke default</string>

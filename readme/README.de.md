@@ -112,10 +112,10 @@ Konfiguriert das Verhalten des integrierten Android-Energiesparmodus, wenn diese
 
 ## ❓ FAQ (Häufige Fragen)
 
-**F: Warum erhalte ich meine Benachrichtigungen verzögert?**
+**F: Warum erhalte ich meine Benachrichtigungen verzögert?**  
 A: GMS Doze und Deep Doze schränken die Hintergrundaktivität massiv ein. Füge deine Messenger-Apps unbedingt zur Whitelist hinzu.
 
-**F: Funktioniert dieses Modul auch ohne Google Play-Dienste?**
+**F: Funktioniert dieses Modul auch ohne Google Play-Dienste?**  
 A: Ja. Die Kernel-Tweaks, System Props, Blur-Deaktivierung, Kill Logs und Deep Doze funktionieren problemlos auch ohne GMS.
 
 ## 📝 Doze-Whitelist

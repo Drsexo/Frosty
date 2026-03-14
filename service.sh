@@ -207,6 +207,15 @@ else
   log_boot "Log killing SKIPPED"
 fi
 
+# Kill Google Tracking
+if [ "$ENABLE_KILL_TRACKING" = "1" ]; then
+  log_boot "Blocking Google tracking..."
+  sh "$MODDIR/frosty.sh" kill_tracking >/dev/null 2>&1
+  log_boot "Google tracking blocked"
+else
+  log_boot "Kill tracking SKIPPED"
+fi
+
 # Apply GMS freezing if any category is enabled
 has_frozen_cats=0
 for _cat in DISABLE_TELEMETRY DISABLE_BACKGROUND DISABLE_LOCATION DISABLE_CONNECTIVITY \

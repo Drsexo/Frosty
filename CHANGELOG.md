@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.5] - 2026-03-14
+### New Feature: Kill Google Tracking
+A new dedicated toggle that suppresses GMS analytics and telemetry at the **application layer**, complementing the existing service freezing which works at the process layer. Blocks: Clearcut telemetry pipeline, Phenotype config polling and log upload, GMS core stats, Play Store panel logging, Google Analytics and upload scheduler, ad tracking (returns all-zeros advertising ID), Tron internal metrics, usage stats collection, and the network watchlist background cross-referencing. All settings are fully reverted on toggle-off and on uninstall.
+### Kernel Tweaks: New Additions & Corrections
+- **Less unnecessary background CPU activity**: Added three new tweaks that reduce unnecessary kernel activity when the device is idle. Such as: dirty page writeback, proactive background memory compaction, NMI watchdog timer interrupt.
+- **Corrected conflicting values**: Duplicates removed and values unified in the correct place.
+### Kill Logs: Reduced Background Drain
+- **NetworkStats polling reduced**: for less background activity and wakelock when the screen is off.
+- **WiFi background scanning suppressed**: Stops WiFi from scanning for networks in the background when the screen is off.
+- Fixed settings backup exporting two values with a malformed number format instead of a clean `0` or `1`.
+
 ## [3.4] - 2026-03-10
 ### New feature: Battery Saver Tuner!
 Configure exactly what Android's battery saver mode does when it's active. Individual toggles for: background data (data saver), hotword detection, backups, force standby, background checks, sensors, and GPS behavior. These only take effect when battery saver is on.

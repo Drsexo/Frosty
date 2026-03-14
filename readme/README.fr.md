@@ -111,10 +111,10 @@ Configure ce que fait le mode d'économie d'énergie intégré d'Android lorsqu'
 
 ## ❓ FAQ
 
-**Q : Pourquoi mes notifications sont-elles retardées ?**
+**Q : Pourquoi mes notifications sont-elles retardées ?**  
 R : GMS Doze et Deep Doze restreignent massivement l'activité en arrière-plan. Ajoutez vos applications de messagerie à la Whitelist.
 
-**Q : Frosty fonctionne-t-il sans les Services Google Play ?**
+**Q : Frosty fonctionne-t-il sans les Services Google Play ?**  
 R : Oui. Les Kernel Tweaks, System Props, la désactivation du flou, le Kill Logs et le Deep Doze fonctionneront sans GMS.
 
 ## 📝 Whitelist Doze

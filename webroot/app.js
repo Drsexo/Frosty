@@ -39,6 +39,7 @@
   var _TKEY_MAP = {
     kernel_tweaks: 'tgl_kernel', system_props: 'tgl_sysprops',
     blur_disable: 'tgl_blur', log_killing: 'tgl_logs',
+    kill_tracking: 'tgl_tracking',
     ram_optimizer: 'tgl_ram_optimizer',
     gms_doze: 'tgl_gms_doze', deep_doze: 'tgl_deep_doze', battery_saver: 'tgl_bss',
     telemetry: 'cat_telemetry', background: 'cat_background',
@@ -250,6 +251,7 @@
     setChk('t-kernel', p.kernel_tweaks);
     setChk('t-blur', p.blur_disable);
     setChk('t-logs', p.log_killing);
+    setChk('t-tracking', p.kill_tracking);
     setChk('t-sysprops', p.system_props);
     setChk('t-ram-optimizer', p.ram_optimizer);
     setChk('t-gms-doze', p.gms_doze);
@@ -325,6 +327,16 @@
           logAction(tf('log_toggle_off', tkey(key)), 'ok');
         }
         log(t('log_reboot_effect'), 'warn');
+      } else if (key === 'kill_tracking') {
+        if (nv) {
+          updateLoading(t('loading_applying_tracking'));
+          var rt = await API.applyKillTracking();
+          if (rt.status === 'ok') logAction(t('log_tracking_applied'), 'ok');
+        } else {
+          updateLoading(t('loading_reverting_tracking'));
+          var rt2 = await API.revertKillTracking();
+          if (rt2.status === 'ok') logAction(t('log_tracking_reverted'), 'ok');
+        }
       } else if (key === 'system_props') {
         updateLoading((nv ? t('loading_applying_sysprops') : t('loading_disabling_sysprops')));
         var rsp = await API.toggleSystemProps();
@@ -530,7 +542,7 @@
     try {
       // Step 1: Turn ON all prefs
       await yieldFrame(t('loading_enabling_toggles'));
-      var allPrefs = ['kernel_tweaks', 'system_props', 'blur_disable', 'log_killing', 'ram_optimizer', 'gms_doze', 'deep_doze', 'battery_saver'];
+      var allPrefs = ['kernel_tweaks', 'system_props', 'blur_disable', 'log_killing', 'kill_tracking', 'ram_optimizer', 'gms_doze', 'deep_doze', 'battery_saver'];
       for (var i = 0; i < allPrefs.length; i++) {
         await API.setPref(allPrefs[i], 1);
       }
@@ -573,7 +585,12 @@
       var rl = await API.killLogs();
       if (rl.status === 'ok') logAction(tf('log_killed_logs', rl.killed), 'ok');
 
-      // Step 8: Apply RAM optimizer
+      // Step 8: Block Google tracking
+      await yieldFrame(t('loading_applying_tracking'));
+      var rtr = await API.applyKillTracking();
+      if (rtr.status === 'ok') logAction(t('log_tracking_applied'), 'ok');
+
+      // Step 9: Apply RAM optimizer
       await yieldFrame(t('loading_applying_ram'));
       var rram = await API.applyRamOptimizer();
       if (rram.status === 'ok') logAction(t('log_ram_applied'), 'ok');
@@ -615,7 +632,7 @@
     try {
       // Step 1: Turn OFF all prefs
       await yieldFrame(t('loading_disabling_toggles'));
-      var allPrefs = ['kernel_tweaks', 'system_props', 'blur_disable', 'log_killing', 'ram_optimizer', 'gms_doze', 'deep_doze', 'battery_saver'];
+      var allPrefs = ['kernel_tweaks', 'system_props', 'blur_disable', 'log_killing', 'kill_tracking', 'ram_optimizer', 'gms_doze', 'deep_doze', 'battery_saver'];
       for (var i = 0; i < allPrefs.length; i++) {
         await API.setPref(allPrefs[i], 0);
       }
@@ -653,7 +670,12 @@
       await API.applyBlur();
       logAction(t('log_blur_restored'), 'ok');
 
-      // Step 7: Revert RAM optimizer
+      // Step 7: Revert Google tracking block
+      await yieldFrame(t('loading_reverting_tracking'));
+      var rtr2 = await API.revertKillTracking();
+      if (rtr2.status === 'ok') logAction(t('log_tracking_reverted'), 'ok');
+
+      // Step 8: Revert RAM optimizer
       await yieldFrame(t('loading_reverting_ram'));
       var rram2 = await API.revertRamOptimizer();
       if (rram2.status === 'ok') logAction(t('log_ram_reverted'), 'ok');
@@ -1210,6 +1232,7 @@
     $('t-sysprops').addEventListener('change', function () { togglePref('system_props'); });
     $('t-blur').addEventListener('change', function () { togglePref('blur_disable'); });
     $('t-logs').addEventListener('change', function () { togglePref('log_killing'); });
+    $('t-tracking').addEventListener('change', function () { togglePref('kill_tracking'); });
     $('t-ram-optimizer').addEventListener('change', function () { togglePref('ram_optimizer'); });
     $('t-gms-doze').addEventListener('change', function () { togglePref('gms_doze'); });
     $('t-deep-doze').addEventListener('change', function () { togglePref('deep_doze'); });
@@ -1385,8 +1408,9 @@
       if (rp.ram_optimizer)  _steps.push('loading_applying_ram');
       if (rp.system_props)  _steps.push('loading_applying_sysprops');
       if (rp.blur_disable)  _steps.push('loading_applying_blur');
-      if (rp.log_killing)   _steps.push('loading_killing_logs');
-      if (hasAnyCat)        _steps.push('loading_freezing_services');
+      if (rp.log_killing)    _steps.push('loading_killing_logs');
+      if (rp.kill_tracking)  _steps.push('loading_applying_tracking');
+      if (hasAnyCat)         _steps.push('loading_freezing_services');
       if (rp.gms_doze)         _steps.push('loading_applying_gms_doze');
       if (rp.deep_doze)        _steps.push('loading_applying_deep_doze');
       if (rp.battery_saver)    _steps.push('loading_applying_bss');
@@ -1432,6 +1456,12 @@
           await stepLoad('loading_killing_logs');
           var rl = await API.killLogs();
           if (rl.status === 'ok') logAction(tf('log_killed_logs', rl.killed), 'ok');
+        }
+
+        if (rp.kill_tracking) {
+          await stepLoad('loading_applying_tracking');
+          var rtr = await API.applyKillTracking();
+          if (rtr.status === 'ok') logAction(t('log_tracking_applied'), 'ok');
         }
 
         if (hasAnyCat) {

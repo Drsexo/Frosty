@@ -111,10 +111,10 @@ Mengonfigurasi apa yang dilakukan mode penghemat baterai bawaan Android saat akt
 
 ## ❓ FAQ (Pertanyaan yang Sering Diajukan)
 
-**T: Mengapa notifikasi saya masuk terlambat?**
+**T: Mengapa notifikasi saya masuk terlambat?**  
 J: GMS Doze dan Deep Doze sangat membatasi aktivitas latar belakang. Pastikan Anda menambahkan aplikasi pesan instan ke Whitelist.
 
-**T: Apakah modul ini berfungsi tanpa Google Play Services?**
+**T: Apakah modul ini berfungsi tanpa Google Play Services?**  
 J: Ya. Tweak Kernel, System Props, Nonaktifkan Blur, Kill Logs, dan Deep Doze akan tetap berfungsi tanpa GMS.
 
 ## 📝 Whitelist Doze

@@ -615,6 +615,36 @@ s() {
     ar:avail_logs_desc)   echo "    يوقف عمليات التسجيل في الخلفية" ;;
      *:avail_logs_desc)   echo "    Stops background loggers" ;;
 
+    fr:avail_tracking)    echo "🔕 Bloquer le pistage Google" ;;
+    de:avail_tracking)    echo "🔕 Google-Tracking blockieren" ;;
+    pl:avail_tracking)    echo "🔕 Blokuj śledzenie Google" ;;
+    it:avail_tracking)    echo "🔕 Blocca tracciamento Google" ;;
+    es:avail_tracking)    echo "🔕 Bloquear rastreo de Google" ;;
+    pt:avail_tracking)    echo "🔕 Bloquear rastreio do Google" ;;
+    tr:avail_tracking)    echo "🔕 Google İzleyicilerini Durdur" ;;
+    id:avail_tracking)    echo "🔕 Blokir Pelacakan Google" ;;
+    ru:avail_tracking)    echo "🔕 Блокировка слежки Google" ;;
+    uk:avail_tracking)    echo "🔕 Блокування стеження Google" ;;
+    zh:avail_tracking)    echo "🔕 拦截 Google 追踪" ;;
+    ja:avail_tracking)    echo "🔕 Google の追跡をブロック" ;;
+    ar:avail_tracking)    echo "🔕 إيقاف تتبع Google" ;;
+     *:avail_tracking)    echo "🔕 Kill Google Tracking" ;;
+
+    fr:avail_tracking_desc) echo "    Désactive l'analytique GMS, la télémétrie Clearcut et le pistage" ;;
+    de:avail_tracking_desc) echo "    Deaktiviert GMS-Analytics, Clearcut-Telemetrie und Ad-Tracking" ;;
+    pl:avail_tracking_desc) echo "    Wyłącza analitykę GMS, telemetrię Clearcut i śledzenie reklam" ;;
+    it:avail_tracking_desc) echo "    Disabilita analytics GMS, telemetria Clearcut e ad tracking" ;;
+    es:avail_tracking_desc) echo "    Desactiva analíticas GMS, telemetría Clearcut y rastreo de ads" ;;
+    pt:avail_tracking_desc) echo "    Desativa análise do GMS, telemetria Clearcut e rastreio de ads" ;;
+    tr:avail_tracking_desc) echo "    GMS analitiğini, Clearcut telemetrisini ve reklam takibini kapatır" ;;
+    id:avail_tracking_desc) echo "    Mematikan analitik GMS, telemetri Clearcut, & pelacakan iklan" ;;
+    ru:avail_tracking_desc) echo "    Отключает аналитику GMS, телеметрию Clearcut и рекламные трекеры" ;;
+    uk:avail_tracking_desc) echo "    Вимикає аналітику GMS, телеметрію Clearcut та рекламні трекери" ;;
+    zh:avail_tracking_desc) echo "    禁用 GMS 数据分析、Clearcut 遥测及广告追踪" ;;
+    ja:avail_tracking_desc) echo "    GMS 分析、Clearcut テレメトリ、広告トラッキングを無効化" ;;
+    ar:avail_tracking_desc) echo "    يعطل تحليلات GMS و Clearcut للقياس عن بعد وتتبع الإعلانات" ;;
+     *:avail_tracking_desc) echo "    Disables GMS analytics, Clearcut telemetry and ad tracking" ;;
+
     fr:avail_gms_doze)    echo "💤 GMS Doze" ;;
     de:avail_gms_doze)    echo "💤 GMS Doze" ;;
     pl:avail_gms_doze)    echo "💤 GMS Doze" ;;
@@ -1011,6 +1041,9 @@ ui_print "$(s avail_blur_desc)"
 ui_print ""
 ui_print "    $(s avail_logs)"
 ui_print "$(s avail_logs_desc)"
+ui_print ""
+ui_print "    $(s avail_tracking)"
+ui_print "$(s avail_tracking_desc)"
 ui_print ""
 ui_print "    $(s avail_gms_doze)"
 ui_print "$(s avail_gms_doze_desc)"

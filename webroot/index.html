@@ -180,9 +180,16 @@
         <div class="tgl-info">
           <span class="tgl-name" data-i18n="tgl_logs">Kill Logs</span>
           <span class="tgl-desc" data-i18n="tgl_logs_desc">Stops background loggers, frees RAM</span>
-          <span class="reboot-tag">⚠ Reboot required</span>
+          <span class="reboot-tag" data-i18n="reboot_req">⚠ Reboot required</span>
         </div>
         <label class="tgl"><input type="checkbox" id="t-logs"><span class="tgl-sl"></span></label>
+      </div>
+      <div class="tgl-row ripple" data-key="kill_tracking">
+        <div class="tgl-info">
+          <span class="tgl-name" data-i18n="tgl_tracking">Kill Google Tracking</span>
+          <span class="tgl-desc" data-i18n="tgl_tracking_desc">Disables GMS analytics, Clearcut telemetry, Phenotype polling and ad tracking at the app layer</span>
+        </div>
+        <label class="tgl"><input type="checkbox" id="t-tracking"><span class="tgl-sl"></span></label>
       </div>
     </section>
 

@@ -18,8 +18,6 @@ SYSPROP_OLD="$MODDIR/system.prop.old"
 
 mkdir -p "$LOGDIR" "$MODDIR/config"
 
-
-
 log_service() { echo "$1" >> "$SERVICES_LOG"; }
 log_ram()     { echo "$1" >> "$RAM_LOG"; }
 
@@ -28,6 +26,7 @@ load_prefs() {
     . "$USER_PREFS"
   else
     ENABLE_KERNEL_TWEAKS=0; ENABLE_BLUR_DISABLE=0; ENABLE_LOG_KILLING=0
+    ENABLE_KILL_TRACKING=0
     ENABLE_SYSTEM_PROPS=0; ENABLE_RAM_OPTIMIZER=0
     ENABLE_GMS_DOZE=0; ENABLE_DEEP_DOZE=0; DEEP_DOZE_LEVEL="moderate"
     ENABLE_BATTERY_SAVER=0
@@ -192,6 +191,7 @@ backup_settings() {
     "ENABLE_SYSTEM_PROPS": $ENABLE_SYSTEM_PROPS,
     "ENABLE_BLUR_DISABLE": $ENABLE_BLUR_DISABLE,
     "ENABLE_LOG_KILLING": $ENABLE_LOG_KILLING,
+    "ENABLE_KILL_TRACKING": $ENABLE_KILL_TRACKING,
     "ENABLE_GMS_DOZE": $ENABLE_GMS_DOZE,
     "ENABLE_DEEP_DOZE": $ENABLE_DEEP_DOZE,
     "DEEP_DOZE_LEVEL": "$DEEP_DOZE_LEVEL",
@@ -203,7 +203,7 @@ backup_settings() {
     "BSS_FORCE_BG_CHECK": $BSS_FORCE_BG_CHECK,
     "BSS_SENSORS_DISABLED": $BSS_SENSORS_DISABLED,
     "BSS_GPS_MODE": $BSS_GPS_MODE,
-    "BSS_DATASAVER": ${BSS_DATASAVER:-0},
+    "BSS_DATASAVER": $BSS_DATASAVER,
     "DISABLE_TELEMETRY": $DISABLE_TELEMETRY,
     "DISABLE_BACKGROUND": $DISABLE_BACKGROUND,
     "DISABLE_LOCATION": $DISABLE_LOCATION,
@@ -236,6 +236,7 @@ ENABLE_KERNEL_TWEAKS=$(pi ENABLE_KERNEL_TWEAKS)
 ENABLE_SYSTEM_PROPS=$(pi ENABLE_SYSTEM_PROPS)
 ENABLE_BLUR_DISABLE=$(pi ENABLE_BLUR_DISABLE)
 ENABLE_LOG_KILLING=$(pi ENABLE_LOG_KILLING)
+ENABLE_KILL_TRACKING=$(pi ENABLE_KILL_TRACKING)
 ENABLE_GMS_DOZE=$(pi ENABLE_GMS_DOZE)
 ENABLE_DEEP_DOZE=$(pi ENABLE_DEEP_DOZE)
 DEEP_DOZE_LEVEL=$dl
@@ -646,7 +647,58 @@ kill_logs() {
   done
   wait
 
+  # Reduce NetworkStats polling overhead
+  settings put global netstats_poll_interval 60000 >/dev/null 2>&1
+  settings put global netstats_persist_threshold 2097152 >/dev/null 2>&1
+  settings put global netstats_global_alert_bytes 2097152 >/dev/null 2>&1
+
+  # Suppress WiFi background scanning while screen is off
+  settings put global wifi_scan_throttle_enabled 1 >/dev/null 2>&1
+  settings put global wifi_scan_always_enabled 0 >/dev/null 2>&1
+
   echo "{\"status\":\"ok\",\"killed\":$k}"
+}
+
+kill_tracking() {
+  settings put global gmscorestat_enabled 0 >/dev/null 2>&1
+  settings put global play_store_panel_logging_enabled 0 >/dev/null 2>&1
+  settings put global clearcut_enabled 0 >/dev/null 2>&1
+  settings put global clearcut_events 0 >/dev/null 2>&1
+  settings put global clearcut_gcm 0 >/dev/null 2>&1
+  settings put global phenotype__debug_bypass_phenotype 1 >/dev/null 2>&1
+  settings put global phenotype_boot_count 99 >/dev/null 2>&1
+  settings put global phenotype_flags "disable_log_upload=1,disable_log_for_missing_debug_id=1" >/dev/null 2>&1
+  settings put global ga_collection_enabled 0 >/dev/null 2>&1
+  settings put global analytics_enabled 0 >/dev/null 2>&1
+  settings put global uploading_enabled 0 >/dev/null 2>&1
+  settings put global bug_report_in_power_menu 0 >/dev/null 2>&1
+  settings put global usage_stats_enabled 0 >/dev/null 2>&1
+  settings put global usagestats_collection_enabled 0 >/dev/null 2>&1
+  settings put global network_watchlist_enabled 0 >/dev/null 2>&1
+  settings put global limit_ad_tracking 1 >/dev/null 2>&1
+  settings put global tron_enabled 0 >/dev/null 2>&1
+  echo '{"status":"ok"}'
+}
+
+revert_tracking() {
+  settings put global gmscorestat_enabled 1 >/dev/null 2>&1
+  settings put global play_store_panel_logging_enabled 1 >/dev/null 2>&1
+  settings put global clearcut_enabled 1 >/dev/null 2>&1
+  settings put global clearcut_events 1 >/dev/null 2>&1
+  settings put global clearcut_gcm 1 >/dev/null 2>&1
+  settings delete global phenotype__debug_bypass_phenotype >/dev/null 2>&1
+  settings delete global phenotype_boot_count >/dev/null 2>&1
+  settings delete global phenotype_flags >/dev/null 2>&1
+  settings put global ga_collection_enabled 1 >/dev/null 2>&1
+  settings put global analytics_enabled 1 >/dev/null 2>&1
+  settings put global uploading_enabled 1 >/dev/null 2>&1
+  settings put global bug_report_in_power_menu 1 >/dev/null 2>&1
+  settings put global usage_stats_enabled 1 >/dev/null 2>&1
+  settings put global usagestats_collection_enabled 1 >/dev/null 2>&1
+  settings put global network_watchlist_enabled 1 >/dev/null 2>&1
+  settings put global limit_ad_tracking 0 >/dev/null 2>&1
+  settings put global tron_enabled 1 >/dev/null 2>&1
+  echo '{"status":"ok"}'
 }
 
 case "$1" in
@@ -662,11 +714,13 @@ case "$1" in
   bss_apply)          apply_battery_saver ;;
   bss_revert)         revert_battery_saver ;;
   kill_logs)          kill_logs ;;
+  kill_tracking)      kill_tracking ;;
+  revert_tracking)    revert_tracking ;;
   export)             backup_settings ;;
   import)             restore_settings "$2" ;;
   list_backups)       list_backups ;;
   share_backup)       share_backup "$2" ;;
-  *)                  echo "Usage: frosty.sh [freeze|stock|apply_sysprops|apply_kernel|revert_kernel|freeze_category|unfreeze_category|ram_optimizer|ram_restore|bss_apply|bss_revert|kill_logs|export|import|list_backups|share_backup]" ;;
+  *)                  echo "Usage: frosty.sh [freeze|stock|apply_sysprops|apply_kernel|revert_kernel|freeze_category|unfreeze_category|ram_optimizer|ram_restore|bss_apply|bss_revert|kill_logs|kill_tracking|revert_tracking|export|import|list_backups|share_backup]" ;;
 esac
 
 exit 0

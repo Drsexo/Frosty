@@ -16,6 +16,8 @@
   <string name="tgl_logs">终止日志 (Kill Logs)</string>
   <string name="tgl_logs_desc">停止后台日志记录进程，从而释放大量 RAM</string>
   <string name="reboot_req">⚠ 需要重启设备</string>
+  <string name="tgl_tracking">拦截 Google 追踪</string>
+  <string name="tgl_tracking_desc">在应用层禁用 GMS 数据分析、Clearcut 遥测、Phenotype 轮询及广告追踪</string>
   <string name="sec_doze">休眠模式 (Doze)</string>
   <string name="tgl_gms_doze">GMS 休眠 (GMS Doze)</string>
   <string name="tgl_gms_doze_desc">允许系统优化 GMS 的电量消耗 · 可能会导致通知延迟</string>
@@ -66,6 +68,8 @@
   <string name="loading_reverting_kernel">正在还原内核设置...</string>
   <string name="loading_applying_blur">正在应用模糊 (Blur) 设置...</string>
   <string name="loading_killing_logs">正在终止系统日志进程...</string>
+  <string name="loading_applying_tracking">正在拦截 Google 追踪...</string>
+  <string name="loading_reverting_tracking">正在还原 Google 追踪拦截...</string>
   <string name="loading_applying_sysprops">正在激活系统属性 (System Props)...</string>
   <string name="loading_disabling_sysprops">正在停用系统属性 (System Props)...</string>
   <string name="loading_applying_gms_doze">正在应用 GMS 休眠模式...</string>
@@ -107,6 +111,8 @@
   <string name="log_kernel_restored">内核：成功恢复 {0} 项值</string>
   <string name="log_kernel_vals_restored">内核：成功恢复 {0} 项值</string>
   <string name="log_killed_logs">已终止 {0} 个日志记录进程</string>
+  <string name="log_tracking_applied">已拦截 Google 追踪</string>
+  <string name="log_tracking_reverted">已还原 Google 追踪拦截</string>
   <string name="log_sysprops_failed">应用系统属性失败：{0}</string>
   <string name="log_blur_state">模糊效果：{0}</string>
   <string name="log_blur_restored">模糊效果已恢复为默认值</string>

@@ -109,10 +109,10 @@ Konfiguruje zachowanie wbudowanego w Androida trybu oszczędzania baterii, gdy j
 
 ## ❓ FAQ (Często zadawane pytania)
 
-**P: Dlaczego moje powiadomienia przychodzą z opóźnieniem?**
+**P: Dlaczego moje powiadomienia przychodzą z opóźnieniem?**  
 O: GMS Doze i Deep Doze drastycznie ograniczają aktywność w tle. Dodaj swoje aplikacje komunikatorów do Białej listy (Whitelist).
 
-**P: Czy ten moduł działa bez Usług Google Play (GMS)?**
+**P: Czy ten moduł działa bez Usług Google Play (GMS)?**  
 O: Tak. Tweaki Kernel, System Props, Wyłączanie Blur, Kill Logs i Deep Doze będą działać bez GMS.
 
 ## 📝 Biała lista Doze (Whitelist)

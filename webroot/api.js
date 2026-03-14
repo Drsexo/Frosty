@@ -58,6 +58,7 @@ var API = (function () {
     system_props:    'ENABLE_SYSTEM_PROPS',
     blur_disable:    'ENABLE_BLUR_DISABLE',
     log_killing:     'ENABLE_LOG_KILLING',
+    kill_tracking:   'ENABLE_KILL_TRACKING',
     ram_optimizer:   'ENABLE_RAM_OPTIMIZER',
     gms_doze:        'ENABLE_GMS_DOZE',
     deep_doze:       'ENABLE_DEEP_DOZE',
@@ -251,6 +252,16 @@ var API = (function () {
     return await runJSON('sh ' + MODDIR + '/frosty.sh kill_logs 2>/dev/null');
   }
 
+  // ── Kill Tracking ──
+
+  async function applyKillTracking() {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh kill_tracking 2>/dev/null');
+  }
+
+  async function revertKillTracking() {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh revert_tracking 2>/dev/null');
+  }
+
   // ── System Props toggle ──
 
   async function toggleSystemProps() {
@@ -342,7 +353,7 @@ var API = (function () {
     applyBatterySaver, revertBatterySaver,
     applyRamOptimizer, revertRamOptimizer,
     applyKernelTweaks, revertKernelTweaks,
-    applyBlur, killLogs, toggleSystemProps,
+    applyBlur, killLogs, applyKillTracking, revertKillTracking, toggleSystemProps,
     getWhitelist, addWhitelist, removeWhitelist,
     appendLog,
     nativeListPackages, nativeGetPackagesInfo,

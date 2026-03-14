@@ -111,10 +111,10 @@ Android'in yerleşik pil tasarrufu modunun etkinleştirildiğinde ne yapacağın
 
 ## ❓ SSS (Sıkça Sorulan Sorular)
 
-**S: Bildirimlerim neden gecikmeli geliyor?**
+**S: Bildirimlerim neden gecikmeli geliyor?**  
 C: GMS Doze ve Deep Doze arka plan işlemlerini büyük ölçüde kısıtlar. Lütfen mesajlaşma ve WhatsApp gibi uygulamalarınızı Beyaz Listeye (Whitelist) ekleyin.
 
-**S: Google Play Hizmetleri olmadan da çalışır mı?**
+**S: Google Play Hizmetleri olmadan da çalışır mı?**  
 C: Evet. Kernel Tweaks, System Props, Blur devre dışı bırakma, Kill Logs ve Deep Doze özellikleri GMS olmadan da çalışır.
 
 ## 📝 Doze Beyaz Listesi (Whitelist)

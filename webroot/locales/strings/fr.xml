@@ -17,6 +17,8 @@
   <string name="tgl_logs">Désactiver les Logs (Kill Logs)</string>
   <string name="tgl_logs_desc">Arrête les processus de journalisation en arrière-plan, libérant ainsi la RAM</string>
   <string name="reboot_req">⚠ Redémarrage requis</string>
+  <string name="tgl_tracking">Bloquer le pistage Google</string>
+  <string name="tgl_tracking_desc">Désactive l\'analytique GMS, la télémétrie Clearcut, l\'interrogation Phenotype et le suivi publicitaire au niveau de l\'application</string>
   <string name="sec_doze">Mode Doze</string>
   <string name="tgl_gms_doze">GMS Doze</string>
   <string name="tgl_gms_doze_desc">Permet au système d'optimiser la batterie des GMS · Peut retarder les notifications</string>
@@ -67,6 +69,8 @@
   <string name="loading_reverting_kernel">Restauration des paramètres du noyau...</string>
   <string name="loading_applying_blur">Application des paramètres de flou...</string>
   <string name="loading_killing_logs">Désactivation des logs...</string>
+  <string name="loading_applying_tracking">Blocage du pistage Google...</string>
+  <string name="loading_reverting_tracking">Annulation du blocage du pistage Google...</string>
   <string name="loading_applying_sysprops">Activation des System Props...</string>
   <string name="loading_disabling_sysprops">Désactivation des System Props...</string>
   <string name="loading_applying_gms_doze">Application du mode GMS Doze...</string>
@@ -108,6 +112,8 @@
   <string name="log_kernel_restored">Kernel : {0} restaurés</string>
   <string name="log_kernel_vals_restored">Kernel : {0} valeurs restaurées avec succès</string>
   <string name="log_killed_logs">{0} processus de logs arrêtés</string>
+  <string name="log_tracking_applied">Pistage Google bloqué</string>
+  <string name="log_tracking_reverted">Pistage Google restauré</string>
   <string name="log_sysprops_failed">Échec de l'application System Props : {0}</string>
   <string name="log_blur_state">Flou (Blur) : {0}</string>
   <string name="log_blur_restored">Effet de flou restauré par défaut</string>

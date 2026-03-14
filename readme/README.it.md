@@ -111,10 +111,10 @@ Configura le azioni eseguite dalla modalità di risparmio energetico integrata d
 
 ## ❓ FAQ (Domande Frequenti)
 
-**D: Perché le mie notifiche arrivano in ritardo?**
+**D: Perché le mie notifiche arrivano in ritardo?**  
 R: GMS Doze e Deep Doze limitano pesantemente l'attività in background. Aggiungi le tue app di messaggistica alla Whitelist.
 
-**D: Questo modulo funziona senza i Google Play Services?**
+**D: Questo modulo funziona senza i Google Play Services?**  
 R: Sì. Kernel Tweaks, System Props, Disable Blur, Kill Logs e Deep Doze funzioneranno senza GMS.
 
 ## 📝 Whitelist Doze

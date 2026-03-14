@@ -44,12 +44,13 @@ net.ipv4.tcp_no_metrics_save=1
 media.stagefright.log-uri=0
 vidc.debug.level=0
 
-# Profiler
+# Profiler & Checkin
 profiler.debugmonitor=false
 profiler.launch=false
 profiler.hung.dumpdobugreport=false
-profiler.force_disable_err_rpt=1
-profiler.force_disable_ulog=1
+ro.config.nocheckin=1
+profiler.forse_disable_err_rpt=1
+profiler.forse_disable_ulog=1
 
 # StrictMode
 persist.android.strictmode=0
@@ -147,11 +148,6 @@ log_surfaceoutput=0
 log_omxmp4=0
 log_ao=0
 log_fps_interval=0
-
-# Checkin & Profiler Reporting
-ro.config.nocheckin=1
-profiler.force_disable_err_rpt=1
-profiler.force_disable_ulog=1
 
 # JNI checks
 ro.kernel.android.checkjni=0

@@ -111,10 +111,10 @@ Configura las acciones del modo de ahorro de energía integrado de Android cuand
 
 ## ❓ FAQ (Preguntas Frecuentes)
 
-**P: ¿Por qué mis notificaciones llegan con retraso?**
+**P: ¿Por qué mis notificaciones llegan con retraso?**  
 R: GMS Doze y Deep Doze restringen masivamente la actividad en segundo plano. Agrega tus aplicaciones de mensajería a la Lista Blanca (Whitelist).
 
-**P: ¿El módulo funciona sin Google Play Services?**
+**P: ¿El módulo funciona sin Google Play Services?**  
 R: Sí. Los Kernel Tweaks, System Props, la desactivación del Blur, Kill Logs y el Deep Doze seguirán funcionando sin GMS.
 
 ## 📝 Lista Blanca de Doze (Whitelist)

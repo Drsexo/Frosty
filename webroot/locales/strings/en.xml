@@ -17,6 +17,8 @@
   <string name="tgl_logs">Kill Logs</string>
   <string name="tgl_logs_desc">Stops background loggers, frees RAM</string>
   <string name="reboot_req">⚠ Reboot required</string>
+  <string name="tgl_tracking">Kill Google Tracking</string>
+  <string name="tgl_tracking_desc">Disables GMS analytics, Clearcut telemetry, Phenotype polling and ad tracking at the app layer</string>
   <string name="sec_doze">Doze</string>
   <string name="tgl_gms_doze">GMS Doze</string>
   <string name="tgl_gms_doze_desc">Lets Android optimize GMS battery · May delay notifications</string>
@@ -67,6 +69,8 @@
   <string name="loading_reverting_kernel">Reverting kernel...</string>
   <string name="loading_applying_blur">Applying blur settings...</string>
   <string name="loading_killing_logs">Killing log processes...</string>
+  <string name="loading_applying_tracking">Blocking Google tracking...</string>
+  <string name="loading_reverting_tracking">Reverting Google tracking block...</string>
   <string name="loading_applying_sysprops">Enabling system props...</string>
   <string name="loading_disabling_sysprops">Disabling system props...</string>
   <string name="loading_applying_gms_doze">Applying GMS Doze...</string>
@@ -108,6 +112,8 @@
   <string name="log_kernel_restored">Kernel: {0} restored</string>
   <string name="log_kernel_vals_restored">Kernel: {0} values restored</string>
   <string name="log_killed_logs">Killed {0} log processes</string>
+  <string name="log_tracking_applied">Google tracking blocked</string>
+  <string name="log_tracking_reverted">Google tracking reverted</string>
   <string name="log_sysprops_failed">System props failed: {0}</string>
   <string name="log_blur_state">Blur: {0}</string>
   <string name="log_blur_restored">Blur restored</string>
