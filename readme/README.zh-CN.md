@@ -2,7 +2,7 @@
 
 # 🧊 FROSTY
 
-### GMS 冻结与省电模块
+### GMS 冻结器与省电工具
 
 [![Magisk](https://img.shields.io/badge/Magisk-20.4%2B-00B0FF.svg)](https://github.com/topjohnwu/Magisk)
 [![KernelSU](https://img.shields.io/badge/KernelSU-Supported-green.svg)](https://github.com/tiann/KernelSU)
@@ -10,13 +10,13 @@
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
 ![Downloads](https://img.shields.io/github/downloads/Drsexo/Frosty/total)
 
-[✨ 功能](#-功能) • [📦 安装](#-安装) • [📖 使用方法](#-使用方法) •[🧊 GMS 分类](#-gms-分类) • [❓ 常见问题](#-常见问题)
+[功能](#功能) • [安装](#安装) • [使用方法](#使用方法) • [GMS-类别](#gms-类别) • [常见问题](#常见问题)
 
 ---
 
-[🇬🇧 English](../README.md) • [🇫🇷 Français](README.fr.md) • [🇩🇪 Deutsch](README.de.md)  
+[🇬🇧 English](https://github.com/Drsexo/Frosty) • [🇫🇷 Français](README.fr.md) • [🇩🇪 Deutsch](README.de.md)  
 [🇵🇱 Polski](README.pl.md) • [🇮🇹 Italiano](README.it.md) • [🇪🇸 Español](README.es.md)  
-[🇧🇷 Português (BR)](README.pt-BR.md) • [🇹🇷 Türkçe](README.tr.md) • [🇮🇩 Indonesia](README.id.md)  
+[🇧🇷 Português](README.pt-BR.md) • [🇹🇷 Türkçe](README.tr.md) • [🇮🇩 Indonesia](README.id.md)  
 [🇷🇺 Русский](README.ru.md) • [🇺🇦 Українська](README.uk.md) • 🇨🇳 中文  
 [🇯🇵 日本語](README.ja.md) • [🇸🇦 العربية](README.ar.md)
 
@@ -24,113 +24,94 @@
 
 ## 概述
 
-Frosty 通过选择性冻结 Google 移动服务（GMS）组件并应用系统级 Doze 省电增强，来优化您的电池续航。安装后，一切都可以通过 WebUI 进行配置。
+Frosty 通过冻结 GMS 服务、应用系统级 Doze（打盹）增强以及自动化息屏行为来优化电池续航。你可以通过 WebUI 配置所有内容。
 
-## ✨ 功能
+## 功能
 
-- **GMS 冻结**：将 GMS 服务划分为 8 个类别，提供精细的禁用控制。
-- **GMS Doze**：将 GMS 从系统省电白名单（Whitelist）中移除。
-- **深度休眠 (Deep Doze)**：对所有应用实施极其激进的后台限制（适中 / 最大模式）。
-- **内核调优 (Kernel Tweaks)**：调度器 (Scheduler)、虚拟机 (VM) 和网络优化。
-- **RAM 优化器**：调整进程限制和 sysfs 内存设置。
-- **终止日志 (Kill Logs)**：停止耗电且占用 RAM 的后台日志记录进程。
-- **系统属性 (System Props)**：禁用系统调试属性以节省更多的 RAM。
-- **省电模式调优 (Battery Saver Tuner)**：自定义 Android 省电模式的行为，控制备份推迟、传感器禁用、GPS 行为、流量节省等。这些设置仅在 Android 系统的省电模式开启时才会生效。
-- **实时配置**：通过 WebUI 上的开关实现实时生效的完全控制。
+- **GMS 冻结**：在 8 个类别中禁用 GMS 服务。
+- **应用打盹 (App Doze)**：将任何应用从 Android 的 Doze 省电豁免名单中移除。这里也支持选择 GMS，从而取代了旧版专用的 GMS Doze 开关。
+- **深度打盹 (Deep Doze)**：对所有应用实施激进的后台限制（中度 / 最高）。
+- **息屏优化**：在可配置的息屏延迟后，自动禁用所选连接（Wi-Fi、蓝牙、移动数据、定位）并清理缓存应用，然后在解锁时恢复所有内容。
+- **阻止 Google 跟踪**：禁用 GMS 分析、Clearcut 遥测、Phenotype 轮询以及广告跟踪。
+- **内核优化**：调度器、虚拟机 (VM)、网络和调试优化。
+- **RAM 优化器**：调整进程限制、内存压缩以及 zram 行为。
+- **系统属性**：禁用调试属性以节省 RAM 和电池。
+- **终止日志**：停止耗电的日志记录和调试进程。
+- **省电模式调节器**：自定义 Android 内置省电模式处于活动状态时的行为。
 
-## 📦 安装
+## 安装
 
-**要求:** Android 9+，最新版 Magisk (20.4+) / KernelSU / APatch，Google Play 服务。
+**要求：** Android 9+，Magisk 20.4+ / KernelSU / APatch，Google Play 服务 (GMS)
 
-1. 从 [Releases 页面](https://github.com/Drsexo/Frosty/releases) 下载模块。
-2. 通过您的 Root 管理器进行安装。
+1. 从 [Releases](https://github.com/Drsexo/Frosty/releases) 下载。
+2. 通过您的 root 管理器安装。
 3. 重启设备。
-4. 打开 WebUI 启用所需功能 —— 默认情况下所有功能均为**关闭**状态。
+4. 打开 WebUI 启用相关功能。
 
 > [!NOTE]
-> Magisk 用户可以使用 [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) 应用程序来访问 WebUI 界面。
+> Magisk 用户可以使用 [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) 来访问 WebUI。
 
-## 📖 使用方法
+## 使用方法
 
-从您的 Root 管理器中打开 WebUI。您会发现：
+通过您的 root 管理器打开 WebUI：
 
-- **系统优化 (System Tweaks)** — 启用内核调优 (Kernel Tweaks)、系统属性 (System Props)、禁用模糊 (Blur) 以及终止日志 (Kill Logs)。
-- **GMS Doze / Deep Doze** — 配置 Doze 省电模式的激进程度。
-- **GMS 分类** — 逐个组别地冻结 GMS 服务。
-- **白名单 (Whitelist)** — 保护重要应用免受深度休眠 (Deep Doze) 的限制。
-- **导入 / 导出** — 备份和恢复您的配置。
+- **系统优化**：内核优化、系统属性、禁用模糊、终止日志、阻止跟踪。
+- **Doze**：带有应用选择器的“应用打盹”，以及带有级别选择和白名单编辑器的“深度打盹”。
+- **息屏优化**：每项连接的独立开关、延迟计时器、解锁时恢复。
+- **GMS 类别**：冻结单独的 GMS 服务组。
+- **省电模式调节器**：微调省电模式的行为。
+- **导入 / 导出**：备份和恢复您的完整配置。
 
-## 🧊 GMS 分类
+## GMS 类别
 
 #### 安全禁用
-| 分类 | 影响 |
-|------|------|
-| 📊 **遥测 (Telemetry)** | 无。阻止 Google 广告、数据分析和追踪。 |
-| 🔄 **后台 (Background)** | 应用自动更新可能会出现延迟。 |
+| 类别 | 影响 |
+|----------|--------|
+| 📊 **遥测** | 无。停止广告、分析和跟踪。 |
+| 🔄 **后台** | 自动更新可能会延迟。 |
 
-#### 将会失效的功能
-| 分类 | 受到影响的功能 |
-|------|----------------|
-| 📍 **位置 (Location)** | 谷歌地图、GPS 导航、查找我的设备。 |
-| 📡 **连接 (Connectivity)** | Chromecast、快速分享 (Quick Share)、快速配对 (Fast Pair)。 |
-| ☁️ **云端 (Cloud)** | Google 账号登录、密码自动填充、备份。 |
-| 💳 **支付 (Payments)** | Google Pay、NFC 非接触式支付。 |
-| ⌚ **穿戴设备 (Wearables)** | Wear OS、Google Fit、健身追踪。 |
-| 🎮 **游戏 (Games)** | Google Play 游戏成就、排行榜、云存档。 |
+#### 可能破坏的功能
+| 类别 | 破坏内容 |
+|----------|-------------|
+| 📍 **定位** | 地图、导航、查找我的设备、位置共享 |
+| 📡 **连接** | Chromecast 投屏、快速分享 (Quick Share)、快速配对 (Fast Pair) |
+| ☁️ **云** | Google 登录、自动填充、密码、备份 |
+| 💳 **支付** | Google Pay、NFC 接触式支付 |
+| ⌚ **可穿戴设备** | Wear OS、Google Fit、健身追踪 |
+| 🎮 **游戏** | Play 游戏成就、排行榜、云存档 |
 
-## 🔋 深度休眠 (Deep Doze) 级别
+## 深度打盹 (Deep Doze) 级别
 
-| 功能 | 适中 | 最大 |
-|------|:----:|:----:|
+| 功能 | 中度 | 最高 |
+|---------|:--------:|:-------:|
 | 激进的 Doze 常量 | ✅ | ✅ |
-| App Standby Buckets (应用待机群组) | ✅ | ✅ |
-| 拒绝 RUN_IN_BACKGROUND | ✅ | ✅ |
-| Deep Idle (熄屏时深度空闲) | ✅ | ✅ |
-| 拒绝 WAKE_LOCK (唤醒锁) | ❌ | ✅ |
-| Wakelock 拦截 (Wakelock Killer) | ❌ | ✅ |
+| 应用待机分组 (很少使用) | ✅ | ✅ |
+| 息屏唤醒锁杀手 (Wakelock Killer) | ✅ | ✅ |
+| 拒绝 WAKE_LOCK | ❌ | ✅ |
 
-## 🚀 RAM 优化器
+## 常见问题
 
-根据您设备的总 RAM 容量，调整 Android 的进程管理器和内存子系统。  
-此外，还会启用 USAP 进程池以加快应用的冷启动速度，并应用 sysfs 内存调优（`swappiness`、`page-cluster`）。在禁用该功能时，所有值都会从备份中完全恢复。
+**问：为什么我的通知会延迟？**  
+答：应用打盹 (App Doze) 和深度打盹 (Deep Doze) 会限制后台活动。请在 WebUI 中将您的即时通讯应用添加到“深度打盹”白名单中。
 
-## ⚙️ 省电模式调优
+**问：GMS Doze 去哪了？**  
+答：它现在属于“应用打盹”的一部分。打开“应用打盹”选择器并选择 GMS，效果是一样的，只是界面更加统一。
 
-配置 Android 内置省电模式处于激活状态时的具体行为。
+**问：如果没有 Google Play 服务，这个模块还能用吗？**  
+答：内核优化、系统属性、禁用模糊、终止日志、RAM 优化器和深度打盹都可以正常工作。GMS 功能当然需要安装了 GMS 才能用。
 
-| 选项 | 描述 |
-|--------|-------------|
-| **流量节省 (Data Saver)** | 限制大多数应用的后台数据使用 |
-| **语音唤醒 (Sound Trigger)** | 禁用唤醒词检测（例如 "Hey Google"） |
-| **完整备份 (Full Backup)** | 推迟设备的完整备份 |
-| **数据备份 (Key/Value Backup)** | 推迟应用设置和键值数据的备份 |
-| **强制待机 (Force Standby)** | 立即将所有后台应用置于待机状态 |
-| **后台检查 (Background Check)** | 对后台进程执行更严格的运行检查 |
-| **传感器 (Sensors)** | 在后台禁用非关键的传感器 |
-| **定位模式 (GPS Mode)** | 控制省电模式激活时的位置访问权限 |
+**问：安装后默认会启用什么功能吗？**  
+答：不会。默认情况下所有功能都是关闭的。请仅启用您需要的功能。
 
-## ❓ 常见问题 (FAQ)
+## 鸣谢
 
-**问：为什么我的通知延迟了？**  
-答：GMS Doze 和深度休眠 (Deep Doze) 会大幅限制后台活动。请务必将您的即时通讯应用添加到白名单 (Whitelist) 中。
+- **kaushikieeee** [GhostGMS](https://github.com/kaushikieeee/GhostGMS)
+- **gloeyisk** [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze)
+- **Azyrn** [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
+- **MoZoiD** [GMS Component Disable Script](https://t.me/MoZoiDStack/137)
+- **s1m** [SaverTuner](https://codeberg.org/s1m/savertuner)
 
-**问：此模块在没有 Google Play 服务的情况下能工作吗？**  
-答：可以。内核调优、系统属性、禁用模糊、终止日志和深度休眠在没有 GMS 的情况下依然有效。
+## 许可证
 
-## 📝 Doze 白名单 (Whitelist)
-
-通过 WebUI 或直接修改 `/data/adb/modules/Frosty/config/doze_whitelist.txt` 文件来编辑列表。  
-请将微信、QQ、银行类应用和闹钟添加至此，以防错过关键通知。
-
-## 🙏 鸣谢
-
-- **kaushikieeee** — [GhostGMS](https://github.com/kaushikieeee/GhostGMS)
-- **gloeyisk** — [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze)
-- **Azyrn** — [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
-- **MoZoiD** — [GMS Component Disable Script](https://t.me/MoZoiDStack/137)
-- **s1m** — [SaverTuner](https://codeberg.org/s1m/savertuner)
-
-## 📜 许可与法律声明
-
-本项目采用 **GPL v3** 许可证，详见 [LICENSE](LICENSE)。  
-**Frosty** 这一名称仅保留给官方发布版本使用。分支 (Forks) 和修改版必须使用不同的名称，并明确声明其为非官方版本。原作者对由非官方或修改版本造成的任何损坏不承担任何责任。
+基于 **GPL v3** 许可，详见 [LICENSE](LICENSE)。  
+**Frosty** 的名称仅保留给官方发布版本。分支 (Forks) 必须使用不同的名称，并明确声明它们是非官方的。原作者对非官方或修改版本造成的损坏不承担任何责任。

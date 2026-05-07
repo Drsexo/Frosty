@@ -11,9 +11,16 @@ mkdir -p "$TEMP_DIR"
 [ -f "$MODDIR/config/user_prefs" ]       && cp -f "$MODDIR/config/user_prefs"       "$TEMP_DIR/"
 [ -f "$MODDIR/config/doze_patches.txt" ] && cp -f "$MODDIR/config/doze_patches.txt" "$TEMP_DIR/"
 
+# Kill Deep Doze screen monitor
 if [ -f "$MODDIR/tmp/screen_monitor.pid" ]; then
   monitor_pid=$(cat "$MODDIR/tmp/screen_monitor.pid" 2>/dev/null)
   [ -n "$monitor_pid" ] && kill "$monitor_pid" 2>/dev/null
+fi
+
+# Kill Screen-Off Opt monitor
+if [ -f "$MODDIR/tmp/soo_monitor.pid" ]; then
+  soo_pid=$(cat "$MODDIR/tmp/soo_monitor.pid" 2>/dev/null)
+  [ -n "$soo_pid" ] && kill "$soo_pid" 2>/dev/null
 fi
 
 cat > "/data/adb/frosty_uninstall_runner.sh" << 'UNINSTALL_EOF'
@@ -57,10 +64,10 @@ log "Reverting Kill Logs device_config..."
 device_config delete activity_manager disable_app_profiler_pss_profiling 2>/dev/null
 device_config delete activity_manager activity_start_pss_defer 2>/dev/null
 
-# Revert GMS Doze
-log "Reverting GMS Doze..."
+# Revert App Doze (including GMS if it was in the list)
+log "Reverting App Doze..."
 if [ -f "$DEVICEIDLE_XML" ]; then
-  sed -i "/<un-wl n=\"$GMS_PKG\"/d" "$DEVICEIDLE_XML"
+  sed -i "/<un-wl /d" "$DEVICEIDLE_XML"
   restorecon "$DEVICEIDLE_XML" 2>/dev/null
 fi
 
@@ -73,8 +80,6 @@ for user_id in $user_ids; do
   pm enable --user "$user_id" "$GMS_PKG/$GMS_PKG.mdm.receivers.MdmDeviceAdminReceiver"   >/dev/null 2>&1
 done
 
-# Revert Custom App Doze
-log "Reverting Custom App Doze..."
 PATCHES_FILE="$TEMP_DIR/doze_patches.txt"
 if [ -f "$PATCHES_FILE" ]; then
   while IFS= read -r pkg; do
@@ -85,20 +90,37 @@ if [ -f "$PATCHES_FILE" ]; then
     cmd appops set "$pkg" IGNORE_BATTERY_OPTIMIZATIONS default 2>/dev/null
   done < "$PATCHES_FILE"
 fi
-CAD_OVERLAYS="/data/adb/modules/Frosty/config/cad_overlays.txt"
-if [ -f "$CAD_OVERLAYS" ]; then
+
+# Remove XML overlays (unified list from app_doze.sh)
+XML_OVERLAYS="/data/adb/modules/Frosty/config/doze_xml_overlays.txt"
+if [ -f "$XML_OVERLAYS" ]; then
   while IFS= read -r file; do
-    case "$file" in '###'*|'#'*|'') continue ;; esac
+    case "$file" in '#'*|'') continue ;; esac
     [ -f "$file" ] && rm -f "$file"
-  done < "$CAD_OVERLAYS"
-  rm -f "$CAD_OVERLAYS"
+  done < "$XML_OVERLAYS"
+  rm -f "$XML_OVERLAYS"
+fi
+
+# Revert Screen Off Optimization connection state if left disabled
+SOO_STATE="/data/adb/modules/Frosty/tmp/soo_disabled"
+if [ -f "$SOO_STATE" ]; then
+  log "Restoring Screen Off Optimization connection state..."
+  while IFS= read -r line; do
+    case "$line" in
+      wifi)       svc wifi enable 2>/dev/null ;;
+      bt)         svc bluetooth enable 2>/dev/null ;;
+      data)       svc data enable 2>/dev/null ;;
+      location:*) settings put secure location_mode "${line#location:}" 2>/dev/null ;;
+    esac
+  done < "$SOO_STATE"
+  rm -f "$SOO_STATE"
 fi
 
 # Revert Battery Saver
 log "Reverting Battery Saver..."
 settings delete global battery_saver_constants 2>/dev/null
 settings put global low_power_sticky 0 2>/dev/null
-settings put global low_power_sticky_auto_disable_enabled 0 2>/dev/null
+settings put global low_power_sticky_auto_disable_enabled 1 2>/dev/null
 settings put global low_power 0 2>/dev/null
 
 # Revert Deep Doze

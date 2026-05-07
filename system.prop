@@ -61,8 +61,8 @@ ro.telephony.call_ring.multiple=false
 persist.ims.disableDebugLogs=1
 persist.ims.enableADBLogs=0
 persist.ims.enableDebugLogs=0
-persist.ims.disableQXDMLogs=0
-persist.ims.disableIMSLogs=0
+persist.ims.disableQXDMLogs=1
+persist.ims.disableIMSLogs=1
 
 # WiFi Direct
 persist.debug.wfd.enable=0
@@ -84,10 +84,6 @@ persist.oem.dump=0
 # Offline Logging
 persist.sys.offlinelog.kernel=0
 persist.sys.offlinelog.logcat=0
-
-# SDM Debug
-sdm.debug.disable_inline_rotator=1
-sdm.debug.disable_skip_validate=1
 
 # Service Logging
 persist.service.pcsync.enable=0
@@ -147,11 +143,3 @@ ro.ril.power_collapse=1
 config.disable_rtt=true
 db.log.slow_query_threshold=0
 ro.config.small_battery=true
-
-# Samsung Knox / TIMA
-ro.config.tima=0
-ro.config.knox=0
-
-# MediaTek MDPP security framework
-security.mdpp=None
-security.mdpp.result=None

@@ -2,7 +2,7 @@
 
 # 🧊 FROSTY
 
-### GMS Freezer & Battery Saver
+### Congélateur GMS & Économiseur de Batterie
 
 [![Magisk](https://img.shields.io/badge/Magisk-20.4%2B-00B0FF.svg)](https://github.com/topjohnwu/Magisk)
 [![KernelSU](https://img.shields.io/badge/KernelSU-Supported-green.svg)](https://github.com/tiann/KernelSU)
@@ -10,127 +10,108 @@
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
 ![Downloads](https://img.shields.io/github/downloads/Drsexo/Frosty/total)
 
-[✨ Fonctionnalités](#-fonctionnalités) • [📦 Installation](#-installation) • [📖 Utilisation](#-utilisation) •[🧊 Catégories GMS](#-catégories-gms) • [❓ FAQ](#-faq)
+[Fonctionnalités](#fonctionnalités) • [Installation](#installation) • [Utilisation](#utilisation) • [Catégories](#catégories-gms) • [FAQ](#faq)
 
 ---
 
-[🇬🇧 English](../README.md) • 🇫🇷 Français • [🇩🇪 Deutsch](README.de.md)  
+[🇬🇧 English](https://github.com/Drsexo/Frosty) • 🇫🇷 Français • [🇩🇪 Deutsch](README.de.md)  
 [🇵🇱 Polski](README.pl.md) • [🇮🇹 Italiano](README.it.md) • [🇪🇸 Español](README.es.md)  
-[🇧🇷 Português (BR)](README.pt-BR.md) • [🇹🇷 Türkçe](README.tr.md) • [🇮🇩 Indonesia](README.id.md)  
+[🇧🇷 Português](README.pt-BR.md) • [🇹🇷 Türkçe](README.tr.md) • [🇮🇩 Indonesia](README.id.md)  
 [🇷🇺 Русский](README.ru.md) • [🇺🇦 Українська](README.uk.md) • [🇨🇳 中文](README.zh-CN.md)  
 [🇯🇵 日本語](README.ja.md) • [🇸🇦 العربية](README.ar.md)
 
 </div>
 
-## Présentation
+## Vue d'ensemble
 
-Frosty optimise l'autonomie de la batterie en gelant sélectivement les composants Google Mobile Services (GMS) et en appliquant des améliorations globales du mode Doze. Tout se configure via l'interface WebUI après l'installation.
+Frosty optimise la durée de vie de la batterie en gelant les services GMS, en appliquant des améliorations de doze à l'échelle du système et en automatisant le comportement de l'écran éteint. Configurez tout via la WebUI.
 
-## ✨ Fonctionnalités
+## Fonctionnalités
 
-- **Gel GMS** : Désactivez les services GMS répartis en 8 catégories avec un contrôle granulaire.
-- **GMS Doze** : Retire les GMS des listes blanches (Whitelist) d'économie d'énergie.
-- **Deep Doze** : Restrictions d'arrière-plan très agressives pour toutes les applications (Modéré/Maximum).
-- **Kernel Tweaks** : Optimisations de l'ordonnanceur (Scheduler), de la VM et du réseau.
-- **Optimiseur de RAM** : Ajuste les limites de processus et les paramètres de mémoire sysfs.
-- **Kill Logs** : Arrêt des processus de journalisation en arrière-plan (économise la batterie et la RAM).
-- **System Props** : Désactive les propriétés de débogage pour économiser la RAM.
-- **Ajustements de l'Économiseur (Battery Saver Tuner)** : Personnalisez le comportement du mode économie d'énergie d'Android, contrôlez le report des sauvegardes, la désactivation des capteurs, le comportement du GPS, l'économiseur de données, etc. Ces paramètres ne prennent effet que lorsque l'économiseur de batterie d'Android est ACTIVÉ.
-- **Configuration en direct** : Contrôle total via WebUI avec des interrupteurs en temps réel.
+- **Gel des GMS** : Désactivez les services GMS à travers 8 catégories.
+- **App Doze** : Retirez n'importe quelle application de la liste d'exemption d'économie d'énergie Doze d'Android. GMS est également sélectionnable ici, remplaçant l'ancien interrupteur dédié GMS Doze.
+- **Deep Doze** : Restrictions agressives en arrière-plan pour toutes les applications (Modéré / Maximum).
+- **Optimisation Écran Éteint** : Désactive automatiquement les connexions sélectionnées (Wi-Fi, Bluetooth, données mobiles, localisation) et vide les applications en cache après un délai configurable d'extinction de l'écran, puis restaure tout au déverrouillage.
+- **Bloquer le suivi Google** : Désactive les analyses GMS, la télémétrie Clearcut, le polling Phenotype et le suivi publicitaire.
+- **Ajustements du Kernel** : Optimisations du planificateur, de la VM, du réseau et du débogage.
+- **Optimiseur de RAM** : Ajuste les limites des processus, le compactage de la mémoire et le comportement de zram.
+- **Props Système** : Désactivez les propriétés de débogage pour économiser la RAM et la batterie.
+- **Arrêt des Logs** : Arrête les processus de journalisation (logs) et de débogage qui drainent la batterie.
+- **Tuner Économiseur de Batterie** : Personnalisez ce que fait l'économiseur de batterie intégré à Android lorsqu'il est actif.
 
-## 📦 Installation
+## Installation
 
-**Prérequis :** Android 9+, Magisk 20.4+ / KernelSU / APatch, Services Google Play.
+**Prérequis :** Android 9+, Magisk 20.4+ / KernelSU / APatch, Services Google Play (GMS)
 
-1. Téléchargez le module depuis les [Releases](https://github.com/Drsexo/Frosty/releases).
-2. Installez-le via votre gestionnaire root.
-3. Redémarrez votre appareil.
-4. Ouvrez la WebUI pour activer les fonctionnalités — tout est **DÉSACTIVÉ** par défaut.
+1. Téléchargez depuis [Releases](https://github.com/Drsexo/Frosty/releases).
+2. Installez via votre gestionnaire root.
+3. Redémarrez l'appareil.
+4. Ouvrez la WebUI pour activer les fonctionnalités.
 
 > [!NOTE]
-> Les utilisateurs de Magisk peuvent utiliser [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) pour accéder à l'interface WebUI.
+> Les utilisateurs de Magisk peuvent utiliser [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) pour accéder à la WebUI.
 
-## 📖 Utilisation
+## Utilisation
 
 Ouvrez la WebUI depuis votre gestionnaire root :
 
-- **Tweaks Système** — Activez les Tweaks du noyau, System Props, désactivez le flou, arrêtez les logs (Kill Logs).
-- **GMS Doze / Deep Doze** — Configurez l'agressivité du mode Doze.
-- **Catégories GMS** — Gelez les groupes de services GMS individuellement.
-- **Whitelist** — Protégez vos applications importantes du mode Deep Doze.
-- **Import / Export** — Sauvegardez et restaurez votre configuration.
+- **Ajustements Système** : Ajustements du kernel, props système, désactivation du flou, arrêt des logs, blocage du suivi.
+- **Doze** : App Doze avec sélecteur d'applications, Deep Doze avec sélecteur de niveau et éditeur de liste blanche.
+- **Optimisation Écran Éteint** : Interrupteurs par connexion, minuteries de délai, restauration au déverrouillage.
+- **Catégories GMS** : Gelez les groupes de services GMS individuels.
+- **Tuner Économiseur de Batterie** : Ajustez le comportement de l'économiseur de batterie.
+- **Importer / Exporter** : Sauvegardez et restaurez votre configuration complète.
 
-## 🧊 Catégories GMS
+## Catégories GMS
 
 #### Sûr à désactiver
 | Catégorie | Impact |
-|-----------|--------|
-| 📊 **Télémétrie** | Aucun. Arrête les publicités, les analytics et le pistage. |
+|----------|--------|
+| 📊 **Télémétrie** | Aucun. Arrête les publicités, les analyses, le suivi. |
 | 🔄 **Arrière-plan** | Les mises à jour automatiques peuvent être retardées. |
 
-#### Fonctions impactées
-| Catégorie | Ce qui ne fonctionnera plus |
-|-----------|-----------------------------|
-| 📍 **Localisation** | Maps, GPS, navigation, Localiser mon appareil. |
-| 📡 **Connectivité** | Chromecast, Quick Share, Fast Pair. |
-| ☁️ **Cloud** | Connexion Google, saisie automatique, mots de passe, sauvegardes. |
-| 💳 **Paiements** | Google Pay, paiements sans contact NFC. |
-| ⌚ **Wearables** | Wear OS, Google Fit, suivi d'activité. |
-| 🎮 **Jeux** | Google Play Jeux (succès, classements, sauvegardes cloud). |
+#### Peut casser des fonctionnalités
+| Catégorie | Ce qui est cassé |
+|----------|-------------|
+| 📍 **Localisation** | Maps, navigation, Localiser mon appareil, partage de position |
+| 📡 **Connectivité** | Chromecast, Quick Share, Fast Pair |
+| ☁️ **Cloud** | Connexion Google, Saisie automatique, mots de passe, sauvegardes |
+| 💳 **Paiements** | Google Pay, paiement sans contact NFC |
+| ⌚ **Appareils connectés** | Wear OS, Google Fit, suivi de la condition physique |
+| 🎮 **Jeux** | Succès Play Jeux, classements, sauvegardes cloud |
 
-## 🔋 Niveaux de Deep Doze
+## Niveaux de Deep Doze
 
 | Fonctionnalité | Modéré | Maximum |
-|----------------|:------:|:-------:|
-| Constantes Doze agressives | ✅ | ✅ |
-| App Standby Buckets | ✅ | ✅ |
-| Refuser RUN_IN_BACKGROUND | ✅ | ✅ |
-| Deep Idle (Écran éteint) | ✅ | ✅ |
+|---------|:--------:|:-------:|
+| Constantes Doze Agressives | ✅ | ✅ |
+| Buckets de mise en veille des apps (rare) | ✅ | ✅ |
+| Tueur de Wakelock écran éteint | ✅ | ✅ |
 | Refuser WAKE_LOCK | ❌ | ✅ |
-| Wakelock Killer | ❌ | ✅ |
 
-## 🚀 Optimiseur de RAM
-
-Ajuste le gestionnaire de processus et le sous-système de mémoire d'Android en fonction de la RAM totale de votre appareil.  
-Active également l'USAP pool pour accélérer les lancements à froid des applications et applique des tweaks sysfs (`swappiness`, `page-cluster`). Toutes les valeurs sont sauvegardées et entièrement restaurées lors de la désactivation.
-
-## ⚙️ Ajustements de l'Économiseur
-
-Configure ce que fait le mode d'économie d'énergie intégré d'Android lorsqu'il est actif.
-
-| Option | Description |
-|--------|-------------|
-| **Économiseur de données** | Restreint les données en arrière-plan pour la plupart des applications |
-| **Détection vocale** | Désactive la détection du mot clé (ex. "Hey Google") |
-| **Sauvegarde complète** | Diffère les sauvegardes complètes de l'appareil |
-| **Sauvegarde des données** | Diffère les sauvegardes de type clé-valeur (paramètres) |
-| **Forcer la mise en veille** | Met immédiatement toutes les applications en arrière-plan en veille |
-| **Contrôle en arrière-plan** | Applique des vérifications plus strictes des processus en arrière-plan |
-| **Capteurs** | Désactive les capteurs optionnels en arrière-plan |
-| **Mode de localisation** | Contrôle l'accès à la localisation lorsque l'économiseur est actif |
-
-## ❓ FAQ
+## FAQ
 
 **Q : Pourquoi mes notifications sont-elles retardées ?**  
-R : GMS Doze et Deep Doze restreignent massivement l'activité en arrière-plan. Ajoutez vos applications de messagerie à la Whitelist.
+R : App Doze et Deep Doze restreignent l'activité en arrière-plan. Ajoutez vos applications de messagerie à la liste blanche de Deep Doze dans la WebUI.
 
-**Q : Frosty fonctionne-t-il sans les Services Google Play ?**  
-R : Oui. Les Kernel Tweaks, System Props, la désactivation du flou, le Kill Logs et le Deep Doze fonctionneront sans GMS.
+**Q : Où est passé GMS Doze ?**  
+R : Il fait désormais partie de App Doze. Ouvrez le sélecteur d'App Doze et sélectionnez GMS, même effet, interface unifiée.
 
-## 📝 Whitelist Doze
+**Q : Est-ce que cela fonctionne sans les Services Google Play ?**  
+R : Les Ajustements du Kernel, les Props Système, la Désactivation du Flou, l'Arrêt des Logs, l'Optimiseur de RAM et Deep Doze fonctionnent tous. Les fonctionnalités GMS nécessitent GMS.
 
-Éditez la liste via la WebUI ou directement dans `/data/adb/modules/Frosty/config/doze_whitelist.txt`.  
-Ajoutez vos applications de messagerie, banques et alarmes pour éviter de manquer des notifications cruciales.
+**Q : Est-ce que quelque chose est activé après l'installation ?**  
+R : Non. Tout est désactivé par défaut. Activez uniquement ce dont vous avez besoin.
 
-## 🙏 Crédits
+## Crédits
 
-- **kaushikieeee** — [GhostGMS](https://github.com/kaushikieeee/GhostGMS)
-- **gloeyisk** — [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze)
-- **Azyrn** — [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
-- **MoZoiD** — [GMS Component Disable Script](https://t.me/MoZoiDStack/137)
-- **s1m** — [SaverTuner](https://codeberg.org/s1m/savertuner)
+- **kaushikieeee** [GhostGMS](https://github.com/kaushikieeee/GhostGMS)
+- **gloeyisk** [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze)
+- **Azyrn** [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
+- **MoZoiD** [Script de désactivation des composants GMS](https://t.me/MoZoiDStack/137)
+- **s1m** [SaverTuner](https://codeberg.org/s1m/savertuner)
 
-## 📜 Licence & Légal
+## Licence
 
 Sous licence **GPL v3**, voir [LICENSE](LICENSE).  
-Le nom **Frosty** est réservé exclusivement aux versions officielles. Les forks et les modifications doivent utiliser un nom différent et indiquer clairement qu'ils ne sont pas officiels. L'auteur original décline toute responsabilité pour les dommages causés par des versions non officielles ou modifiées.
+Le nom **Frosty** est réservé exclusivement aux versions officielles. Les forks doivent utiliser un nom différent et indiquer clairement qu'ils ne sont pas officiels. L'auteur original n'assume aucune responsabilité pour les dommages causés par des versions non officielles ou modifiées.

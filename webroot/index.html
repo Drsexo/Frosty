@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#141218">
   <title>Frosty</title>
   <link rel="stylesheet" href="/internal/insets.css">
@@ -196,14 +196,6 @@
     <!-- Doze -->
     <section class="card">
       <h2 class="card-title"><span>💤 </span><span data-i18n="sec_doze">Doze</span></h2>
-      <div class="tgl-row ripple" data-key="gms_doze">
-        <div class="tgl-info">
-          <span class="tgl-name" data-i18n="tgl_gms_doze">GMS Doze</span>
-          <span class="tgl-desc" data-i18n="tgl_gms_doze_desc">Lets Android optimize GMS battery · May delay notifications</span>
-          <span class="reboot-tag" data-i18n="reboot_req">⚠ Reboot required</span>
-        </div>
-        <label class="tgl"><input type="checkbox" id="t-gms-doze"><span class="tgl-sl"></span></label>
-      </div>
       <div class="divider"></div>
       <div class="tgl-row ripple" data-key="custom_app_doze">
         <div class="tgl-info">
@@ -215,7 +207,7 @@
       </div>
       <div class="cad-extras" id="cad-extras">
         <button class="wl-btn ripple" id="cad-open">
-          <span data-i18n="cad_btn">📱 Manage Apps</span>
+          <span data-i18n="cad_btn">▶ Manage Apps</span>
           <span class="wl-count" id="cad-count">0</span>
         </button>
       </div>
@@ -239,7 +231,7 @@
           </button>
         </div>
         <button class="wl-btn ripple" id="wl-open">
-          <span data-i18n="wl_btn">📋 App Doze Whitelist</span>
+          <span data-i18n="wl_btn">▶ App Doze Whitelist</span>
           <span class="wl-count" id="wl-count">0</span>
         </button>
       </div>
@@ -255,6 +247,20 @@
         <button class="bss-cfg-btn ripple" id="bss-open">
           <span>⚙️</span>
           <span data-i18n="bss_configure">Configure Options</span>
+        </button>
+      </div>
+      <div class="divider"></div>
+      <div class="tgl-row ripple" data-key="screen_off_opt">
+        <div class="tgl-info">
+          <span class="tgl-name" data-i18n="tgl_soo">Screen Off Optimization</span>
+          <span class="tgl-desc" data-i18n="tgl_soo_desc">Disables selected connections and kills listed apps after a screen-off delay. Restores on unlock.</span>
+        </div>
+        <label class="tgl"><input type="checkbox" id="t-screen-off-opt"><span class="tgl-sl"></span></label>
+      </div>
+      <div class="bss-extras" id="soo-extras">
+        <button class="bss-cfg-btn ripple" id="soo-open">
+          <span>⚙️</span>
+          <span data-i18n="soo_configure">Configure Options</span>
         </button>
       </div>
     </section>
@@ -433,7 +439,7 @@
               <div class="bss-mode-dot"></div>
               <div class="bss-mode-info">
                 <span class="bss-mode-name" data-i18n="bss_gps_2">All off (screen off)</span>
-                <span class="bss-mode-desc" data-i18n="bss_gps_hint_2">Every location provider — GPS, Wi-Fi, and cell tower — stops when the screen goes off. Weather widgets, maps, and fitness trackers stop updating in the background.</span>
+                <span class="bss-mode-desc" data-i18n="bss_gps_hint_2">Every location provider - GPS, Wi-Fi, and cell tower - stops when the screen goes off. Weather widgets, maps, and fitness trackers stop updating in the background.</span>
               </div>
             </div>
             <div class="bss-mode-row" id="bss-gps-3" data-gps="3">
@@ -461,6 +467,42 @@
 
       </div>
     </div>
+
+
+  <!-- Screen Off Optimization Modal -->
+  <div class="modal-overlay" id="soo-modal" style="transition:none">
+    <div class="modal bss-modal" style="transition:none">
+      <div class="modal-head">
+        <h3>🌙 <span data-i18n="soo_modal_title">Screen Off Options</span></h3>
+        <button class="modal-x ripple" id="soo-close">✕</button>
+      </div>
+      <div class="bss-opt-list">
+        <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="soo_opt_wifi">Disable Wi-Fi</span><span class="bss-opt-desc" data-i18n="soo_opt_wifi_desc">Turns off Wi-Fi after the connections off delay</span></div><label class="tgl"><input type="checkbox" id="soo-t-wifi"><span class="tgl-sl"></span></label></div>
+        <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="soo_opt_bt">Disable Bluetooth</span><span class="bss-opt-desc" data-i18n="soo_opt_bt_desc">Turns off Bluetooth after the connections off delay</span></div><label class="tgl"><input type="checkbox" id="soo-t-bt"><span class="tgl-sl"></span></label></div>
+        <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="soo_opt_data">Disable mobile data</span><span class="bss-opt-desc" data-i18n="soo_opt_data_desc">Turns off mobile data after the connections off delay</span></div><label class="tgl"><input type="checkbox" id="soo-t-data"><span class="tgl-sl"></span></label></div>
+        <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="soo_opt_location">Disable location</span><span class="bss-opt-desc" data-i18n="soo_opt_location_desc">Turns off all location providers after the connections off delay</span></div><label class="tgl"><input type="checkbox" id="soo-t-location"><span class="tgl-sl"></span></label></div>
+        <div class="bss-opt-row">
+          <div class="bss-opt-info"><span class="bss-opt-name" data-i18n="soo_opt_conn_delay">Connections off delay</span><span class="bss-opt-desc" data-i18n="soo_opt_conn_delay_desc">Minutes after screen-off before disabling connections</span></div>
+          <select id="soo-conn-delay" style="background:var(--surface-3);color:var(--on-surface);border:1px solid var(--stroke-var);border-radius:8px;padding:8px 10px;font-size:0.85rem;font-weight:700;min-width:70px">
+            <option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option><option value="20">20 min</option><option value="30">30 min</option><option value="60">60 min</option><option value="120">120 min</option><option value="180">180 min</option><option value="200">200 min</option>
+          </select>
+        </div>
+        <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="soo_opt_restore">Restore on unlock</span><span class="bss-opt-desc" data-i18n="soo_opt_restore_desc">Re-enables all connections that were disabled when the screen turns back on</span></div><label class="tgl"><input type="checkbox" id="soo-t-restore"><span class="tgl-sl"></span></label></div>
+        <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="soo_opt_kill_cache">Clear cached apps</span><span class="bss-opt-desc" data-i18n="soo_opt_kill_cache_desc">Kills all background processes (like Android does when low on memory). Calms apps left open via home button without force-stopping them.</span></div><label class="tgl"><input type="checkbox" id="soo-t-kill-cache"><span class="tgl-sl"></span></label></div>
+        <div id="soo-cache-extras" style="overflow:hidden;max-height:0;transition:max-height 0.25s ease">
+          <div class="bss-opt-row" style="padding-top:0">
+            <div class="bss-opt-info"><span class="bss-opt-name" data-i18n="soo_opt_cache_delay">Cache clear delay</span><span class="bss-opt-desc" data-i18n="soo_opt_cache_delay_desc">Minutes after screen-off before clearing cached apps</span></div>
+            <select id="soo-cache-delay" style="background:var(--surface-3);color:var(--on-surface);border:1px solid var(--stroke-var);border-radius:8px;padding:8px 10px;font-size:0.85rem;font-weight:700;min-width:70px">
+              <option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option><option value="20">20 min</option><option value="30">30 min</option><option value="60">60 min</option><option value="120">120 min</option><option value="180">180 min</option><option value="200">200 min</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="bss-actions">
+        <button class="bss-apply-btn ripple" id="soo-apply"><span data-i18n="soo_apply">Apply &amp; Close</span></button>
+      </div>
+    </div>
+  </div>
 
   <script src="api.js"></script>
   <script src="app.js"></script>

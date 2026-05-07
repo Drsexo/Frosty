@@ -23,7 +23,7 @@ ensure_whitelist() {
     echo "# Frosty - Doze Whitelist" > "$WHITELIST_FILE"
     echo "# Apps listed here are excluded from Deep Doze restrictions." >> "$WHITELIST_FILE"
     echo "# Add package names one per line. Lines starting with # are comments." >> "$WHITELIST_FILE"
-    echo ""
+    echo "" >> "$WHITELIST_FILE"
     log_deep "Created empty whitelist"
   fi
 }
@@ -55,8 +55,8 @@ apply_doze_constants() {
 
 revert_doze_constants() {
   settings delete global device_idle_constants 2>/dev/null
-  dumpsys deviceidle disable 2>/dev/null
-  settings put global app_standby_enabled 0 2>/dev/null
+  dumpsys deviceidle enable 2>/dev/null
+  settings delete global app_standby_enabled 2>/dev/null
   settings delete global adaptive_battery_management_enabled 2>/dev/null
 }
 
@@ -103,6 +103,7 @@ kill_wakelocks() {
   local killed=0
   local tmpfile="$MODDIR/tmp/wakelocks.txt"
   local procfile="$MODDIR/tmp/processes.txt"
+  trap 'rm -f "$tmpfile" "$procfile"' EXIT TERM
   dumpsys power 2>/dev/null | grep -E "PARTIAL_WAKE_LOCK|FULL_WAKE_LOCK" > "$tmpfile"
   dumpsys activity processes 2>/dev/null > "$procfile"
 

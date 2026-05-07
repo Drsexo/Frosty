@@ -1,6 +1,44 @@
 # Changelog
 ## I am not responsible for any unofficial or tampered versions of my module distributed outside this repository.
 
+## [4.0] - 2026-05-07
+Clean install recommended if upgrading from v3.7 or earlier. Many scripts and configs were restructured.
+### New Feature: Screen Off Optimization
+Automatically disables selected connections (Wi-Fi, Bluetooth, mobile data, and location) and clears recent background apps after the screen has been off for a configurable delay, then restores everything the moment you unlock. Each connection can be toggled independently. Only the ones that were actually on at screen-off time are ever disabled
+### GMS Doze: Merged into App Doze
+GMS doze has been removed, it is now treated as a regular App Doze package, select GMS in the App Doze list to get the same effect. Users upgrading from v3.7 who had GMS Doze enabled need to add GMS to the App Doze list manually once.
+### App Doze: Improvements
+- **Apps scanning rewritten for faster execution**: Typical scan time reduced from 10-30 seconds to 1-3 seconds on devices with large sysconfig directories.
+- **Rare bootloop fix**: The previous approach modified the file in place. If interrupted mid-write by an OOM kill or storage hiccup, a half-written overlay would be registered and bind-mounted at next boot, causing PackageManager to fail parsing it resulting in a bootloop. Fixed by writing to a `.tmp` file, validating its integrity and closing-tag, and only moving it into place on success. A failed validation skips the overlay entirely and logs a warning, the original system file is used instead. Also added an XML sanity check before mounting any overlay in `post-fs-data.sh`.
+### GMS Improvements
+- **Kill Google Tracking now also restricts GMS background data** at the network policy layer via `cmd netpolicy`, operating below the app level where GMS cannot bypass it. 
+- **Kill Google Tracking now extends GMS check-in interval** from ~60 to 120 minutes, reducing background wake-up frequency.
+- **GMS category freeze now cancels pending JobScheduler jobs** immediately after disabling services, preventing one last job fire before the system acknowledges the disabled state.
+### system.prop Fixes
+- **Fixed `persist.ims.disableQXDMLogs=0`**: Which was leaving QXDM logs enabled. Corrected to `1`.
+- **Fixed `persist.ims.disableIMSLogs=0`**: Same inverted boolean. Corrected to `1`.
+- **Fixed `sdm.debug.disable_skip_validate=1`**: `disable_skip_validate=1` forces full frame validation on every frame, increasing GPU work. Corrected to `0` to allow the driver to skip validation when safe.
+- **Removed `ro.config.knox` and `ro.config.tima` props** which were causing bootloops on some Samsung devices  with hardware-enforced Knox.
+- **Removed `security.mdpp` and `sdm.debug.*` props**: these weren't widely compatible with different socs, meaningless at best.
+### Kernel Tweaks: New Dynamic Sections
+- **Block I/O tuning**: Added dynamic loop over all non-RAM/loop/zram block devices. Sets `read_ahead_kb=128` (reduces wasteful speculative prefetch on flash storage which has near-zero seek latency) and `iostats=0` (disables per-device I/O statistics collection overhead).
+- **TCP extras**: Added `tcp_slow_start_after_idle=0` (prevents TCP connections from restarting slow-start congestion control after idle periods) and `tcp_fastopen=3` (enables TCP Fast Open client+server, reducing round-trips for reconnecting to known servers). Both backed up and restored via the kernel backup file.
+### Bug Fixes
+- **Fixed `revert_battery_saver()` setting `low_power_sticky_auto_disable_enabled` to `0`**: Android's default is `1` (battery saver auto-disables when charger is plugged in). Setting it to `0` on revert meant battery saver could stay on permanently after the feature was toggled off. Fixed to restore the default value of `1`.
+- **Fixed `revert_doze_constants()` actively disabling Doze instead of restoring stock**: `dumpsys deviceidle disable` turns Doze completely off, and `settings put global app_standby_enabled 0` disables Android's entire app standby bucket system. Both are worse than stock behavior. Any user who toggled Deep Doze off ended up with worse battery than an unmodified device. Fixed to `dumpsys deviceidle enable` and `settings delete` to restore Android defaults.
+- **Fixed `revert()` in `app_doze.sh` missing two whitelist tier restorations**: `apply()` removes packages from three tiers (user whitelist, sys-whitelist, except-idle-whitelist) but `revert()` only restored the user tier. Packages stayed partially de-whitelisted until the next boot. Added `cmd deviceidle sys-whitelist +` and `cmd deviceidle except-idle-whitelist +`.
+- **Fixed `list_pkgs()` subshell variable mutation producing malformed JSON**: `echo "$pkgs" | while read` creates a subshell where `first=0` never propagates back, so every package was missing its preceding comma, producing `["pkg1""pkg2"]` instead of `["pkg1","pkg2"]`. Fixed using a heredoc which runs the loop in the current shell.
+- **Fixed `post-fs-data.sh` CAD bind-mount case pattern whitespace**: Spaces embedded in the pipe-separated case pattern made the OEM partition paths literal matches that never fired. CAD XML overlays were silently not bind-mounted on Oppo/Realme/OnePlus custom partition devices.
+- **Fixed `post-fs-data.sh` CAD `deviceidle.xml` patch not atomic**: The loop removed `</config>` and re-added it once per package. If killed between the sed removal and the echo, the XML was left without a closing tag. All `<un-wl>` entries and `</config>` are now written in a single grouped operation.
+- **Fixed `deep_doze.sh` `ensure_whitelist()` `echo ""` writing to stdout**: The blank separator line was output to stdout instead of being appended to `$WHITELIST_FILE`. Any caller capturing `ensure_whitelist` output would receive a spurious blank line.
+- **Fixed `frosty.sh` dispatcher silently succeeding on unknown actions**: Unknown command now returns `{"status":"error","message":"unknown action"}` and exits 1 instead of silently exiting 0.
+- **Fixed `kill_wakelocks()` temp files leaking on TERM signal**: Added `trap 'rm -f "$tmpfile" "$procfile"' EXIT TERM` so temp files are cleaned even when the process is killed mid-execution.
+- **Fixed `post-fs-data.sh` Kill Logs cleanup leaving stale overlays**: `rmdir` silently fails on non-empty directories, leaving `$MODDIR/system/bin/` in place, causing Magisk to remount the stub directory over `/system/bin/` on every subsequent reboot. Fixed to `rm -rf`.
+- **Fixed `uninstall.sh` duplicate GMS Doze + App Doze revert blocks**: Two separate sections were reverting GMS separately from the rest of App Doze. Merged into a single "Revert App Doze" block that handles all packages including GMS.
+- **App Doze selected apps in WebUI now shown at the top of the list**: The app picker now sorts selected packages to the top with a separator, matching the existing behavior of the Deep Doze whitelist. Previously selected apps were scattered throughout the alphabetical list.
+- **`DEEP_DOZE_LEVEL` quoting unified**: `frosty.sh` `restore_settings` and `api.js` `setPref` now both write unquoted values, eliminating the inconsistency.
+- **Fixed Kill Logs not correctly reverting everything when disabled**.
+- **Fixed the WebUI clipping through Android status bar and navigation bar in some OEMs**.
 
 ## [3.7] - 2026-04-15
 ### New Feature: Custom App Doze

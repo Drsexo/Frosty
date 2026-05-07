@@ -80,7 +80,7 @@ set_perm_recursive "$MODPATH" 0 0 0755 0644
 set_perm "$MODPATH/service.sh" 0 0 0755
 set_perm "$MODPATH/post-fs-data.sh" 0 0 0755
 set_perm "$MODPATH/frosty.sh" 0 0 0755
-set_perm "$MODPATH/gms_doze.sh" 0 0 0755
+set_perm "$MODPATH/screen_off_opt.sh" 0 0 0755
 set_perm "$MODPATH/deep_doze.sh" 0 0 0755
 set_perm "$MODPATH/uninstall.sh" 0 0 0755
 set_perm "$MODPATH/app_doze.sh" 0 0 0755
@@ -408,8 +408,83 @@ s() {
     ar:stay_frosty)   echo "❆  Stay Frosty!  ❆" ;;
      *:stay_frosty)   echo "❆  Stay Frosty!  ❆" ;;
 
+    fr:upgrade_warn_title)  echo "  ⚠️  Mise à jour majeure - Installation propre recommandée" ;;
+    de:upgrade_warn_title)  echo "  ⚠️  Großes Update - Neuinstallation empfohlen" ;;
+    pl:upgrade_warn_title)  echo "  ⚠️  Duża aktualizacja - Zalecana czysta instalacja" ;;
+    it:upgrade_warn_title)  echo "  ⚠️  Aggiornamento importante - Consigliata installazione pulita" ;;
+    es:upgrade_warn_title)  echo "  ⚠️  Actualización importante - Se recomienda instalación limpia" ;;
+    pt:upgrade_warn_title)  echo "  ⚠️  Atualização importante - Instalação limpa recomendada" ;;
+    tr:upgrade_warn_title)  echo "  ⚠️  Büyük Güncelleme - Temiz kurulum önerilir" ;;
+    id:upgrade_warn_title)  echo "  ⚠️  Pembaruan Besar - Instalasi bersih disarankan" ;;
+    ru:upgrade_warn_title)  echo "  ⚠️  Крупное обновление - Рекомендуется чистая установка" ;;
+    uk:upgrade_warn_title)  echo "  ⚠️  Велике оновлення - Рекомендується чиста установка" ;;
+    zh:upgrade_warn_title)  echo "  ⚠️  重大更新 - 建议执行全新安装" ;;
+    ja:upgrade_warn_title)  echo "  ⚠️  大型アップデート - クリーンインストールを推奨" ;;
+    ar:upgrade_warn_title)  echo "  ⚠️  تحديث كبير - يُنصح بتثبيت نظيف (من الصفر)" ;;
+     *:upgrade_warn_title)  echo "  ⚠️  Major Update - Clean Install Recommended" ;;
+
+    fr:upgrade_warn_line1)  echo "  Cette version inclut des changements de code importants." ;;
+    de:upgrade_warn_line1)  echo "  Diese Version enthält umfangreiche Code-Änderungen." ;;
+    pl:upgrade_warn_line1)  echo "  Ta wersja zawiera znaczące zmiany w kodzie." ;;
+    it:upgrade_warn_line1)  echo "  Questa versione include modifiche significative al codice." ;;
+    es:upgrade_warn_line1)  echo "  Esta versión incluye cambios significativos en el código." ;;
+    pt:upgrade_warn_line1)  echo "  Esta versão inclui mudanças significativas no código." ;;
+    tr:upgrade_warn_line1)  echo "  Bu sürüm önemli kod değişiklikleri içermektedir." ;;
+    id:upgrade_warn_line1)  echo "  Versi ini mencakup perubahan kode yang signifikan." ;;
+    ru:upgrade_warn_line1)  echo "  Эта версия включает значительные изменения в коде." ;;
+    uk:upgrade_warn_line1)  echo "  Ця версія містить значні зміни в коді." ;;
+    zh:upgrade_warn_line1)  echo "  此版本包含大量的底层代码更改。" ;;
+    ja:upgrade_warn_line1)  echo "  このバージョンには大幅なコード変更が含まれています。" ;;
+    ar:upgrade_warn_line1)  echo "  يتضمن هذا الإصدار تغييرات جذرية في الأكواد." ;;
+     *:upgrade_warn_line1)  echo "  This version includes significant code changes." ;;
+
+    fr:upgrade_warn_line2)  echo "  Si vous rencontrez des problèmes après la mise à jour :" ;;
+    de:upgrade_warn_line2)  echo "  Falls nach dem Update Probleme auftreten:" ;;
+    pl:upgrade_warn_line2)  echo "  Jeśli po aktualizacji wystąpią problemy:" ;;
+    it:upgrade_warn_line2)  echo "  Se riscontri problemi dopo l'aggiornamento:" ;;
+    es:upgrade_warn_line2)  echo "  Si experimentas problemas después de actualizar:" ;;
+    pt:upgrade_warn_line2)  echo "  Se você enfrentar problemas após a atualização:" ;;
+    tr:upgrade_warn_line2)  echo "  Güncelleme sonrasında sorun yaşarsanız:" ;;
+    id:upgrade_warn_line2)  echo "  Jika Anda mengalami masalah setelah memperbarui:" ;;
+    ru:upgrade_warn_line2)  echo "  Если после обновления возникнут проблемы:" ;;
+    uk:upgrade_warn_line2)  echo "  Якщо після оновлення виникнуть проблеми:" ;;
+    zh:upgrade_warn_line2)  echo "  如果在更新后遇到任何问题：" ;;
+    ja:upgrade_warn_line2)  echo "  アップデート後に問題が発生した場合：" ;;
+    ar:upgrade_warn_line2)  echo "  إذا واجهت أي مشاكل بعد التحديث:" ;;
+     *:upgrade_warn_line2)  echo "  If you experience issues after updating:" ;;
+
+    fr:upgrade_warn_line3)  echo "  Désinstaller -> Redémarrer -> Réinstaller proprement" ;;
+    de:upgrade_warn_line3)  echo "  Deinstallieren -> Neustart -> Neu installieren" ;;
+    pl:upgrade_warn_line3)  echo "  Odinstaluj -> Uruchom ponownie -> Zainstaluj na nowo" ;;
+    it:upgrade_warn_line3)  echo "  Disinstalla -> Riavvia -> Installa da zero" ;;
+    es:upgrade_warn_line3)  echo "  Desinstalar -> Reiniciar -> Instalar desde cero" ;;
+    pt:upgrade_warn_line3)  echo "  Desinstalar -> Reiniciar -> Instalar do zero" ;;
+    tr:upgrade_warn_line3)  echo "  Kaldır -> Yeniden başlat -> Sıfırdan kur" ;;
+    id:upgrade_warn_line3)  echo "  Hapus -> Restart -> Instal dari awal" ;;
+    ru:upgrade_warn_line3)  echo "  Удалить -> Перезагрузить -> Установить начисто" ;;
+    uk:upgrade_warn_line3)  echo "  Видалити -> Перезавантажити -> Встановити начисто" ;;
+    zh:upgrade_warn_line3)  echo "  卸载 -> 重启 -> 重新安装" ;;
+    ja:upgrade_warn_line3)  echo "  アンインストール -> 再起動 -> 新規インストール" ;;
+    ar:upgrade_warn_line3)  echo "  إلغاء التثبيت -> إعادة التشغيل -> تثبيت من جديد" ;;
+     *:upgrade_warn_line3)  echo "  Uninstall -> Reboot -> Install fresh" ;;
+
   esac
 }
+
+# Upgrade warning - shown when a previous installation is detected
+INSTALLED_PROP="/data/adb/modules/$MODID/module.prop"
+if [ -f "$INSTALLED_PROP" ]; then
+  _installed_vc=$(grep "^versionCode=" "$INSTALLED_PROP" 2>/dev/null | cut -d= -f2)
+  if [ -n "$_installed_vc" ] && [ "$_installed_vc" -le 37 ] 2>/dev/null; then
+    ui_print "$(s upgrade_warn_title)"
+    ui_print ""
+    ui_print "$(s upgrade_warn_line1)"
+    ui_print "$(s upgrade_warn_line2)"
+    ui_print "$(s upgrade_warn_line3)"
+    ui_print ""
+    sleep 3
+  fi
+fi
 
 # Existing config detection
 EXISTING_PREFS="/data/adb/modules/$MODID/config/user_prefs"

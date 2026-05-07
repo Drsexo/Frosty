@@ -10,7 +10,7 @@
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
 ![Downloads](https://img.shields.io/github/downloads/Drsexo/Frosty/total)
 
-[Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Categories](#-gms-categories) • [FAQ](#-faq)
+[Features](#features) • [Installation](#installation) • [Usage](#usage) • [Categories](#gms-categories) • [FAQ](#faq)
 
 ---
 
@@ -24,43 +24,45 @@
 
 ## Overview
 
-Frosty optimizes battery life by selectively freezing Google Mobile Services (GMS) components and applying system-wide doze enhancements. Configure everything through the WebUI after installation.
+Frosty optimizes battery life by freezing GMS services, applying system-wide doze enhancements, and automating screen-off behavior. Configure everything through the WebUI.
 
-## ✨ Features
+## Features
 
-- **GMS Freezing**: Disable GMS services across 8 categories with granular control
-- **GMS Doze**: Remove GMS from power-save whitelists so Android can optimize it
-- **Deep Doze**: Aggressive background restrictions for all apps (Moderate/Maximum)
+- **GMS Freezing**: Disable GMS services across 8 categories
+- **App Doze**: Remove any app from Android's Doze power-save exemption list. GMS is selectable here too, replacing the old dedicated GMS Doze toggle
+- **Deep Doze**: Aggressive background restrictions for all apps (Moderate / Maximum)
+- **Screen Off Optimization**: Automatically disables selected connections (Wi-Fi, Bluetooth, data, location) and clears cached apps after a configurable screen-off delay, then restores everything on unlock
+- **Kill Google Tracking**: Disables GMS analytics, Clearcut telemetry, Phenotype polling, and ad tracking
 - **Kernel Tweaks**: Scheduler, VM, network, and debug optimizations
-- **RAM Optimizer**: Tunes process limits and sysfs memory settings
-- **Log Killing**: Stop battery-draining log/debug processes
+- **RAM Optimizer**: Tunes process limits, memory compaction, and zram behavior
 - **System Props**: Disable debug properties to save RAM and battery
-- **Battery Saver Tuner**: Customize what Android's battery saver mode does, control backup deferral, sensor disabling, GPS behavior, data saver, and more. They only have visible effect when Android battery saver is ON
-- **Live Configuration**: Full control via WebUI with real-time toggles
+- **Log Killing**: Stop battery-draining log and debug processes
+- **Battery Saver Tuner**: Customize what Android's built-in battery saver does when active
 
-## 📦 Installation
+## Installation
 
 **Requirements:** Android 9+, Magisk 20.4+ / KernelSU / APatch, Google Play Services
 
 1. Download from [Releases](https://github.com/Drsexo/Frosty/releases)
 2. Install via your root manager
 3. Reboot
-4. Open WebUI to enable features — everything starts **OFF** by default
+4. Open the WebUI to enable features
 
 > [!NOTE]
 > Magisk users can use [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) to access the WebUI.
 
-## 📖 Usage
+## Usage
 
-Open the WebUI from your root manager. You'll find:
+Open the WebUI from your root manager:
 
-- **System Tweaks** — toggle kernel tweaks, system props, blur disable, log killing
-- **GMS Doze / Deep Doze** — configure doze aggressiveness
-- **GMS Categories** — freeze individual GMS service groups
-- **Whitelist Editor** — protect apps from Deep Doze
-- **Import / Export** — back up and restore your configuration
+- **System Tweaks**: kernel tweaks, system props, blur disable, log killing, tracking block
+- **Doze**: App Doze with app picker, Deep Doze with level selector and whitelist editor
+- **Screen Off Optimization**: per-connection toggles, delay timers, restore on unlock
+- **GMS Categories**: freeze individual GMS service groups
+- **Battery Saver Tuner**: fine-tune battery saver behavior
+- **Import / Export**: back up and restore your full configuration
 
-## 🧊 GMS Categories
+## GMS Categories
 
 #### Safe to Disable
 | Category | Impact |
@@ -78,61 +80,38 @@ Open the WebUI from your root manager. You'll find:
 | ⌚ **Wearables** | Wear OS, Google Fit, fitness tracking |
 | 🎮 **Games** | Play Games achievements, leaderboards, cloud saves |
 
-## 🔋 Deep Doze Levels
+## Deep Doze Levels
 
 | Feature | Moderate | Maximum |
 |---------|:--------:|:-------:|
 | Aggressive Doze Constants | ✅ | ✅ |
-| App Standby Buckets | ✅ | ✅ |
-| Screen-off Deep Idle | ✅ | ✅ |
+| App Standby Buckets (rare) | ✅ | ✅ |
+| Screen-off Wakelock Killer | ✅ | ✅ |
 | Deny WAKE_LOCK | ❌ | ✅ |
-| Wakelock Killer | ❌ | ✅ |
 
-## 🚀 RAM Optimizer
-
-Tunes Android's process manager and memory subsystem based on your device's total RAM.  
-Also enables the USAP pool for faster cold app launches and applies sysfs tweaks (`swappiness`, `page-cluster`). All values are backed up and fully restored on disable.
-
-## ⚙️ Battery Saver Tuner
-
-Configures what Android's built-in battery saver mode does when active. 
-
-| Option | Description |
-|--------|-------------|
-| **Data Saver** | Restrict background data for most apps |
-| **Sound Trigger** | Disable hotword detection (e.g. "Hey Google") |
-| **Full Backup** | Defer full device backups |
-| **Key/Value Backup** | Defer key-value backups |
-| **Force Standby** | Put all background apps in standby immediately |
-| **Background Check** | Enforce stricter background process checks |
-| **Sensors** | Disable optional sensors in background |
-| **GPS Mode** | Control location access when battery saver is active |
-
-## ❓ FAQ
+## FAQ
 
 **Q: Why are my notifications delayed?**  
-A: GMS Doze and Deep Doze restrict background activity. Add your messaging apps to the whitelist.
+A: App Doze and Deep Doze restrict background activity. Add your messaging apps to the Deep Doze whitelist in the WebUI.
+
+**Q: Where did GMS Doze go?**  
+A: It's now part of App Doze. Open the App Doze picker and select GMS, same effect, unified interface.
 
 **Q: Does this work without Google Play Services?**  
-A: Kernel Tweaks, System Props, Blur Disable, Log Killing, and Deep Doze will work. GMS features require GMS.
+A: Kernel Tweaks, System Props, Blur Disable, Log Killing, RAM Optimizer, and Deep Doze all work. GMS features require GMS.
 
+**Q: Is anything enabled after install?**  
+A: No. Everything is off by default. Enable only what you need.
 
-## 📝 Doze Whitelist
+## Credits
 
-Edit via WebUI or directly at `/data/adb/modules/Frosty/config/doze_whitelist.txt`.  
-Add messaging, banking, and alarm apps to prevent missed notifications.
+- **kaushikieeee** [GhostGMS](https://github.com/kaushikieeee/GhostGMS)
+- **gloeyisk** [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze)
+- **Azyrn** [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
+- **MoZoiD** [GMS Component Disable Script](https://t.me/MoZoiDStack/137)
+- **s1m** [SaverTuner](https://codeberg.org/s1m/savertuner)
 
-## 🙏 Credits
-
-- **kaushikieeee** — [GhostGMS](https://github.com/kaushikieeee/GhostGMS)
-- **gloeyisk** — [Universal GMS Doze](https://github.com/gloeyisk/universal-gms-doze)
-- **Azyrn** — [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
-- **MoZoiD** — [GMS Component Disable Script](https://t.me/MoZoiDStack/137)
-- **s1m** — [SaverTuner](https://codeberg.org/s1m/savertuner)
-
-## 📜 License & Legal
+## License
 
 Licensed under **GPL v3** see [LICENSE](LICENSE).  
-The name **Frosty** is reserved for official releases only. Forks and modifications
-must use a different name and clearly state they are unofficial. The original author
-takes no responsibility for damage caused by unofficial or modified versions.
+The name **Frosty** is reserved for official releases only. Forks must use a different name and clearly state they are unofficial. The original author takes no responsibility for damage caused by unofficial or modified versions.

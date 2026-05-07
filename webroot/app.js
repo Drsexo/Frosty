@@ -29,7 +29,6 @@
   var cadIconObserver = null;
 
   var CAD_BLOCKED = {
-    'com.google.android.gms': 'cad_warn_gms',
     'android': 'cad_warn_system',
     'com.android.systemui': 'cad_warn_system',
     'com.android.phone': 'cad_warn_system',
@@ -61,8 +60,8 @@
     blur_disable: 'tgl_blur', log_killing: 'tgl_logs',
     kill_tracking: 'tgl_tracking',
     ram_optimizer: 'tgl_ram_optimizer',
-    gms_doze: 'tgl_gms_doze', deep_doze: 'tgl_deep_doze', battery_saver: 'tgl_bss',
-    custom_app_doze: 'tgl_cad',
+    deep_doze: 'tgl_deep_doze', battery_saver: 'tgl_bss',
+    custom_app_doze: 'tgl_cad', screen_off_opt: 'tgl_soo',
     telemetry: 'cat_telemetry', background: 'cat_background',
     location: 'cat_location', connectivity: 'cat_connectivity',
     cloud: 'cat_cloud', payments: 'cat_payments',
@@ -274,7 +273,6 @@
     setChk('t-tracking', p.kill_tracking);
     setChk('t-sysprops', p.system_props);
     setChk('t-ram-optimizer', p.ram_optimizer);
-    setChk('t-gms-doze', p.gms_doze);
     setChk('t-deep-doze', p.deep_doze);
     setChk('t-custom-app-doze', p.custom_app_doze);
 
@@ -299,6 +297,13 @@
     if (bssx) {
       if (p.battery_saver) bssx.classList.add('on');
       else bssx.classList.remove('on');
+    }
+
+    setChk('t-screen-off-opt', p.screen_off_opt);
+    var soox = $('soo-extras');
+    if (soox) {
+      if (p.screen_off_opt) soox.classList.add('on');
+      else soox.classList.remove('on');
     }
 
     // ── GMS Categories ──
@@ -351,7 +356,9 @@
           var rl = await API.killLogs();
           if (rl.status === 'ok') logAction(tf('log_killed_logs', rl.killed), 'ok');
         } else {
-          logAction(tf('log_toggle_off', tkey(key)), 'ok');
+          updateLoading(t('loading_reverting_logs'));
+          await API.revertKillLogs();
+          logAction(t('log_logs_reverted'), 'ok');
         }
         log(t('log_reboot_effect'), 'warn');
       } else if (key === 'kill_tracking') {
@@ -373,15 +380,15 @@
           logAction(tf('log_sysprops_failed', rsp.message || ''), 'err');
         }
         log(t('log_reboot_effect'), 'warn');
-      } else if (key === 'gms_doze') {
+      } else if (key === 'screen_off_opt') {
         if (nv) {
-          updateLoading(t('loading_applying_gms_doze'));
-          await API.applyGmsDoze();
-          logAction(t('log_gms_doze_applied'), 'ok');
+          updateLoading(t('loading_applying_soo'));
+          await API.applyScreenOffOpt();
+          logAction(t('log_soo_applied'), 'ok');
         } else {
-          updateLoading(t('loading_reverting_gms_doze'));
-          await API.revertGmsDoze();
-          logAction(t('log_gms_doze_reverted'), 'ok');
+          updateLoading(t('loading_reverting_soo'));
+          await API.revertScreenOffOpt();
+          logAction(t('log_soo_reverted'), 'ok');
         }
       } else if (key === 'deep_doze') {
         if (nv) {
@@ -537,6 +544,57 @@
     $('bss-modal').classList.remove('open');
   }
 
+  function openSooModal() {
+    var p = state.prefs;
+    setChk('soo-t-wifi',       p.soo_kill_wifi);
+    setChk('soo-t-bt',         p.soo_kill_bt);
+    setChk('soo-t-data',       p.soo_kill_data);
+    setChk('soo-t-location',   p.soo_kill_location);
+    setChk('soo-t-restore',    p.soo_restore_on_unlock !== undefined ? p.soo_restore_on_unlock : 1);
+    setChk('soo-t-kill-cache', p.soo_kill_cache);
+    var rdEl = $('soo-conn-delay');
+    var cdEl = $('soo-cache-delay');
+    if (rdEl) rdEl.value = p.soo_conn_delay  !== undefined ? p.soo_conn_delay  : 5;
+    if (cdEl) cdEl.value = p.soo_cache_delay !== undefined ? p.soo_cache_delay : 5;
+    var cacheExtras = $('soo-cache-extras');
+    if (cacheExtras) cacheExtras.style.maxHeight = p.soo_kill_cache ? '100px' : '0';
+    $('soo-modal').classList.add('open');
+  }
+
+  function closeSooModal() {
+    $('soo-modal').classList.remove('open');
+  }
+
+  async function saveSooOptions() {
+    if (busy) return;
+    busy = true;
+    showLoading(t('loading_applying_soo'));
+    try {
+      var rdEl = $('soo-conn-delay');
+      var cdEl = $('soo-cache-delay');
+      var opts = {
+        soo_kill_wifi:         $('soo-t-wifi').checked       ? 1 : 0,
+        soo_kill_bt:           $('soo-t-bt').checked         ? 1 : 0,
+        soo_kill_data:         $('soo-t-data').checked       ? 1 : 0,
+        soo_kill_location:     $('soo-t-location').checked   ? 1 : 0,
+        soo_restore_on_unlock: $('soo-t-restore').checked    ? 1 : 0,
+        soo_kill_cache:        $('soo-t-kill-cache').checked ? 1 : 0,
+        soo_conn_delay:  rdEl ? parseInt(rdEl.value) || 5 : 5,
+        soo_cache_delay: cdEl ? parseInt(cdEl.value) || 5 : 5
+      };
+      for (var k in opts) { await API.setPref(k, opts[k]); state.prefs[k] = opts[k]; }
+      if (state.prefs.screen_off_opt) {
+        await API.applyScreenOffOpt();
+        logAction(t('log_soo_applied'), 'ok');
+      }
+      toast(t('log_soo_applied'), 'ok');
+      closeSooModal();
+      render();
+    } catch (e) { toast(t('toast_error') + ': ' + e.message, 'err'); }
+    hideLoading();
+    busy = false;
+  }
+
   async function saveBssOptions() {
     if (busy) return;
     busy = true;
@@ -582,7 +640,7 @@
     try {
       // Step 1: Turn ON all prefs
       await yieldFrame(t('loading_enabling_toggles'));
-      var allPrefs = ['kernel_tweaks', 'system_props', 'blur_disable', 'log_killing', 'kill_tracking', 'ram_optimizer', 'gms_doze', 'custom_app_doze', 'deep_doze', 'battery_saver'];
+      var allPrefs = ['kernel_tweaks', 'system_props', 'blur_disable', 'log_killing', 'kill_tracking', 'ram_optimizer', 'custom_app_doze', 'deep_doze', 'battery_saver', 'screen_off_opt'];
       for (var i = 0; i < allPrefs.length; i++) {
         await API.setPref(allPrefs[i], 1);
       }
@@ -635,12 +693,7 @@
       var rram = await API.applyRamOptimizer();
       if (rram.status === 'ok') logAction(t('log_ram_applied'), 'ok');
 
-      // Step 10: Apply GMS Doze
-      await yieldFrame(t('loading_applying_gms_doze'));
-      await API.applyGmsDoze();
-      logAction(t('log_gms_doze_applied'), 'ok');
-
-      // Step 10b: Apply Custom App Doze
+      // Step 10: Apply App Doze
       await yieldFrame(t('loading_applying_cad'));
       await API.applyCustomAppDoze();
       logAction(t('log_cad_applied'), 'ok');
@@ -654,6 +707,11 @@
       await yieldFrame(t('loading_applying_bss'));
       await API.applyBatterySaver();
       logAction(t('log_bss_applied'), 'ok');
+
+      // Step 13: Start Screen-Off Opt
+      await yieldFrame(t('loading_applying_soo'));
+      await API.applyScreenOffOpt();
+      logAction(t('log_soo_applied'), 'ok');
 
       toast(t('toast_frozen'), 'ok');
       log(t('log_reboot_effect'), 'warn');
@@ -677,7 +735,7 @@
     try {
       // Step 1: Turn OFF all prefs
       await yieldFrame(t('loading_disabling_toggles'));
-      var allPrefs = ['kernel_tweaks', 'system_props', 'blur_disable', 'log_killing', 'kill_tracking', 'ram_optimizer', 'gms_doze', 'custom_app_doze', 'deep_doze', 'battery_saver'];
+      var allPrefs = ['kernel_tweaks', 'system_props', 'blur_disable', 'log_killing', 'kill_tracking', 'ram_optimizer', 'custom_app_doze', 'deep_doze', 'battery_saver', 'screen_off_opt'];
       for (var i = 0; i < allPrefs.length; i++) {
         await API.setPref(allPrefs[i], 0);
       }
@@ -725,12 +783,7 @@
       var rram2 = await API.revertRamOptimizer();
       if (rram2.status === 'ok') logAction(t('log_ram_reverted'), 'ok');
 
-      // Step 9: Revert GMS Doze
-      await yieldFrame(t('loading_reverting_gms_doze'));
-      await API.revertGmsDoze();
-      logAction(t('log_gms_doze_reverted'), 'ok');
-
-      // Step 9b: Revert Custom App Doze
+      // Step 9: Revert App Doze
       await yieldFrame(t('loading_reverting_cad'));
       await API.revertCustomAppDoze();
       logAction(t('log_cad_reverted'), 'ok');
@@ -744,6 +797,11 @@
       await yieldFrame(t('loading_reverting_bss'));
       await API.revertBatterySaver();
       logAction(t('log_bss_reverted'), 'ok');
+
+      // Step 12: Stop Screen-Off Opt
+      await yieldFrame(t('loading_reverting_soo'));
+      await API.revertScreenOffOpt();
+      logAction(t('log_soo_reverted'), 'ok');
 
       toast(t('toast_stocked'), 'ok');
       log(t('log_reboot_effect'), 'warn');
@@ -761,21 +819,27 @@
   // ══════════════════════════════
 
   function openWhitelist() {
+    var titleEl = document.querySelector('#wl-modal .modal-head h3 span[data-i18n]');
+    var noticeEl = document.querySelector('#wl-modal .modal-notice span[data-i18n="wl_notice"]');
+    if (titleEl) titleEl.textContent = t('wl_title');
+    if (noticeEl) noticeEl.textContent = t('wl_notice');
     $('wl-modal').classList.add('open');
-    if (!wlLoaded) {
-      renderWlLoading();
-      loadAllApps().then(function () {
-        return loadWlPkgs();
-      }).then(function () {
-        wlFiltered = getSortedFiltered();
-        renderWl();
-      });
-    } else {
-      loadWlPkgs().then(function () {
-        wlFiltered = getSortedFiltered();
-        renderWl();
-      });
-    }
+    renderWlLoading();
+    setTimeout(function () {
+      if (!wlLoaded) {
+        loadAllApps().then(function () {
+          return loadWlPkgs();
+        }).then(function () {
+          wlFiltered = getSortedFiltered();
+          renderWl();
+        });
+      } else {
+        loadWlPkgs().then(function () {
+          wlFiltered = getSortedFiltered();
+          renderWl();
+        });
+      }
+    }, 50);
   }
 
   function closeWhitelist() {
@@ -1139,18 +1203,18 @@
         loadCadPkgs().then(function () {
           return loadCadApps();
         }).then(function () {
-          cadFiltered = getCadFiltered();
+          cadFiltered = getCadSortedFiltered();
           renderCad();
         }).catch(function () {
-          cadFiltered = getCadFiltered();
+          cadFiltered = getCadSortedFiltered();
           renderCad();
         });
       } else {
         loadCadPkgs().then(function () {
-          cadFiltered = getCadFiltered();
+          cadFiltered = getCadSortedFiltered();
           renderCad();
         }).catch(function () {
-          cadFiltered = getCadFiltered();
+          cadFiltered = getCadSortedFiltered();
           renderCad();
         });
       }
@@ -1222,6 +1286,16 @@
       }
       return true;
     });
+  }
+
+  function getCadSortedFiltered() {
+    var filtered = getCadFiltered();
+    var checked = [], unchecked = [];
+    for (var i = 0; i < filtered.length; i++) {
+      if (cadPkgs.indexOf(filtered[i].pkg) !== -1) checked.push(filtered[i]);
+      else unchecked.push(filtered[i]);
+    }
+    return checked.concat(unchecked);
   }
 
   function setupCadIconObserver() {
@@ -1366,7 +1440,7 @@
         cadPkgs.push(pkg);
       }
       updateCadCount();
-      cadFiltered = getCadFiltered();
+      cadFiltered = getCadSortedFiltered();
 
       var list = $('cad-list');
       if (list) {
@@ -1449,7 +1523,7 @@
     cadSearch = val;
     if (cadSearchTimer) clearTimeout(cadSearchTimer);
     cadSearchTimer = setTimeout(function() {
-      cadFiltered = getCadFiltered();
+      cadFiltered = getCadSortedFiltered();
       renderCad();
     }, 150);
   }
@@ -1614,6 +1688,7 @@
     { id: 'cad-modal',           close: function() { closeCustomAppDoze(); } },
     { id: 'wl-modal',            close: function() { closeWhitelist(); } },
     { id: 'bss-modal',           close: function() { closeBssModal(); } },
+    { id: 'soo-modal',           close: function() { closeSooModal(); } },
     { id: 'about-modal',         close: function() { $('about-modal').classList.remove('open'); } },
     { id: 'io-modal',            close: function() { $('io-modal').classList.remove('open'); } },
     { id: 'lang-modal',          close: function() { $('lang-modal').classList.remove('open'); } },
@@ -1647,9 +1722,9 @@
     $('t-logs').addEventListener('change', function () { togglePref('log_killing'); });
     $('t-tracking').addEventListener('change', function () { togglePref('kill_tracking'); });
     $('t-ram-optimizer').addEventListener('change', function () { togglePref('ram_optimizer'); });
-    $('t-gms-doze').addEventListener('change', function () { togglePref('gms_doze'); });
     $('t-deep-doze').addEventListener('change', function () { togglePref('deep_doze'); });
     $('t-bss').addEventListener('change', function () { togglePref('battery_saver'); });
+    $('t-screen-off-opt').addEventListener('change', function () { togglePref('screen_off_opt'); });
     document.querySelectorAll('.tgl-row, .cat-row, .bss-opt-row').forEach(function (row) {
       row.addEventListener('click', function (e) {
         if (e.target.closest('.tgl')) return;
@@ -1685,6 +1760,17 @@
       })(_gi);
     }
 
+    $('soo-open').addEventListener('click', function() { _pushModalHistory(); openSooModal(); });
+    $('soo-close').addEventListener('click', closeSooModal);
+    $('soo-modal').addEventListener('click', function (e) {
+      if (e.target === this) closeSooModal();
+    });
+    $('soo-apply').addEventListener('click', saveSooOptions);
+    $('soo-t-kill-cache').addEventListener('change', function() {
+      var cacheExtras = $('soo-cache-extras');
+      if (cacheExtras) cacheExtras.style.maxHeight = this.checked ? '100px' : '0';
+    });
+
     // ── Custom App Doze ──
     $('cad-open').addEventListener('click', function() { _pushModalHistory(); openCustomAppDoze(); });
     $('cad-close').addEventListener('click', closeCustomAppDoze);
@@ -1702,7 +1788,7 @@
     $('t-custom-app-doze').addEventListener('change', function () { togglePref('custom_app_doze'); });
 
     // ── Whitelist ──
-    $('wl-open').addEventListener('click', function() { _pushModalHistory(); openWhitelist(); });
+    $('wl-open').addEventListener('click', function() { _pushModalHistory(); openWhitelist('deep_doze'); });
     $('wl-close').addEventListener('click', closeWhitelist);
     $('wl-modal').addEventListener('click', function (e) {
       if (e.target === this) closeWhitelist();
@@ -1848,10 +1934,10 @@
       if (rp.log_killing)    _steps.push('loading_killing_logs');
       if (rp.kill_tracking)  _steps.push('loading_applying_tracking');
       if (hasAnyCat)         _steps.push('loading_freezing_services');
-      if (rp.gms_doze)         _steps.push('loading_applying_gms_doze');
       if (rp.custom_app_doze)  _steps.push('loading_applying_cad');
       if (rp.deep_doze)        _steps.push('loading_applying_deep_doze');
       if (rp.battery_saver)    _steps.push('loading_applying_bss');
+      if (rp.screen_off_opt)   _steps.push('loading_applying_soo');
       var _total = _steps.length, _cur = 0;
 
       function stepLoad(key) {
@@ -1911,12 +1997,6 @@
           }
         }
 
-        if (rp.gms_doze) {
-          await stepLoad('loading_applying_gms_doze');
-          await API.applyGmsDoze();
-          logAction(t('log_gms_doze_applied'), 'ok');
-        }
-
         if (rp.custom_app_doze) {
           await stepLoad('loading_applying_cad');
           await API.applyCustomAppDoze();
@@ -1935,6 +2015,12 @@
           await stepLoad('loading_applying_bss');
           await API.applyBatterySaver();
           logAction(t('log_bss_applied'), 'ok');
+        }
+
+        if (rp.screen_off_opt) {
+          await stepLoad('loading_applying_soo');
+          await API.applyScreenOffOpt();
+          logAction(t('log_soo_applied'), 'ok');
         }
 
         toast(t('toast_reapplied'), 'ok');
@@ -2032,7 +2118,7 @@
     var appEl = null;
 
     function isModalOpen() {
-      var ids = ['wl-modal', 'cad-modal', 'bss-modal', 'about-modal', 'io-modal', 'lang-modal', 'lang-confirm-backdrop'];
+      var ids = ['wl-modal', 'cad-modal', 'bss-modal', 'soo-modal', 'about-modal', 'io-modal', 'lang-modal', 'lang-confirm-backdrop'];
       for (var i = 0; i < ids.length; i++) {
         var m = document.getElementById(ids[i]);
         if (m && m.classList.contains('open')) return true;
@@ -2050,7 +2136,7 @@
     document.addEventListener('touchstart', function (e) {
       if (isModalOpen()) return;
       if (!appEl) appEl = document.getElementById('app');
-      if ((appEl ? appEl.scrollTop : window.scrollY) === 0) {
+      if (appEl && appEl.scrollTop === 0) {
         startY = e.touches[0].clientY;
         pulling = true;
       }

@@ -11,6 +11,7 @@ RAM_LOG="$LOGDIR/ram.log"
 TWEAKS_LOG="$LOGDIR/kernel_tweaks.log"
 PROPS_LOG="$LOGDIR/props.log"
 BS_LOG="$LOGDIR/battery_saver.log"
+SOO_LOG="$LOGDIR/screen_off_opt.log"
 GMS_LIST="$MODDIR/config/gms_services.txt"
 USER_PREFS="$MODDIR/config/user_prefs"
 KERNEL_TWEAKS="$MODDIR/config/kernel_tweaks.txt"
@@ -153,6 +154,9 @@ freeze_category() {
   local target="$1" count=0 fail=0
   [ ! -f "$GMS_LIST" ] && { echo '{"status":"error","message":"gms_services.txt not found"}'; return; }
 
+  local _jobs_tmp="/data/local/tmp/frosty_jobs_$$"
+  : > "$_jobs_tmp"
+
   while IFS='|' read -r svc cat || [ -n "$svc" ]; do
     case "$svc" in ''|'#'*) continue ;; esac
     svc=$(echo "$svc" | tr -d " ")
@@ -160,10 +164,17 @@ freeze_category() {
     [ "$cat" = "$target" ] || continue
     if pm disable "$svc" >/dev/null 2>&1; then
       count=$((count + 1))
+      printf '%s\n' "$(printf '%s' "$svc" | cut -d/ -f1)" >> "$_jobs_tmp"
     else
       fail=$((fail + 1))
     fi
   done < "$GMS_LIST"
+
+  sort -u "$_jobs_tmp" 2>/dev/null | while IFS= read -r _pkg; do
+    [ -n "$_pkg" ] && cmd jobscheduler cancel -u 0 "$_pkg" >/dev/null 2>&1
+  done
+  rm -f "$_jobs_tmp"
+
   echo "{\"status\":\"ok\",\"disabled\":$count,\"failed\":$fail}"
 }
 
@@ -208,7 +219,6 @@ backup_settings() {
     "ENABLE_BLUR_DISABLE": ${ENABLE_BLUR_DISABLE:-0},
     "ENABLE_LOG_KILLING": ${ENABLE_LOG_KILLING:-0},
     "ENABLE_KILL_TRACKING": ${ENABLE_KILL_TRACKING:-0},
-    "ENABLE_GMS_DOZE": ${ENABLE_GMS_DOZE:-0},
     "ENABLE_DEEP_DOZE": ${ENABLE_DEEP_DOZE:-0},
     "DEEP_DOZE_LEVEL": "${DEEP_DOZE_LEVEL:-moderate}",
     "ENABLE_BATTERY_SAVER": ${ENABLE_BATTERY_SAVER:-0},
@@ -228,7 +238,16 @@ backup_settings() {
     "DISABLE_PAYMENTS": ${DISABLE_PAYMENTS:-0},
     "DISABLE_WEARABLES": ${DISABLE_WEARABLES:-0},
     "DISABLE_GAMES": ${DISABLE_GAMES:-0},
-    "ENABLE_CUSTOM_APP_DOZE": ${ENABLE_CUSTOM_APP_DOZE:-0}
+    "ENABLE_CUSTOM_APP_DOZE": ${ENABLE_CUSTOM_APP_DOZE:-0},
+    "ENABLE_SCREEN_OFF_OPT": ${ENABLE_SCREEN_OFF_OPT:-0},
+    "SOO_KILL_WIFI": ${SOO_KILL_WIFI:-0},
+    "SOO_KILL_BT": ${SOO_KILL_BT:-0},
+    "SOO_KILL_DATA": ${SOO_KILL_DATA:-0},
+    "SOO_KILL_LOCATION": ${SOO_KILL_LOCATION:-0},
+    "SOO_CONN_DELAY": ${SOO_CONN_DELAY:-5},
+    "SOO_RESTORE_ON_UNLOCK": ${SOO_RESTORE_ON_UNLOCK:-1},
+    "SOO_KILL_CACHE": ${SOO_KILL_CACHE:-0},
+    "SOO_CACHE_DELAY": ${SOO_CACHE_DELAY:-5}
   },
   "whitelist_b64": "$wl_b64",
   "patches_b64": "$patches_b64"
@@ -241,36 +260,44 @@ restore_settings() {
   local file="$1"
   [ ! -f "$file" ] && { echo "ERROR: File not found"; return 1; }
 
-  pi() { grep "\"$1\"" "$file" | grep -o '[0-9]*' | head -1; }
+  pi()  { grep "\"$1\"" "$file" | grep -o '[0-9]*' | head -1; }
   ps_() { grep "\"$1\"" "$file" | sed 's/.*: *"//;s/".*//' | head -1; }
 
-  local ram_opt=$(pi ENABLE_RAM_OPTIMIZER); [ -z "$ram_opt" ] && ram_opt=0
-  local ker_twe=$(pi ENABLE_KERNEL_TWEAKS); [ -z "$ker_twe" ] && ker_twe=0
-  local sys_pro=$(pi ENABLE_SYSTEM_PROPS); [ -z "$sys_pro" ] && sys_pro=0
-  local blu_dis=$(pi ENABLE_BLUR_DISABLE); [ -z "$blu_dis" ] && blu_dis=0
-  local log_kil=$(pi ENABLE_LOG_KILLING); [ -z "$log_kil" ] && log_kil=0
-  local kil_tra=$(pi ENABLE_KILL_TRACKING); [ -z "$kil_tra" ] && kil_tra=0
-  local gms_doz=$(pi ENABLE_GMS_DOZE); [ -z "$gms_doz" ] && gms_doz=0
-  local dep_doz=$(pi ENABLE_DEEP_DOZE); [ -z "$dep_doz" ] && dep_doz=0
-  local dep_lvl=$(ps_ DEEP_DOZE_LEVEL); [ -z "$dep_lvl" ] && dep_lvl="moderate"
-  local bss_ena=$(pi ENABLE_BATTERY_SAVER); [ -z "$bss_ena" ] && bss_ena=0
-  local bss_snd=$(pi BSS_SOUNDTRIGGER_DISABLED); [ -z "$bss_snd" ] && bss_snd=1
-  local bss_fbu=$(pi BSS_FULLBACKUP_DEFERRED); [ -z "$bss_fbu" ] && bss_fbu=1
-  local bss_kbu=$(pi BSS_KEYVALUEBACKUP_DEFERRED); [ -z "$bss_kbu" ] && bss_kbu=1
-  local bss_fsb=$(pi BSS_FORCE_STANDBY); [ -z "$bss_fsb" ] && bss_fsb=0
-  local bss_fbg=$(pi BSS_FORCE_BG_CHECK); [ -z "$bss_fbg" ] && bss_fbg=0
-  local bss_sen=$(pi BSS_SENSORS_DISABLED); [ -z "$bss_sen" ] && bss_sen=1
-  local bss_gps=$(pi BSS_GPS_MODE); [ -z "$bss_gps" ] && bss_gps=0
-  local bss_dat=$(pi BSS_DATASAVER); [ -z "$bss_dat" ] && bss_dat=0
-  local dis_tel=$(pi DISABLE_TELEMETRY); [ -z "$dis_tel" ] && dis_tel=0
-  local dis_bac=$(pi DISABLE_BACKGROUND); [ -z "$dis_bac" ] && dis_bac=0
-  local dis_loc=$(pi DISABLE_LOCATION); [ -z "$dis_loc" ] && dis_loc=0
-  local dis_con=$(pi DISABLE_CONNECTIVITY); [ -z "$dis_con" ] && dis_con=0
-  local dis_clo=$(pi DISABLE_CLOUD); [ -z "$dis_clo" ] && dis_clo=0
-  local dis_pay=$(pi DISABLE_PAYMENTS); [ -z "$dis_pay" ] && dis_pay=0
-  local dis_wea=$(pi DISABLE_WEARABLES); [ -z "$dis_wea" ] && dis_wea=0
-  local dis_gam=$(pi DISABLE_GAMES); [ -z "$dis_gam" ] && dis_gam=0
-  local cad_ena=$(pi ENABLE_CUSTOM_APP_DOZE); [ -z "$cad_ena" ] && cad_ena=0
+  local ram_opt=$(pi ENABLE_RAM_OPTIMIZER);         [ -z "$ram_opt" ] && ram_opt=0
+  local ker_twe=$(pi ENABLE_KERNEL_TWEAKS);         [ -z "$ker_twe" ] && ker_twe=0
+  local sys_pro=$(pi ENABLE_SYSTEM_PROPS);          [ -z "$sys_pro" ] && sys_pro=0
+  local blu_dis=$(pi ENABLE_BLUR_DISABLE);          [ -z "$blu_dis" ] && blu_dis=0
+  local log_kil=$(pi ENABLE_LOG_KILLING);           [ -z "$log_kil" ] && log_kil=0
+  local kil_tra=$(pi ENABLE_KILL_TRACKING);         [ -z "$kil_tra" ] && kil_tra=0
+  local dep_doz=$(pi ENABLE_DEEP_DOZE);             [ -z "$dep_doz" ] && dep_doz=0
+  local dep_lvl=$(ps_ DEEP_DOZE_LEVEL);             [ -z "$dep_lvl" ] && dep_lvl="moderate"
+  local bss_ena=$(pi ENABLE_BATTERY_SAVER);         [ -z "$bss_ena" ] && bss_ena=0
+  local bss_snd=$(pi BSS_SOUNDTRIGGER_DISABLED);    [ -z "$bss_snd" ] && bss_snd=1
+  local bss_fbu=$(pi BSS_FULLBACKUP_DEFERRED);      [ -z "$bss_fbu" ] && bss_fbu=1
+  local bss_kbu=$(pi BSS_KEYVALUEBACKUP_DEFERRED);  [ -z "$bss_kbu" ] && bss_kbu=1
+  local bss_fsb=$(pi BSS_FORCE_STANDBY);            [ -z "$bss_fsb" ] && bss_fsb=0
+  local bss_fbg=$(pi BSS_FORCE_BG_CHECK);           [ -z "$bss_fbg" ] && bss_fbg=0
+  local bss_sen=$(pi BSS_SENSORS_DISABLED);         [ -z "$bss_sen" ] && bss_sen=1
+  local bss_gps=$(pi BSS_GPS_MODE);                 [ -z "$bss_gps" ] && bss_gps=0
+  local bss_dat=$(pi BSS_DATASAVER);                [ -z "$bss_dat" ] && bss_dat=0
+  local dis_tel=$(pi DISABLE_TELEMETRY);            [ -z "$dis_tel" ] && dis_tel=0
+  local dis_bac=$(pi DISABLE_BACKGROUND);           [ -z "$dis_bac" ] && dis_bac=0
+  local dis_loc=$(pi DISABLE_LOCATION);             [ -z "$dis_loc" ] && dis_loc=0
+  local dis_con=$(pi DISABLE_CONNECTIVITY);         [ -z "$dis_con" ] && dis_con=0
+  local dis_clo=$(pi DISABLE_CLOUD);                [ -z "$dis_clo" ] && dis_clo=0
+  local dis_pay=$(pi DISABLE_PAYMENTS);             [ -z "$dis_pay" ] && dis_pay=0
+  local dis_wea=$(pi DISABLE_WEARABLES);            [ -z "$dis_wea" ] && dis_wea=0
+  local dis_gam=$(pi DISABLE_GAMES);                [ -z "$dis_gam" ] && dis_gam=0
+  local cad_ena=$(pi ENABLE_CUSTOM_APP_DOZE);       [ -z "$cad_ena" ] && cad_ena=0
+  local soo_ena=$(pi ENABLE_SCREEN_OFF_OPT);        [ -z "$soo_ena" ] && soo_ena=0
+  local soo_wifi=$(pi SOO_KILL_WIFI);               [ -z "$soo_wifi" ] && soo_wifi=0
+  local soo_bt=$(pi SOO_KILL_BT);                   [ -z "$soo_bt" ]   && soo_bt=0
+  local soo_data=$(pi SOO_KILL_DATA);               [ -z "$soo_data" ] && soo_data=0
+  local soo_loc=$(pi SOO_KILL_LOCATION);            [ -z "$soo_loc" ]  && soo_loc=0
+  local soo_cdel=$(pi SOO_CONN_DELAY);              [ -z "$soo_cdel" ] && soo_cdel=5
+  local soo_rest=$(pi SOO_RESTORE_ON_UNLOCK);       [ -z "$soo_rest" ] && soo_rest=1
+  local soo_cache=$(pi SOO_KILL_CACHE);             [ -z "$soo_cache" ] && soo_cache=0
+  local soo_cdel2=$(pi SOO_CACHE_DELAY);            [ -z "$soo_cdel2" ] && soo_cdel2=5
 
   cat > "$MODDIR/config/user_prefs" << ENDPREFS
 ENABLE_RAM_OPTIMIZER=$ram_opt
@@ -279,9 +306,8 @@ ENABLE_SYSTEM_PROPS=$sys_pro
 ENABLE_BLUR_DISABLE=$blu_dis
 ENABLE_LOG_KILLING=$log_kil
 ENABLE_KILL_TRACKING=$kil_tra
-ENABLE_GMS_DOZE=$gms_doz
 ENABLE_DEEP_DOZE=$dep_doz
-DEEP_DOZE_LEVEL="$dep_lvl"
+DEEP_DOZE_LEVEL=$dep_lvl
 ENABLE_BATTERY_SAVER=$bss_ena
 BSS_SOUNDTRIGGER_DISABLED=$bss_snd
 BSS_FULLBACKUP_DEFERRED=$bss_fbu
@@ -300,15 +326,24 @@ DISABLE_PAYMENTS=$dis_pay
 DISABLE_WEARABLES=$dis_wea
 DISABLE_GAMES=$dis_gam
 ENABLE_CUSTOM_APP_DOZE=$cad_ena
+ENABLE_SCREEN_OFF_OPT=$soo_ena
+SOO_KILL_WIFI=$soo_wifi
+SOO_KILL_BT=$soo_bt
+SOO_KILL_DATA=$soo_data
+SOO_KILL_LOCATION=$soo_loc
+SOO_CONN_DELAY=$soo_cdel
+SOO_RESTORE_ON_UNLOCK=$soo_rest
+SOO_KILL_CACHE=$soo_cache
+SOO_CACHE_DELAY=$soo_cdel2
 ENDPREFS
 
   local b64_data=$(grep '"whitelist_b64"' "$file" | sed 's/.*: *"//;s/".*//')
   if [ -n "$b64_data" ]; then
-    echo "$b64_data" | base64 -d > "$MODDIR/config/doze_whitelist.txt"
+    printf '%s' "$b64_data" | base64 -d > "$MODDIR/config/doze_whitelist.txt"
   fi
   local patches_data=$(grep '"patches_b64"' "$file" | sed 's/.*: *"//;s/".*//')
   if [ -n "$patches_data" ]; then
-    echo "$patches_data" | base64 -d > "$MODDIR/config/doze_patches.txt"
+    printf '%s' "$patches_data" | base64 -d > "$MODDIR/config/doze_patches.txt"
   fi
   echo "OK"
 }
@@ -322,7 +357,9 @@ list_backups() {
   local first=1
   for f in $files; do
     [ "$first" -eq 1 ] && first=0 || printf ','
-    printf '{"name":"%s","path":"%s"}' "$(basename "$f")" "$f"
+    local _name
+    _name=$(basename "$f" | sed 's/\\/\\\\/g; s/"/\\"/g')
+    printf '{"name":"%s","path":"%s"}' "$_name" "$f"
   done
   printf ']\n'
 }
@@ -409,19 +446,16 @@ apply_ram_optimizer() {
     fi
   fi
 
-  # Memory compaction: lets Android compact background app memory rather than evicting them outright, improving app resume times under memory pressure.
   if device_config put activity_manager use_compaction true 2>/dev/null; then
     log_ram "[OK] use_compaction = true"
     kcount=$((kcount + 1))
   fi
 
-  # App freezer: freeze background app processes when idle instead of killing them, dramatically improving cold-start times for recently used apps.
   if device_config put activity_manager_native_boot use_freezer true 2>/dev/null; then
     log_ram "[OK] use_freezer = true"
     kcount=$((kcount + 1))
   fi
 
-  # Reduce alarm wakeups during idle - batches non-critical alarms more aggressively.
   if device_config put alarm_manager save_battery_on_idle true 2>/dev/null; then
     log_ram "[OK] alarm save_battery_on_idle = true"
     kcount=$((kcount + 1))
@@ -534,7 +568,6 @@ apply_kernel() {
   done
   log_tweak "Disabled $debug_count debug masks"
 
-  # TCP congestion: best available algorithm
   _tcp_cc=/proc/sys/net/ipv4/tcp_congestion_control
   _tcp_av=/proc/sys/net/ipv4/tcp_available_congestion_control
   if [ -f "$_tcp_cc" ] && [ -f "$_tcp_av" ]; then
@@ -553,6 +586,43 @@ apply_kernel() {
       esac
     done
   fi
+
+  log_tweak ""
+  log_tweak "# BLOCK I/O (dynamic)"
+  local io_count=0
+  for queue in /sys/block/*/queue; do
+    [ -d "$queue" ] || continue
+    local dev
+    dev=$(echo "$queue" | cut -d/ -f4)
+    case "$dev" in ram*|loop*|zram*) continue ;; esac
+    if [ -f "$queue/read_ahead_kb" ]; then
+      printf '128\n' > "$queue/read_ahead_kb" 2>/dev/null && io_count=$((io_count + 1))
+    fi
+    if [ -f "$queue/iostats" ]; then
+      printf '0\n' > "$queue/iostats" 2>/dev/null && io_count=$((io_count + 1))
+    fi
+  done
+  log_tweak "Applied $io_count block I/O tweaks"
+
+  log_tweak ""
+  log_tweak "# TCP EXTRAS (dynamic)"
+  for _path_val in \
+    "/proc/sys/net/ipv4/tcp_slow_start_after_idle|0" \
+    "/proc/sys/net/ipv4/tcp_fastopen|3"; do
+    local _p _v
+    _p=$(printf '%s' "$_path_val" | cut -d'|' -f1)
+    _v=$(printf '%s' "$_path_val" | cut -d'|' -f2)
+    [ -f "$_p" ] || continue
+    if ! grep -q "^$(basename "$_p")=" "$KERNEL_BACKUP" 2>/dev/null; then
+      printf '%s=%s=%s\n' "$(basename "$_p")" "$(cat "$_p" 2>/dev/null)" "$_p" >> "$KERNEL_BACKUP"
+    fi
+    local _old_v
+    _old_v=$(cat "$_p" 2>/dev/null)
+    if printf '%s\n' "$_v" > "$_p" 2>/dev/null; then
+      log_tweak "[OK] $(basename "$_p"): $_old_v -> $_v"
+      count=$((count + 1))
+    fi
+  done
 
   echo "{\"status\":\"ok\",\"applied\":$count,\"failed\":$fail,\"skipped\":$skip,\"debug_masks\":$debug_count}"
 }
@@ -628,7 +698,7 @@ apply_battery_saver() {
 revert_battery_saver() {
   settings delete global battery_saver_constants >/dev/null 2>&1
   settings put global low_power_sticky 0 2>/dev/null
-  settings put global low_power_sticky_auto_disable_enabled 0 2>/dev/null
+  settings put global low_power_sticky_auto_disable_enabled 1 2>/dev/null
   settings put global low_power 0 2>/dev/null
   echo "Frosty v${MODVER:-?} - Battery Saver - $(date '+%Y-%m-%d %H:%M:%S')" > "$BS_LOG"
   echo "[$(date '+%H:%M:%S')] [OK] Reverted" >> "$BS_LOG"
@@ -689,11 +759,49 @@ kill_logs() {
   echo 1 > /proc/sys/kernel/printk_ratelimit 2>/dev/null
   echo 1 > /proc/sys/kernel/printk_ratelimit_burst 2>/dev/null
 
-  # Disable PSS memory profiling at app launch - eliminates the sampling overhead that ActivityManagerService incurs on every app start.
   device_config put activity_manager disable_app_profiler_pss_profiling true 2>/dev/null
   device_config put activity_manager activity_start_pss_defer 300000 2>/dev/null
 
   echo "{\"status\":\"ok\",\"killed\":$k}"
+}
+
+revert_kill_logs() {
+  (
+    for tag in dumpsys:procstats dumpsys:usagestats procstats usagestats \
+               data_app_wtf keymaster system_server_wtf system_app_strictmode \
+               system_app_wtf system_server_strictmode data_app_strictmode \
+               netstats data_app_anr data_app_crash system_server_anr \
+               system_server_watchdog system_server_crash system_server_native_crash \
+               system_server_lowmem system_app_crash system_app_anr storage_trim \
+               SYSTEM_AUDIT SYSTEM_BOOT SYSTEM_LAST_KMSG system_app_native_crash \
+               SYSTEM_TOMBSTONE SYSTEM_TOMBSTONE_PROTO data_app_native_crash \
+               SYSTEM_RESTART; do
+      content call --uri content://settings/global --method DELETE_value \
+        --arg "dropbox:$tag" 2>/dev/null >/dev/null &
+    done
+    wait
+  ) &
+
+  settings delete global battery_stats_constants 2>/dev/null
+
+  settings delete global netstats_poll_interval >/dev/null 2>&1
+  settings delete global netstats_persist_threshold >/dev/null 2>&1
+  settings delete global netstats_global_alert_bytes >/dev/null 2>&1
+
+  settings delete global wifi_scan_throttle_enabled >/dev/null 2>&1
+  settings delete global wifi_scan_always_enabled >/dev/null 2>&1
+
+  echo 0 > /proc/sys/kernel/printk_ratelimit 2>/dev/null
+  echo 10 > /proc/sys/kernel/printk_ratelimit_burst 2>/dev/null
+
+  echo 1 > /sys/kernel/tracing/tracing_on 2>/dev/null
+
+  device_config delete activity_manager disable_app_profiler_pss_profiling 2>/dev/null
+  device_config delete activity_manager activity_start_pss_defer 2>/dev/null
+
+  cmd wifi set-verbose-logging enabled >/dev/null 2>&1
+
+  echo '{"status":"ok"}'
 }
 
 kill_tracking() {
@@ -714,6 +822,13 @@ kill_tracking() {
   settings put global network_watchlist_enabled 0 >/dev/null 2>&1
   settings put global limit_ad_tracking 1 >/dev/null 2>&1
   settings put global tron_enabled 0 >/dev/null 2>&1
+  settings put global gms_checkin_timeout_min 120 >/dev/null 2>&1
+
+  local _gms_uid
+  _gms_uid=$(dumpsys package com.google.android.gms 2>/dev/null \
+    | grep -m1 "userId=" | grep -o 'userId=[0-9]*' | cut -d= -f2)
+  [ -n "$_gms_uid" ] && cmd netpolicy add restrict-background-blacklist "$_gms_uid" >/dev/null 2>&1
+
   echo '{"status":"ok"}'
 }
 
@@ -735,6 +850,13 @@ revert_tracking() {
   settings put global network_watchlist_enabled 1 >/dev/null 2>&1
   settings put global limit_ad_tracking 0 >/dev/null 2>&1
   settings put global tron_enabled 1 >/dev/null 2>&1
+  settings delete global gms_checkin_timeout_min >/dev/null 2>&1
+
+  local _gms_uid
+  _gms_uid=$(dumpsys package com.google.android.gms 2>/dev/null \
+    | grep -m1 "userId=" | grep -o 'userId=[0-9]*' | cut -d= -f2)
+  [ -n "$_gms_uid" ] && cmd netpolicy remove restrict-background-blacklist "$_gms_uid" >/dev/null 2>&1
+
   echo '{"status":"ok"}'
 }
 
@@ -777,6 +899,18 @@ wl_remove() {
   echo '{"status":"ok"}'
 }
 
+# Screen-Off Optimization
+soo_apply() {
+  chmod +x "$MODDIR/screen_off_opt.sh" 2>/dev/null
+  sh "$MODDIR/screen_off_opt.sh" start 2>/dev/null
+  echo '{"status":"ok"}'
+}
+
+soo_revert() {
+  sh "$MODDIR/screen_off_opt.sh" stop 2>/dev/null
+  echo '{"status":"ok"}'
+}
+
 case "$1" in
   freeze)             freeze_services ;;
   stock)              stock_services ;;
@@ -790,6 +924,7 @@ case "$1" in
   bss_apply)          apply_battery_saver ;;
   bss_revert)         revert_battery_saver ;;
   kill_logs)          kill_logs ;;
+  revert_kill_logs)   revert_kill_logs ;;
   kill_tracking)      kill_tracking ;;
   revert_tracking)    revert_tracking ;;
   export)             backup_settings ;;
@@ -799,5 +934,8 @@ case "$1" in
   wl_list)            wl_list ;;
   wl_add)             wl_add "$2" ;;
   wl_remove)          wl_remove "$2" ;;
+  soo_apply)          soo_apply ;;
+  soo_revert)         soo_revert ;;
+  *)  echo '{"status":"error","message":"unknown action"}'; exit 1 ;;
 esac
 exit 0
