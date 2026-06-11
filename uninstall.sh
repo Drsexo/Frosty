@@ -87,6 +87,8 @@ if [ -f "$PATCHES_FILE" ]; then
     pkg=$(echo "$pkg" | tr -d ' ')
     [ -z "$pkg" ] && continue
     dumpsys deviceidle whitelist +"$pkg" >/dev/null 2>&1
+    cmd deviceidle sys-whitelist +"$pkg" >/dev/null 2>&1
+    cmd deviceidle except-idle-whitelist +"$pkg" >/dev/null 2>&1
     cmd appops set "$pkg" IGNORE_BATTERY_OPTIMIZATIONS default 2>/dev/null
   done < "$PATCHES_FILE"
 fi
@@ -111,6 +113,8 @@ if [ -f "$SOO_STATE" ]; then
       bt)         svc bluetooth enable 2>/dev/null ;;
       data)       svc data enable 2>/dev/null ;;
       location:*) settings put secure location_mode "${line#location:}" 2>/dev/null ;;
+      sensors)    settings put global sensors_off 0 2>/dev/null ;;
+      panel_lpm)  settings put global display_panel_lpm 0 2>/dev/null ;;
     esac
   done < "$SOO_STATE"
   rm -f "$SOO_STATE"
@@ -134,6 +138,7 @@ for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
   am set-standby-bucket "$pkg" active 2>/dev/null
   am set-inactive "$pkg" false 2>/dev/null
 done
+dumpsys sensorservice enable 2>/dev/null
 dumpsys deviceidle unforce 2>/dev/null
 
 # Revert DropBox
@@ -157,8 +162,12 @@ log "Reverting NetworkStats..."
 settings delete global netstats_poll_interval 2>/dev/null
 settings delete global netstats_persist_threshold 2>/dev/null
 settings delete global netstats_global_alert_bytes 2>/dev/null
-settings put global wifi_scan_throttle_enabled 1 2>/dev/null
-settings put global wifi_scan_always_enabled 1 2>/dev/null
+settings delete global wifi_scan_throttle_enabled 2>/dev/null
+settings delete global wifi_scan_always_enabled 2>/dev/null
+
+# Revert Kill Tracking netpolicy for GMS
+_gms_uid=$(dumpsys package com.google.android.gms 2>/dev/null | grep "userId=" | head -1 | sed 's/.*userId=//' | tr -d ' ')
+[ -n "$_gms_uid" ] && cmd netpolicy remove restrict-background-blacklist "$_gms_uid" 2>/dev/null
 
 # Revert Google tracking
 log "Reverting Google tracking..."
@@ -179,10 +188,22 @@ settings put global usagestats_collection_enabled 1 >/dev/null 2>&1
 settings put global network_watchlist_enabled 1 >/dev/null 2>&1
 settings put global limit_ad_tracking 0 >/dev/null 2>&1
 settings put global tron_enabled 1 >/dev/null 2>&1
+settings delete global gms_checkin_timeout_min 2>/dev/null
+settings delete global binder_calls_stats 2>/dev/null
 
 # Re-enable GMS services
-if [ -f "$GMS_LIST" ]; then
-  log "Re-enabling GMS services..."
+_frozen_file="$MODDIR/tmp/frozen_services.txt"
+if [ -f "$_frozen_file" ]; then
+  log "Re-enabling GMS services from tracking file..."
+  count=0
+  while IFS= read -r service; do
+    case "$service" in '#'*|'') continue ;; esac
+    pm enable "$service" >/dev/null 2>&1 && count=$((count + 1))
+  done < "$_frozen_file"
+  rm -f "$_frozen_file"
+  log "Re-enabled $count services"
+elif [ -f "$GMS_LIST" ]; then
+  log "Re-enabling GMS services from full list..."
   count=0
   while IFS='|' read -r service category || [ -n "$service" ]; do
     case "$service" in '#'*|'') continue ;; esac
@@ -192,6 +213,7 @@ if [ -f "$GMS_LIST" ]; then
   log "Re-enabled $count services"
 fi
 
+rm -f "$MODDIR/tmp/frozen_services.txt" "$MODDIR/tmp/ram_clean.log" "$MODDIR/tmp/ram_clean.pid"
 log "UNINSTALL COMPLETE - reboot recommended"
 rm -rf "$TEMP_DIR"
 sleep 5

@@ -45,8 +45,10 @@ if [ "$ENABLE_CUSTOM_APP_DOZE" = "1" ] && [ -f "$_CAD_PATCHES" ] && [ -f "$_DIXM
     cp -af "$_DIXML" "$_tmp" 2>/dev/null
 
     for _pkg in $_cad_pkgs; do
-      sed -i "/<wl n=\"$_pkg\"/d" "$_tmp" 2>/dev/null
+      _esc=$(printf '%s' "$_pkg" | sed 's/\./\\./g')
+      sed -i "/<wl n=\"$_esc\"/d" "$_tmp" 2>/dev/null
     done
+    unset _esc
     sed -i '/<\/config>/d' "$_tmp"
 
     {
@@ -109,3 +111,4 @@ else
   rmdir "$MODDIR/system/etc" 2>/dev/null
   rmdir "$MODDIR/system" 2>/dev/null
 fi
+unset INITDIR BINDIR ENABLE_BLUR_DISABLE ENABLE_LOG_KILLING ENABLE_CUSTOM_APP_DOZE

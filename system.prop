@@ -141,5 +141,5 @@ ro.ril.power_collapse=1
 
 # Misc
 config.disable_rtt=true
-db.log.slow_query_threshold=0
+db.log.slow_query_threshold=-1
 ro.config.small_battery=true

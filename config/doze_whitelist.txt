@@ -41,6 +41,7 @@ com.motorola.launcher3
 com.nothing.launcher
 com.teslacoilsw.launcher
 ch.deletescape.lawnchair.plah
+app.lawnchair
 bitpit.launcher
 
 # Telephony & Dialer

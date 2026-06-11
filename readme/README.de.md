@@ -22,6 +22,10 @@
 
 </div>
 
+<div align="center">
+<img src="images/de.png" width="600">
+</div>
+
 ## Übersicht
 
 Frosty optimiert die Akkulaufzeit, indem es GMS-Dienste einfriert, systemweite Doze-Verbesserungen anwendet und das Verhalten bei ausgeschaltetem Bildschirm automatisiert. Konfiguriere alles über die WebUI.
@@ -32,7 +36,7 @@ Frosty optimiert die Akkulaufzeit, indem es GMS-Dienste einfriert, systemweite D
 - **App-Doze**: Entferne jede beliebige App aus der Doze-Ausnahmeliste von Android. GMS ist hier ebenfalls auswählbar und ersetzt den alten dedizierten GMS-Doze-Schalter.
 - **Deep Doze**: Aggressive Hintergrundbeschränkungen für alle Apps (Moderat / Maximum).
 - **Screen-Off-Optimierung**: Deaktiviert automatisch ausgewählte Verbindungen (WLAN, Bluetooth, Daten, Standort) und leert gecachte Apps nach einer konfigurierbaren Verzögerung bei ausgeschaltetem Bildschirm. Stellt beim Entsperren alles wieder her.
-- **Google-Tracking blockieren**: Deaktiviert GMS-Analysen, Clearcut-Telemetrie, Phenotype-Polling und Ad-Tracking.
+- **Google-Tracking deaktivieren**: Deaktiviert GMS-Analysen, Clearcut-Telemetrie, Phenotype-Polling und Ad-Tracking.
 - **Kernel-Tweaks**: Optimierungen für Scheduler, VM, Netzwerk und Debugging.
 - **RAM-Optimierer**: Passt Prozesslimits, Speicherkomprimierung und zram-Verhalten an.
 - **System-Props**: Deaktiviere Debug-Eigenschaften, um RAM und Akku zu sparen.
@@ -70,13 +74,13 @@ Frosty optimiert die Akkulaufzeit, indem es GMS-Dienste einfriert, systemweite D
 | 📊 **Telemetrie** | Keine. Stoppt Werbung, Analysen, Tracking. |
 | 🔄 **Hintergrund** | Automatische Updates können verzögert werden. |
 
-#### Kann Funktionen stören
-| Kategorie | Was gestört wird |
+#### Kann Funktionen beeinträchtigen
+| Kategorie | Was beeinträchtigt wird |
 |----------|-------------|
 | 📍 **Standort** | Maps, Navigation, Mein Gerät finden, Standortfreigabe |
 | 📡 **Konnektivität** | Chromecast, Quick Share, Fast Pair |
 | ☁️ **Cloud** | Google Login, Autofill, Passwörter, Backups |
-| 💳 **Zahlungen** | Google Pay, NFC Tap-to-Pay |
+| 💳 **Zahlungen** | Google Pay, NFC-Kontaktloszahlung |
 | ⌚ **Wearables** | Wear OS, Google Fit, Fitness-Tracking |
 | 🎮 **Spiele** | Play Games Erfolge, Bestenlisten, Cloud-Speicherstände |
 
@@ -85,8 +89,8 @@ Frosty optimiert die Akkulaufzeit, indem es GMS-Dienste einfriert, systemweite D
 | Funktion | Moderat | Maximum |
 |---------|:--------:|:-------:|
 | Aggressive Doze-Konstanten | ✅ | ✅ |
-| App-Standby-Buckets (selten) | ✅ | ✅ |
-| Screen-Off Wakelock-Killer | ✅ | ✅ |
+| App Standby Buckets (Rare) | ✅ | ✅ |
+| Screen-Off Wakelock-Beendigung | ✅ | ✅ |
 | WAKE_LOCK verweigern | ❌ | ✅ |
 
 ## FAQ

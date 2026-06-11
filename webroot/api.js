@@ -76,8 +76,10 @@ var API = (function () {
     soo_kill_location:          'SOO_KILL_LOCATION',
     soo_conn_delay:            'SOO_CONN_DELAY',
     soo_restore_on_unlock:      'SOO_RESTORE_ON_UNLOCK',
-    soo_kill_cache:             'SOO_KILL_CACHE',
-    soo_cache_delay:            'SOO_CACHE_DELAY'
+    soo_ram_clean_mode:         'SOO_RAM_CLEAN_MODE',
+    soo_ram_clean_delay:        'SOO_RAM_CLEAN_DELAY',
+    soo_kill_sensors:           'SOO_KILL_SENSORS',
+    soo_kill_panel_lpm:         'SOO_KILL_PANEL_LPM'
   };
   var CAT_MAP = {
     telemetry:    'DISABLE_TELEMETRY',
@@ -106,18 +108,20 @@ var API = (function () {
     }
 
     var BSS_DEFAULT_1 = {
-      bss_soundtrigger_disabled: 1, bss_fullbackup_deferred: 1, bss_keyvaluebackup_deferred: 1, bss_sensors_disabled: 1
+      bss_soundtrigger_disabled: 0, bss_fullbackup_deferred: 0, bss_keyvaluebackup_deferred: 0, bss_sensors_disabled: 0
     };
     var SOO_DEFAULTS = {
-      soo_restore_on_unlock: 1, soo_conn_delay: 5
+      soo_restore_on_unlock: 1, soo_conn_delay: 5, soo_ram_clean_delay: 5
     };
     var prefs = {};
     for (var pk in PREF_MAP) {
       var envKey = PREF_MAP[pk];
       if (pk === 'deep_doze_level') {
         prefs[pk] = vals[envKey] || 'moderate';
+      } else if (pk === 'soo_ram_clean_mode') {
+        prefs[pk] = vals[envKey] || 'off';
       } else if (BSS_DEFAULT_1[pk] !== undefined) {
-        prefs[pk] = vals[envKey] !== undefined && vals[envKey] !== '' ? parseInt(vals[envKey]) : 1;
+        prefs[pk] = vals[envKey] !== undefined && vals[envKey] !== '' ? parseInt(vals[envKey]) : 0;
       } else if (SOO_DEFAULTS[pk] !== undefined) {
         prefs[pk] = vals[envKey] !== undefined && vals[envKey] !== '' ? parseInt(vals[envKey]) : SOO_DEFAULTS[pk];
       } else {
@@ -144,6 +148,65 @@ var API = (function () {
 
     await run(cmd);
     return { status: 'ok' };
+  }
+
+  async function applyKernelTweaks() {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh apply_kernel 2>/dev/null');
+  }
+
+  async function revertKernelTweaks() {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh revert_kernel 2>/dev/null');
+  }
+
+  async function toggleSystemProps() {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh apply_sysprops 2>/dev/null');
+  }
+
+  async function applyRamOptimizer() {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh apply_ram 2>/dev/null');
+  }
+
+  async function revertRamOptimizer() {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh revert_ram 2>/dev/null');
+  }
+
+  async function killLogs() {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh kill_logs 2>/dev/null');
+  }
+
+  async function revertKillLogs() {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh revert_logs 2>/dev/null');
+  }
+
+  async function applyKillTracking() {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh kill_tracking 2>/dev/null');
+  }
+
+  async function revertKillTracking() {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh revert_tracking 2>/dev/null');
+  }
+
+  async function applyBatterySaver() {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh apply_bss 2>/dev/null');
+  }
+
+  async function revertBatterySaver() {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh revert_bss 2>/dev/null');
+  }
+
+  async function applyBlur() {
+    var cmd = '. "' + PREFS + '"; ' +
+      'if [ "$ENABLE_BLUR_DISABLE" = "1" ]; then ' +
+      'resetprop -n disableBlurs true; resetprop -n enable_blurs_on_windows 0; ' +
+      'resetprop -n ro.launcher.blur.appLaunch 0; resetprop -n ro.sf.blurs_are_expensive 0; ' +
+      'resetprop -n ro.surface_flinger.supports_background_blur 0; ' +
+      'echo "{\\"status\\":\\"ok\\",\\"blur\\":\\"disabled\\",\\"message\\":\\"Reboot for full effect\\"}"; ' +
+      'else ' +
+      'resetprop --delete disableBlurs 2>/dev/null; resetprop --delete enable_blurs_on_windows 2>/dev/null; ' +
+      'resetprop --delete ro.launcher.blur.appLaunch 2>/dev/null; resetprop --delete ro.sf.blurs_are_expensive 2>/dev/null; ' +
+      'resetprop --delete ro.surface_flinger.supports_background_blur 2>/dev/null; ' +
+      'echo "{\\"status\\":\\"ok\\",\\"blur\\":\\"enabled\\",\\"message\\":\\"Reboot for full effect\\"}"; fi';
+    return await runJSON(cmd);
   }
 
   async function applyFreeze() {
@@ -183,6 +246,7 @@ var API = (function () {
   async function freezeCategory(category) {
     return await runJSON('sh ' + MODDIR + '/frosty.sh freeze_category \'' + esc(category) + '\' 2>/dev/null');
   }
+
   async function unfreezeCategory(category) {
     return await runJSON('sh ' + MODDIR + '/frosty.sh unfreeze_category \'' + esc(category) + '\' 2>/dev/null');
   }
@@ -195,78 +259,6 @@ var API = (function () {
   async function revertDeepDoze() {
     await run('sh ' + MODDIR + '/deep_doze.sh stock 2>&1');
     return { status: 'ok' };
-  }
-
-  async function applyRamOptimizer() {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh ram_optimizer 2>/dev/null');
-  }
-
-  async function revertRamOptimizer() {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh ram_restore 2>/dev/null');
-  }
-
-  async function applyKernelTweaks() {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh apply_kernel 2>/dev/null');
-  }
-
-  async function revertKernelTweaks() {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh revert_kernel 2>/dev/null');
-  }
-
-  async function applyBlur() {
-    var cmd = '. "' + PREFS + '"; ' +
-      'if [ "$ENABLE_BLUR_DISABLE" = "1" ]; then ' +
-      'resetprop -n disableBlurs true; resetprop -n enable_blurs_on_windows 0; ' +
-      'resetprop -n ro.launcher.blur.appLaunch 0; resetprop -n ro.sf.blurs_are_expensive 0; ' +
-      'resetprop -n ro.surface_flinger.supports_background_blur 0; ' +
-      'echo "{\\"status\\":\\"ok\\",\\"blur\\":\\"disabled\\",\\"message\\":\\"Reboot for full effect\\"}"; ' +
-      'else ' +
-      'resetprop --delete disableBlurs 2>/dev/null; resetprop --delete enable_blurs_on_windows 2>/dev/null; ' +
-      'resetprop --delete ro.launcher.blur.appLaunch 2>/dev/null; resetprop --delete ro.sf.blurs_are_expensive 2>/dev/null; ' +
-      'resetprop --delete ro.surface_flinger.supports_background_blur 2>/dev/null; ' +
-      'echo "{\\"status\\":\\"ok\\",\\"blur\\":\\"enabled\\",\\"message\\":\\"Reboot for full effect\\"}"; fi';
-    return await runJSON(cmd);
-  }
-
-  async function applyBatterySaver() {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh bss_apply 2>/dev/null');
-  }
-
-  async function revertBatterySaver() {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh bss_revert 2>/dev/null');
-  }
-
-  async function killLogs() {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh kill_logs 2>/dev/null');
-  }
-
-  async function revertKillLogs() {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh revert_kill_logs 2>/dev/null');
-  }
-
-  async function applyKillTracking() {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh kill_tracking 2>/dev/null');
-  }
-
-  async function revertKillTracking() {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh revert_tracking 2>/dev/null');
-  }
-
-  async function toggleSystemProps() {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh apply_sysprops 2>/dev/null');
-  }
-
-  async function getWhitelist() {
-    var raw = await run('sh ' + MODDIR + '/frosty.sh wl_list 2>/dev/null');
-    try { return JSON.parse(raw); } catch(e) { return { status: 'ok', packages: [] }; }
-  }
-
-  async function addWhitelist(pkg) {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh wl_add \'' + esc(pkg) + '\' 2>/dev/null');
-  }
-
-  async function removeWhitelist(pkg) {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh wl_remove \'' + esc(pkg) + '\' 2>/dev/null');
   }
 
   async function applyCustomAppDoze() {
@@ -306,16 +298,61 @@ var API = (function () {
   }
 
   async function applyScreenOffOpt() {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh soo_apply 2>/dev/null');
+    return await runJSON('sh ' + MODDIR + '/frosty.sh apply_soo 2>/dev/null');
   }
 
   async function revertScreenOffOpt() {
-    return await runJSON('sh ' + MODDIR + '/frosty.sh soo_revert 2>/dev/null');
+    return await runJSON('sh ' + MODDIR + '/frosty.sh revert_soo 2>/dev/null');
+  }
+
+  async function getWhitelist() {
+    var raw = await run('sh ' + MODDIR + '/frosty.sh list_wl 2>/dev/null');
+    try { return JSON.parse(raw); } catch(e) { return { status: 'ok', packages: [] }; }
+  }
+
+  async function addWhitelist(pkg) {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh add_wl \'' + esc(pkg) + '\' 2>/dev/null');
+  }
+
+  async function removeWhitelist(pkg) {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh remove_wl \'' + esc(pkg) + '\' 2>/dev/null');
+  }
+
+  async function listBackups() {
+    var raw = await run('sh ' + MODDIR + '/frosty.sh list_backups 2>&1');
+    try { return JSON.parse(raw.trim()); } catch(e) { return []; }
+  }
+
+  async function exportSettings() {
+    var path = await runStrict('sh ' + MODDIR + '/frosty.sh export 2>&1');
+    return path.trim();
+  }
+
+  async function importSettings(filePath) {
+    var result = await run("sh '" + MODDIR + "/frosty.sh' import '" + esc(filePath) + "' 2>&1");
+    return result.trim() === 'OK';
+  }
+
+  async function shareBackup(filePath) {
+    await run("sh '" + MODDIR + "/frosty.sh' share_backup '" + esc(filePath) + "' 2>&1");
+  }
+
+  async function ramClean(mode, exclude) {
+    var ex = exclude ? ' \'' + esc(exclude) + '\'' : '';
+    return await runJSON('sh ' + MODDIR + '/frosty.sh ram_clean \'' + esc(mode) + '\'' + ex + ' 2>/dev/null');
+  }
+
+  async function ramCleanPoll() {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh ram_clean_poll 2>/dev/null');
+  }
+
+  async function getFgPkg() {
+    return await runJSON('sh ' + MODDIR + '/frosty.sh get_fg_pkg 2>/dev/null');
   }
 
   function appendLog(msg) {
-    var safeMsg = String(msg).replace(/['"\\`$]/g, '').substring(0, 200);
-    exec('echo "[$(date +"%Y-%m-%d %H:%M:%S")] [webui] ' + safeMsg + '" >> "' + LOG_DIR + '/action.log"');
+    var safeMsg = String(msg).replace(/'/g, "'\\''" ).substring(0, 200);
+    exec("printf '[%s] [webui] %s\\n' \"$(date +'%Y-%m-%d %H:%M:%S')\" '" + safeMsg + "' >> \"" + LOG_DIR + "/action.log\"");
   }
 
   function nativeListPackages(type) {
@@ -330,42 +367,25 @@ var API = (function () {
     } catch (e) { return []; }
   }
 
-  async function listBackups() {
-    var raw = await run('sh ' + MODDIR + '/frosty.sh list_backups 2>&1');
-    try { return JSON.parse(raw.trim()); } catch(e) { return []; }
-  }
-
-  async function exportSettings() {
-    var path = await runStrict('sh ' + MODDIR + '/frosty.sh export 2>&1');
-    return path.trim();
-  }
-
-  async function importSettings(filePath) {
-    var result = await run('sh ' + MODDIR + '/frosty.sh import "' + filePath + '" 2>&1');
-    return result.trim() === 'OK';
-  }
-
-  async function shareBackup(filePath) {
-    await run('sh ' + MODDIR + '/frosty.sh share_backup "' + filePath + '" 2>&1');
-  }
-
   return {
     MODDIR,
     available, exec, run,
     getPrefs, setPref,
-    applyFreeze, applyStock,
-    freezeCategory, unfreezeCategory,
-    applyDeepDoze, revertDeepDoze,
-    applyBatterySaver, revertBatterySaver,
-    applyRamOptimizer, revertRamOptimizer,
     applyKernelTweaks, revertKernelTweaks,
-    applyBlur, killLogs, revertKillLogs, applyKillTracking, revertKillTracking, toggleSystemProps,
-    getWhitelist, addWhitelist, removeWhitelist,
-    getCustomDozeList, addCustomDoze, removeCustomDoze,
-    applyCustomAppDoze, revertCustomAppDoze, getNotOptimizedApps, checkCadNeedsReboot,
+    toggleSystemProps,
+    applyRamOptimizer, revertRamOptimizer,
+    killLogs, revertKillLogs,
+    applyKillTracking, revertKillTracking,
+    applyBatterySaver, revertBatterySaver,
+    applyBlur, applyFreeze, applyStock, freezeCategory, unfreezeCategory,
+    applyDeepDoze, revertDeepDoze,
+    applyCustomAppDoze, revertCustomAppDoze, getCustomDozeList,
+    addCustomDoze, removeCustomDoze, getNotOptimizedApps, checkCadNeedsReboot,
     applyScreenOffOpt, revertScreenOffOpt,
-    appendLog,
-    nativeListPackages, nativeGetPackagesInfo,
-    listBackups, exportSettings, importSettings, shareBackup
+    getWhitelist, addWhitelist, removeWhitelist,
+    listBackups, exportSettings, importSettings, shareBackup,
+    appendLog, nativeListPackages, nativeGetPackagesInfo,
+    ramClean, ramCleanPoll, getFgPkg
   };
+
 })();

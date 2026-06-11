@@ -28,14 +28,7 @@
 /proc/sys/kernel/printk_devkmsg|off
 /proc/sys/kernel/printk|0 0 0 0
 
-# VM
-/proc/sys/vm/dirty_background_ratio|5
-/proc/sys/vm/dirty_ratio|20
-/proc/sys/vm/dirty_expire_centisecs|500
-/proc/sys/vm/dirty_writeback_centisecs|500
-/proc/sys/vm/stat_interval|15
-/proc/sys/vm/vfs_cache_pressure|80
-/proc/sys/vm/oom_dump_tasks|0
+# VM DEBUG
 /proc/sys/vm/block_dump|0
 
 # DEBUG
@@ -44,10 +37,6 @@
 # ENTROPY
 /proc/sys/kernel/random/read_wakeup_threshold|256
 /proc/sys/kernel/random/write_wakeup_threshold|320
-
-# PRINTK RATELIMIT
-/proc/sys/kernel/printk_ratelimit|1
-/proc/sys/kernel/printk_ratelimit_burst|5
 
 # RAMDUMPS
 /sys/module/subsystem_restart/parameters/enable_mini_ramdumps|0

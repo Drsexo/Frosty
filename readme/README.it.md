@@ -22,9 +22,13 @@
 
 </div>
 
+<div align="center">
+<img src="images/it.png" width="600">
+</div>
+
 ## Panoramica
 
-Frosty ottimizza la durata della batteria congelando i servizi GMS, applicando miglioramenti di doze a livello di sistema e automatizzando il comportamento a schermo spento. Configura tutto tramite la WebUI.
+Frosty ottimizza la durata della batteria congelando i servizi GMS, applicando miglioramenti di Doze a livello di sistema e automatizzando il comportamento a schermo spento. Configura tutto tramite la WebUI.
 
 ## Funzionalità
 
@@ -32,7 +36,7 @@ Frosty ottimizza la durata della batteria congelando i servizi GMS, applicando m
 - **App Doze**: Rimuove qualsiasi app dall'elenco delle eccezioni del risparmio energetico Doze di Android. Anche i GMS possono essere selezionati qui, sostituendo il vecchio interruttore dedicato GMS Doze.
 - **Deep Doze**: Restrizioni aggressive in background per tutte le app (Moderato / Massimo).
 - **Ottimizzazione Schermo Spento**: Disabilita automaticamente le connessioni selezionate (Wi-Fi, Bluetooth, dati, posizione) e svuota le app in cache dopo un ritardo configurabile allo spegnimento dello schermo, quindi ripristina tutto allo sblocco.
-- **Blocca Tracciamento Google**: Disabilita l'analisi GMS, la telemetria Clearcut, il polling Phenotype e il tracciamento degli annunci.
+- **Disabilita Tracciamento Google**: Disabilita l'analisi GMS, la telemetria Clearcut, il polling Phenotype e il tracciamento degli annunci.
 - **Tweak del Kernel**: Ottimizzazioni per scheduler, VM, rete e debug.
 - **Ottimizzatore RAM**: Regola i limiti dei processi, la compattazione della memoria e il comportamento di zram.
 - **Proprietà di Sistema**: Disabilita le proprietà di debug per risparmiare RAM e batteria.
@@ -55,7 +59,7 @@ Frosty ottimizza la durata della batteria congelando i servizi GMS, applicando m
 
 Apri la WebUI dal tuo gestore root:
 
-- **Tweak di Sistema**: tweak del kernel, proprietà di sistema, disabilitazione sfocatura, terminazione log, blocco tracciamento.
+- **Tweak di Sistema**: tweak del kernel, proprietà di sistema, disabilitazione sfocatura, terminazione log, disabilitazione tracciamento.
 - **Doze**: App Doze con selettore app, Deep Doze con selettore di livello e editor di whitelist.
 - **Ottimizzazione Schermo Spento**: interruttori per connessione, timer di ritardo, ripristino allo sblocco.
 - **Categorie GMS**: congela i singoli gruppi di servizi GMS.
@@ -70,8 +74,8 @@ Apri la WebUI dal tuo gestore root:
 | 📊 **Telemetria** | Nessuno. Ferma pubblicità, analisi, tracciamento. |
 | 🔄 **Background** | Gli aggiornamenti automatici potrebbero essere ritardati. |
 
-#### Potrebbe interrompere funzionalità
-| Categoria | Cosa si interrompe |
+#### Potrebbe compromettere funzionalità
+| Categoria | Funzionalità compromesse |
 |----------|-------------|
 | 📍 **Posizione** | Maps, navigazione, Trova il mio dispositivo, condivisione posizione |
 | 📡 **Connettività** | Chromecast, Quick Share, Fast Pair |
@@ -85,8 +89,8 @@ Apri la WebUI dal tuo gestore root:
 | Funzionalità | Moderato | Massimo |
 |---------|:--------:|:-------:|
 | Costanti Doze Aggressive | ✅ | ✅ |
-| App Standby Buckets (raro) | ✅ | ✅ |
-| Killer di Wakelock (schermo spento) | ✅ | ✅ |
+| App Standby Buckets (Rare) | ✅ | ✅ |
+| Terminazione Wakelock (schermo spento) | ✅ | ✅ |
 | Nega WAKE_LOCK | ❌ | ✅ |
 
 ## FAQ

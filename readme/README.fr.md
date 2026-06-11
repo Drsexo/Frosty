@@ -22,9 +22,13 @@
 
 </div>
 
+<div align="center">
+<img src="images/fr.png" width="600">
+</div>
+
 ## Vue d'ensemble
 
-Frosty optimise la durée de vie de la batterie en gelant les services GMS, en appliquant des améliorations de doze à l'échelle du système et en automatisant le comportement de l'écran éteint. Configurez tout via la WebUI.
+Frosty optimise la durée de vie de la batterie en gelant les services GMS, en appliquant des améliorations de Doze à l'échelle du système et en automatisant le comportement de l'écran éteint. Configurez tout via la WebUI.
 
 ## Fonctionnalités
 
@@ -32,7 +36,7 @@ Frosty optimise la durée de vie de la batterie en gelant les services GMS, en a
 - **App Doze** : Retirez n'importe quelle application de la liste d'exemption d'économie d'énergie Doze d'Android. GMS est également sélectionnable ici, remplaçant l'ancien interrupteur dédié GMS Doze.
 - **Deep Doze** : Restrictions agressives en arrière-plan pour toutes les applications (Modéré / Maximum).
 - **Optimisation Écran Éteint** : Désactive automatiquement les connexions sélectionnées (Wi-Fi, Bluetooth, données mobiles, localisation) et vide les applications en cache après un délai configurable d'extinction de l'écran, puis restaure tout au déverrouillage.
-- **Bloquer le suivi Google** : Désactive les analyses GMS, la télémétrie Clearcut, le polling Phenotype et le suivi publicitaire.
+- **Désactiver le suivi Google** : Désactive les analyses GMS, la télémétrie Clearcut, le polling Phenotype et le suivi publicitaire.
 - **Ajustements du Kernel** : Optimisations du planificateur, de la VM, du réseau et du débogage.
 - **Optimiseur de RAM** : Ajuste les limites des processus, le compactage de la mémoire et le comportement de zram.
 - **Props Système** : Désactivez les propriétés de débogage pour économiser la RAM et la batterie.
@@ -55,7 +59,7 @@ Frosty optimise la durée de vie de la batterie en gelant les services GMS, en a
 
 Ouvrez la WebUI depuis votre gestionnaire root :
 
-- **Ajustements Système** : Ajustements du kernel, props système, désactivation du flou, arrêt des logs, blocage du suivi.
+- **Ajustements Système** : Ajustements du kernel, props système, désactivation du flou, arrêt des logs, désactivation du suivi.
 - **Doze** : App Doze avec sélecteur d'applications, Deep Doze avec sélecteur de niveau et éditeur de liste blanche.
 - **Optimisation Écran Éteint** : Interrupteurs par connexion, minuteries de délai, restauration au déverrouillage.
 - **Catégories GMS** : Gelez les groupes de services GMS individuels.
@@ -70,8 +74,8 @@ Ouvrez la WebUI depuis votre gestionnaire root :
 | 📊 **Télémétrie** | Aucun. Arrête les publicités, les analyses, le suivi. |
 | 🔄 **Arrière-plan** | Les mises à jour automatiques peuvent être retardées. |
 
-#### Peut casser des fonctionnalités
-| Catégorie | Ce qui est cassé |
+#### Peut perturber des fonctionnalités
+| Catégorie | Fonctionnalités perturbées |
 |----------|-------------|
 | 📍 **Localisation** | Maps, navigation, Localiser mon appareil, partage de position |
 | 📡 **Connectivité** | Chromecast, Quick Share, Fast Pair |
@@ -85,8 +89,8 @@ Ouvrez la WebUI depuis votre gestionnaire root :
 | Fonctionnalité | Modéré | Maximum |
 |---------|:--------:|:-------:|
 | Constantes Doze Agressives | ✅ | ✅ |
-| Buckets de mise en veille des apps (rare) | ✅ | ✅ |
-| Tueur de Wakelock écran éteint | ✅ | ✅ |
+| App Standby Buckets (Rare) | ✅ | ✅ |
+| Arrêt de Wakelock écran éteint | ✅ | ✅ |
 | Refuser WAKE_LOCK | ❌ | ✅ |
 
 ## FAQ

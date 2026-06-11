@@ -1,7 +1,21 @@
 # Frosty - RAM Tweaks
 # Format: /path/to/kernel/file|value
 # Applied when RAM Optimizer is enabled. Backed up to backup/ram_values.txt before writing.
-# Note: some tweaks are set dynamically in frosty.sh based on device RAM.
+# Note: Some tweaks are set dynamically in frosty.sh based on device RAM.
+
+# VM / MEMORY MANAGEMENT
+/proc/sys/vm/dirty_background_ratio|5
+/proc/sys/vm/dirty_ratio|20
+/proc/sys/vm/dirty_expire_centisecs|500
+/proc/sys/vm/dirty_writeback_centisecs|500
+/proc/sys/vm/stat_interval|15
+/proc/sys/vm/vfs_cache_pressure|80
+/proc/sys/vm/oom_dump_tasks|0
+/proc/sys/vm/overcommit_memory|1
+/proc/sys/vm/overcommit_ratio|75
+/proc/sys/vm/watermark_scale_factor|100
+/proc/sys/vm/watermark_boost_factor|0
+/proc/sys/vm/nr_hugepages|0
 
 # ZRAM / SWAP
 /proc/sys/vm/page-cluster|1

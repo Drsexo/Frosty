@@ -61,7 +61,7 @@ fi
 
 if [ "$ENABLE_RAM_OPTIMIZER" = "1" ]; then
   log_boot "Applying RAM optimizer..."
-  sh "$MODDIR/frosty.sh" ram_optimizer >/dev/null 2>&1
+  sh "$MODDIR/frosty.sh" apply_ram >/dev/null 2>&1
   log_boot "RAM optimizer applied"
 else
   log_boot "RAM optimizer SKIPPED"
@@ -97,8 +97,7 @@ fi
 
 if [ "$ENABLE_CUSTOM_APP_DOZE" = "1" ]; then
   log_boot "Applying App Doze..."
-  chmod +x "$MODDIR/app_doze.sh"
-  "$MODDIR/app_doze.sh" apply >/dev/null 2>&1
+  sh "$MODDIR/app_doze.sh" apply >/dev/null 2>&1
   log_boot "App Doze applied"
 else
   log_boot "App Doze SKIPPED"
@@ -106,8 +105,7 @@ fi
 
 if [ "$ENABLE_DEEP_DOZE" = "1" ]; then
   log_boot "Applying Deep Doze..."
-  chmod +x "$MODDIR/deep_doze.sh"
-  "$MODDIR/deep_doze.sh" freeze >/dev/null 2>&1
+  sh "$MODDIR/deep_doze.sh" freeze >/dev/null 2>&1
   log_boot "Deep Doze applied"
 else
   log_boot "Deep Doze SKIPPED"
@@ -115,7 +113,7 @@ fi
 
 if [ "$ENABLE_BATTERY_SAVER" = "1" ]; then
   log_boot "Applying Battery Saver Tuner..."
-  sh "$MODDIR/frosty.sh" bss_apply >/dev/null 2>&1
+  sh "$MODDIR/frosty.sh" apply_bss >/dev/null 2>&1
   log_boot "Battery Saver applied"
 else
   log_boot "Battery Saver SKIPPED"
@@ -123,12 +121,16 @@ fi
 
 if [ "$ENABLE_SCREEN_OFF_OPT" = "1" ]; then
   log_boot "Starting Screen Off Optimization..."
-  chmod +x "$MODDIR/screen_off_opt.sh"
-  "$MODDIR/screen_off_opt.sh" start >/dev/null 2>&1
+  sh "$MODDIR/screen_off_opt.sh" start >/dev/null 2>&1
   log_boot "Screen Off Optimization monitor started"
 else
   log_boot "Screen Off Optimization SKIPPED"
 fi
 
 log_boot "Boot complete at $(date '+%Y-%m-%d %H:%M:%S')"
+
+for _rbt in "$MODDIR/tmp/"*_needs_reboot; do
+  [ -f "$_rbt" ] && { log_boot "Please reboot to apply all changes"; break; }
+done
+unset _rbt
 exit 0

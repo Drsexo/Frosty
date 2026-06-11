@@ -22,6 +22,10 @@
 
 </div>
 
+<div align="center">
+<img src="readme/images/en.png" width="600">
+</div>
+
 ## Overview
 
 Frosty optimizes battery life by freezing GMS services, applying system-wide doze enhancements, and automating screen-off behavior. Configure everything through the WebUI.
@@ -85,7 +89,7 @@ Open the WebUI from your root manager:
 | Feature | Moderate | Maximum |
 |---------|:--------:|:-------:|
 | Aggressive Doze Constants | ✅ | ✅ |
-| App Standby Buckets (rare) | ✅ | ✅ |
+| App Standby Buckets (Rare) | ✅ | ✅ |
 | Screen-off Wakelock Killer | ✅ | ✅ |
 | Deny WAKE_LOCK | ❌ | ✅ |
 

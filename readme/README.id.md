@@ -22,21 +22,25 @@
 
 </div>
 
+<div align="center">
+<img src="images/id.png" width="600">
+</div>
+
 ## Gambaran Umum
 
-Frosty mengoptimalkan masa pakai baterai dengan membekukan layanan GMS, menerapkan peningkatan doze di seluruh sistem, dan mengotomatiskan perilaku saat layar mati. Konfigurasikan semuanya melalui WebUI.
+Frosty mengoptimalkan masa pakai baterai dengan membekukan layanan GMS, menerapkan peningkatan Doze di seluruh sistem, dan mengotomatiskan perilaku saat layar mati. Konfigurasikan semuanya melalui WebUI.
 
 ## Fitur
 
 - **Pembekuan GMS**: Nonaktifkan layanan GMS di 8 kategori.
-- **Doze Aplikasi (App Doze)**: Hapus aplikasi apa pun dari daftar pengecualian penghematan daya Doze Android. GMS juga dapat dipilih di sini, menggantikan tombol khusus GMS Doze yang lama.
+- **App Doze**: Hapus aplikasi apa pun dari daftar pengecualian penghematan daya Doze Android. GMS juga dapat dipilih di sini, menggantikan tombol khusus GMS Doze yang lama.
 - **Deep Doze**: Pembatasan latar belakang yang agresif untuk semua aplikasi (Moderat / Maksimum).
 - **Pengoptimalan Layar Mati**: Secara otomatis menonaktifkan koneksi tertentu (Wi-Fi, Bluetooth, data, lokasi) dan membersihkan aplikasi dalam cache setelah penundaan layar mati yang dapat dikonfigurasi, lalu memulihkan semuanya saat tidak terkunci.
-- **Blokir Pelacakan Google**: Menonaktifkan analitik GMS, telemetri Clearcut, polling Phenotype, dan pelacakan iklan.
+- **Nonaktifkan Pelacakan Google**: Menonaktifkan analitik GMS, telemetri Clearcut, polling Phenotype, dan pelacakan iklan.
 - **Penyesuaian Kernel**: Optimalisasi penjadwal (scheduler), VM, jaringan, dan debug.
 - **Pengoptimal RAM**: Menyesuaikan batas proses, pemadatan memori, dan perilaku zram.
 - **System Props**: Menonaktifkan properti debug untuk menghemat RAM dan baterai.
-- **Matikan Log**: Menghentikan proses log dan debug yang menguras baterai.
+- **Penghentian Log**: Menghentikan proses log dan debug yang menguras baterai.
 - **Penyetel Penghemat Baterai**: Menyesuaikan apa yang dilakukan penghemat baterai bawaan Android saat aktif.
 
 ## Instalasi
@@ -55,8 +59,8 @@ Frosty mengoptimalkan masa pakai baterai dengan membekukan layanan GMS, menerapk
 
 Buka WebUI dari root manager Anda:
 
-- **Penyesuaian Sistem**: penyesuaian kernel, system props, nonaktifkan blur, matikan log, blokir pelacakan.
-- **Doze**: Doze Aplikasi dengan pemilih aplikasi, Deep Doze dengan pemilih level dan editor daftar putih (whitelist).
+- **Penyesuaian Sistem**: penyesuaian kernel, system props, nonaktifkan blur, penghentian log, nonaktifkan pelacakan.
+- **Doze**: App Doze dengan pemilih aplikasi, Deep Doze dengan pemilih level dan editor daftar putih (whitelist).
 - **Pengoptimalan Layar Mati**: tombol per koneksi, timer penundaan, pulihkan saat tidak terkunci.
 - **Kategori GMS**: bekukan setiap kelompok layanan GMS.
 - **Penyetel Penghemat Baterai**: sesuaikan perilaku penghemat baterai.
@@ -70,8 +74,8 @@ Buka WebUI dari root manager Anda:
 | 📊 **Telemetri** | Tidak ada. Menghentikan iklan, analitik, pelacakan. |
 | 🔄 **Latar Belakang** | Pembaruan otomatis mungkin tertunda. |
 
-#### Dapat Merusak Fitur
-| Kategori | Apa yang Rusak |
+#### Dapat Mengganggu Fitur
+| Kategori | Fitur yang Terpengaruh |
 |----------|-------------|
 | 📍 **Lokasi** | Maps, navigasi, Temukan Perangkat Saya, berbagi lokasi |
 | 📡 **Konektivitas** | Chromecast, Quick Share, Fast Pair |
@@ -85,20 +89,20 @@ Buka WebUI dari root manager Anda:
 | Fitur | Moderat | Maksimum |
 |---------|:--------:|:-------:|
 | Konstanta Doze Agresif | ✅ | ✅ |
-| App Standby Buckets (jarang) | ✅ | ✅ |
-| Pembunuh Wakelock (layar mati) | ✅ | ✅ |
+| App Standby Buckets (Rare) | ✅ | ✅ |
+| Penghentian Wakelock (layar mati) | ✅ | ✅ |
 | Tolak WAKE_LOCK | ❌ | ✅ |
 
 ## FAQ
 
 **T: Mengapa notifikasi saya tertunda?**  
-J: Doze Aplikasi dan Deep Doze membatasi aktivitas latar belakang. Tambahkan aplikasi pesan Anda ke daftar putih Deep Doze di WebUI.
+J: App Doze dan Deep Doze membatasi aktivitas latar belakang. Tambahkan aplikasi pesan Anda ke daftar putih Deep Doze di WebUI.
 
 **T: Ke mana perginya GMS Doze?**  
-J: Sekarang ini adalah bagian dari Doze Aplikasi (App Doze). Buka pemilih Doze Aplikasi dan pilih GMS, efeknya sama, hanya saja antarmukanya disatukan.
+J: Sekarang ini adalah bagian dari App Doze. Buka pemilih App Doze dan pilih GMS, efeknya sama, hanya saja antarmukanya disatukan.
 
 **T: Apakah ini berfungsi tanpa Layanan Google Play?**  
-J: Penyesuaian Kernel, System Props, Nonaktifkan Blur, Matikan Log, Pengoptimal RAM, dan Deep Doze semuanya tetap berfungsi. Fitur GMS tentu saja memerlukan GMS.
+J: Penyesuaian Kernel, System Props, Nonaktifkan Blur, Penghentian Log, Pengoptimal RAM, dan Deep Doze semuanya tetap berfungsi. Fitur GMS tentu saja memerlukan GMS.
 
 **T: Apakah ada yang diaktifkan setelah instalasi?**  
 J: Tidak. Semuanya dimatikan secara default. Aktifkan hanya fitur yang Anda butuhkan.
