@@ -100,6 +100,11 @@ unfreeze_services() {
         _cap_r=$(printf '%s' "$current_category" | cut -c2-)
         log_service "# ${_cap_f}${_cap_r}"
       fi
+      local _svc_pkg; _svc_pkg=$(printf '%s' "$service" | cut -d/ -f1)
+      if pm list packages --user 0 -d 2>/dev/null | grep -Fx "package:$_svc_pkg" >/dev/null 2>&1; then
+        log_service "[SKIP] $service (disabled by ROM, not re-enabling)"
+        continue
+      fi
       if pm enable "$service" >/dev/null 2>&1; then
         log_service "[OK] $service"
         count_ok=$((count_ok + 1))

@@ -209,13 +209,13 @@ _monitor_loop() {
         if [ -f "$DISABLED_FILE" ]; then
           if grep -q "^sensors$" "$DISABLED_FILE" 2>/dev/null; then
             _restore_sensors
-            grep -v "^sensors$" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null && \
-              mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null || true
+            grep -v "^sensors$" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
+            mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null
           fi
           if grep -q "^panel_lpm$" "$DISABLED_FILE" 2>/dev/null; then
             settings put global display_panel_lpm 0 2>/dev/null
-            grep -v "^panel_lpm$" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null && \
-              mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null || true
+            grep -v "^panel_lpm$" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
+            mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null
             log_soo "[OK] Panel LPM disabled"
           fi
         fi

@@ -34,6 +34,8 @@ kill_logs() {
   cmd window tracing size 0 >/dev/null 2>&1
   cmd voiceinteraction set-debug-hotword-logging false 2>/dev/null
   cmd wifi set-verbose-logging disabled -l 0 >/dev/null 2>&1
+  _devcfg_backup interaction_jank_monitor enabled
+  _devcfg_backup interaction_jank_monitor trace_threshold_frame_time_millis
   device_config put interaction_jank_monitor enabled false >/dev/null 2>&1
   device_config put interaction_jank_monitor trace_threshold_frame_time_millis -1 >/dev/null 2>&1
   settings put global netstats_enabled 0 >/dev/null 2>&1
@@ -59,6 +61,8 @@ kill_logs() {
   echo 1 > /proc/sys/kernel/printk_ratelimit 2>/dev/null
   echo 1 > /proc/sys/kernel/printk_ratelimit_burst 2>/dev/null
 
+  _devcfg_backup activity_manager disable_app_profiler_pss_profiling
+  _devcfg_backup activity_manager activity_start_pss_defer
   device_config put activity_manager disable_app_profiler_pss_profiling true >/dev/null 2>&1
   device_config put activity_manager activity_start_pss_defer 300000 >/dev/null 2>&1
 
@@ -93,11 +97,11 @@ revert_kill_logs() {
   echo 5 > /proc/sys/kernel/printk_ratelimit 2>/dev/null
   echo 10 > /proc/sys/kernel/printk_ratelimit_burst 2>/dev/null
 
-  device_config delete activity_manager disable_app_profiler_pss_profiling >/dev/null 2>&1
-  device_config delete activity_manager activity_start_pss_defer >/dev/null 2>&1
+  _devcfg_restore activity_manager disable_app_profiler_pss_profiling
+  _devcfg_restore activity_manager activity_start_pss_defer
 
-  device_config delete interaction_jank_monitor enabled >/dev/null 2>&1
-  device_config delete interaction_jank_monitor trace_threshold_frame_time_millis >/dev/null 2>&1
+  _devcfg_restore interaction_jank_monitor enabled
+  _devcfg_restore interaction_jank_monitor trace_threshold_frame_time_millis
   settings delete global netstats_enabled >/dev/null 2>&1
   logcat -G 256k 2>/dev/null
 

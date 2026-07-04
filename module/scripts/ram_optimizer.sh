@@ -82,16 +82,19 @@ apply_ram_optimizer() {
     fi
   fi
 
+  _devcfg_backup activity_manager use_compaction
   if device_config put activity_manager use_compaction true >/dev/null 2>&1; then
     log_ram "[OK] use_compaction = true"
     kcount=$((kcount + 1))
   fi
 
+  _devcfg_backup activity_manager_native_boot use_freezer
   if device_config put activity_manager_native_boot use_freezer true >/dev/null 2>&1; then
     log_ram "[OK] use_freezer = true"
     kcount=$((kcount + 1))
   fi
 
+  _devcfg_backup alarm_manager save_battery_on_idle
   if device_config put alarm_manager save_battery_on_idle true >/dev/null 2>&1; then
     log_ram "[OK] alarm save_battery_on_idle = true"
     kcount=$((kcount + 1))
@@ -311,9 +314,9 @@ revert_ram_optimizer() {
   content call --uri content://settings/config --method DELETE_value \
     --arg runtime_native/usap_pool_enabled >/dev/null 2>&1
 
-  device_config delete activity_manager use_compaction >/dev/null 2>&1
-  device_config delete activity_manager_native_boot use_freezer >/dev/null 2>&1
-  device_config delete alarm_manager save_battery_on_idle >/dev/null 2>&1
+  _devcfg_restore activity_manager use_compaction
+  _devcfg_restore activity_manager_native_boot use_freezer
+  _devcfg_restore alarm_manager save_battery_on_idle
 
   log_ram "[OK] RAM optimizer reverted"
   echo "{\"status\":\"ok\"}"

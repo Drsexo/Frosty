@@ -1,6 +1,25 @@
 # Changelog
 ## I am not responsible for any unofficial or tampered versions of my module distributed outside this repository.
 
+## [4.3] - 2026-07-04
+### App Doze
+- **Fixed App Doze re-patching on every boot due to wrong checks**. (thanks to @xizt159 for the report and fix)
+### Screen Off Optimization
+- **Fixed Wi-Fi/BT/data restore silently failing on some setups** (`svc` path resolution).
+- **`_disable_connections()` now checks the actual result before logging success**.
+- **Cleaned up "Restoring" log line formatting**.
+### GMS Services
+- **`unfreeze_services()` fallback no longer re-enables ROM-disabled services accidentally**.
+### Kill Logs / RAM Optimizer
+- **`device_config` overrides now backed up and restored properly on revert**.
+### Battery Saver
+- **Stopped forcing Battery Saver to stay active while charging**.
+### Uninstall
+- **`device_config` revert updated to match**.
+- **Fixed two Kill Logs `device_config` keys never reverted on uninstall**.
+### Misc
+- **Fixed a silent no-op in file-rewrite cleanup helpers** (last-entry-removed edge case).
+
 ## [4.2] - 2026-07-01
 ### Deep Doze
 - **Fixed screen-ON poll window after wake**: Monitor now polls every 5 seconds instead of waiting up to 180 seconds.

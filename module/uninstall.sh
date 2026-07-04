@@ -15,6 +15,7 @@ mkdir -p "$TEMP_DIR"
 [ -f "$MODDIR/backup/lmkd_values.txt" ]  && cp -f "$MODDIR/backup/lmkd_values.txt"  "$TEMP_DIR/"
 [ -f "$MODDIR/backup/bss_values.txt" ]   && cp -f "$MODDIR/backup/bss_values.txt"   "$TEMP_DIR/"
 [ -f "$MODDIR/config/dropbox_tags.txt" ] && cp -f "$MODDIR/config/dropbox_tags.txt" "$TEMP_DIR/"
+[ -f "$MODDIR/backup/devcfg_values.txt" ] && cp -f "$MODDIR/backup/devcfg_values.txt" "$TEMP_DIR/"
 
 # Kill Deep Doze screen monitor
 if [ -f "$MODDIR/tmp/screen_monitor.pid" ]; then
@@ -44,6 +45,16 @@ _set_prop() {
 }
 _del_prop() {
   command -v resetprop >/dev/null 2>&1 && resetprop --delete "$1" 2>/dev/null || true
+}
+DEVCFG_BACKUP="$TEMP_DIR/devcfg_values.txt"
+_devcfg_restore() {
+  local _ns="$1" _key="$2" _orig
+  _orig=$(grep -F "${_ns}.${_key}=" "$DEVCFG_BACKUP" 2>/dev/null | cut -d= -f2-)
+  if [ -n "$_orig" ] && [ "$_orig" != "null" ]; then
+    device_config put "$_ns" "$_key" "$_orig" 2>/dev/null
+  else
+    device_config delete "$_ns" "$_key" 2>/dev/null
+  fi
 }
 
 log() { echo "[$(date '+%H:%M:%S')] $1" >> "$LOGFILE"; }
@@ -75,9 +86,9 @@ rm -f "$LOGS_BACKUP"
 log "Reverting RAM optimizer..."
 content call --uri content://settings/config --method DELETE_value \
   --arg runtime_native/usap_pool_enabled >/dev/null 2>&1
-device_config delete activity_manager use_compaction 2>/dev/null
-device_config delete activity_manager_native_boot use_freezer 2>/dev/null
-device_config delete alarm_manager save_battery_on_idle 2>/dev/null
+_devcfg_restore activity_manager use_compaction
+_devcfg_restore activity_manager_native_boot use_freezer
+_devcfg_restore alarm_manager save_battery_on_idle
 
 LMKD_BACKUP="$TEMP_DIR/lmkd_values.txt"
 if [ -f "$LMKD_BACKUP" ]; then
@@ -97,8 +108,10 @@ fi
 
 # Revert Kill Logs device_config
 log "Reverting Kill Logs device_config..."
-device_config delete activity_manager disable_app_profiler_pss_profiling 2>/dev/null
-device_config delete activity_manager activity_start_pss_defer 2>/dev/null
+_devcfg_restore activity_manager disable_app_profiler_pss_profiling
+_devcfg_restore activity_manager activity_start_pss_defer
+_devcfg_restore interaction_jank_monitor enabled
+_devcfg_restore interaction_jank_monitor trace_threshold_frame_time_millis
 
 # Revert App Doze (including GMS if it was in the list)
 log "Reverting App Doze..."
@@ -163,14 +176,11 @@ BSS_BACKUP="$TEMP_DIR/bss_values.txt"
 if [ -f "$BSS_BACKUP" ]; then
   _lp=$(grep '^low_power=' "$BSS_BACKUP" | cut -d= -f2)
   _lps=$(grep '^low_power_sticky=' "$BSS_BACKUP" | cut -d= -f2)
-  _lpa=$(grep '^low_power_sticky_auto_disable_enabled=' "$BSS_BACKUP" | cut -d= -f2)
   if [ -n "$_lps" ] && [ "$_lps" != "null" ]; then settings put global low_power_sticky "$_lps" 2>/dev/null; else settings put global low_power_sticky 0 2>/dev/null; fi
-  if [ -n "$_lpa" ] && [ "$_lpa" != "null" ]; then settings put global low_power_sticky_auto_disable_enabled "$_lpa" 2>/dev/null; else settings put global low_power_sticky_auto_disable_enabled 1 2>/dev/null; fi
   if [ -n "$_lp" ] && [ "$_lp" != "null" ]; then settings put global low_power "$_lp" 2>/dev/null; else settings put global low_power 0 2>/dev/null; fi
   rm -f "$BSS_BACKUP"
 else
   settings put global low_power_sticky 0 2>/dev/null
-  settings put global low_power_sticky_auto_disable_enabled 1 2>/dev/null
   settings put global low_power 0 2>/dev/null
 fi
 

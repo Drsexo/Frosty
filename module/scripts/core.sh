@@ -1,4 +1,5 @@
 #!/system/bin/sh
+# Shared infrastructure for frosty.sh subscripts.
 
 MODVER=$(grep "^version=" "$MODDIR/module.prop" 2>/dev/null | cut -d= -f2)
 
@@ -18,6 +19,7 @@ RAM_BACKUP="$MODDIR/backup/ram_values.txt"
 LOGS_BACKUP="$MODDIR/backup/logs_values.txt"
 BSS_BACKUP="$MODDIR/backup/bss_values.txt"
 LMKD_BACKUP="$MODDIR/backup/lmkd_values.txt"
+DEVCFG_BACKUP="$MODDIR/backup/devcfg_values.txt"
 DROPBOX_TAGS="$MODDIR/config/dropbox_tags.txt"
 RAM_WL_FILE="$MODDIR/config/ram_clean_whitelist.txt"
 _RAM_CLEAN_LOG="$LOGDIR/ram_clean.log"
@@ -48,6 +50,30 @@ _set_prop() {
 
 _del_prop() {
   command -v resetprop >/dev/null 2>&1 && resetprop --delete "$1" 2>/dev/null || true
+}
+
+_devcfg_backup() {
+  local _ns="$1" _key="$2"
+  grep -qF "${_ns}.${_key}=" "$DEVCFG_BACKUP" 2>/dev/null && return
+  local _cur
+  _cur=$(device_config get "$_ns" "$_key" 2>/dev/null)
+  mkdir -p "$(dirname "$DEVCFG_BACKUP")"
+  printf '%s.%s=%s\n' "$_ns" "$_key" "$_cur" >> "$DEVCFG_BACKUP"
+}
+
+_devcfg_restore() {
+  local _ns="$1" _key="$2"
+  local _orig
+  _orig=$(grep -F "${_ns}.${_key}=" "$DEVCFG_BACKUP" 2>/dev/null | cut -d= -f2-)
+  if [ -n "$_orig" ] && [ "$_orig" != "null" ]; then
+    device_config put "$_ns" "$_key" "$_orig" 2>/dev/null
+  else
+    device_config delete "$_ns" "$_key" 2>/dev/null
+  fi
+  if [ -f "$DEVCFG_BACKUP" ]; then
+    grep -vF "${_ns}.${_key}=" "$DEVCFG_BACKUP" > "${DEVCFG_BACKUP}.tmp" 2>/dev/null
+    mv -f "${DEVCFG_BACKUP}.tmp" "$DEVCFG_BACKUP" 2>/dev/null
+  fi
 }
 
 get_fg_pkg() {
