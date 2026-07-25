@@ -20,18 +20,18 @@ GMS_ADMIN2="$GMS_PKG/$GMS_PKG.mdm.receivers.MdmDeviceAdminReceiver"
 
 # Heavy GMS background services to disable without breaking FCM push notifications
 GMS_HEAVY_COMPONENTS=(
-  "$GMS_PKG/.ads.AdRequestBrokerService"
-  "$GMS_PKG/.analytics.AnalyticsService"
-  "$GMS_PKG/.chime.service.ChimeMessageService"
-  "$GMS_PKG/.clearcut.service.ClearcutLoggerService"
-  "$GMS_PKG/.fitness.store.StoreService"
-  "$GMS_PKG/.freighter.service.FreighterService"
-  "$GMS_PKG/.location.service.FusedLocationProviderService"
-  "$GMS_PKG/.measurement.AppMeasurementService"
-  "$GMS_PKG/.measurement.PackageMeasurementService"
-  "$GMS_PKG/.nearby.discovery.service.DiscoveryService"
-  "$GMS_PKG/.phenotype.service.PhenotypeCoreService"
-  "$GMS_PKG/.usagereporting.UsageReportingService"
+  "$GMS_PKG/$GMS_PKG.ads.AdRequestBrokerService"
+  "$GMS_PKG/$GMS_PKG.analytics.AnalyticsService"
+  "$GMS_PKG/$GMS_PKG.chime.service.ChimeMessageService"
+  "$GMS_PKG/$GMS_PKG.clearcut.service.ClearcutLoggerService"
+  "$GMS_PKG/$GMS_PKG.fitness.store.StoreService"
+  "$GMS_PKG/$GMS_PKG.freighter.service.FreighterService"
+  "$GMS_PKG/$GMS_PKG.location.service.FusedLocationProviderService"
+  "$GMS_PKG/$GMS_PKG.measurement.AppMeasurementService"
+  "$GMS_PKG/$GMS_PKG.measurement.PackageMeasurementService"
+  "$GMS_PKG/$GMS_PKG.nearby.discovery.service.DiscoveryService"
+  "$GMS_PKG/$GMS_PKG.phenotype.service.PhenotypeCoreService"
+  "$GMS_PKG/$GMS_PKG.usagereporting.UsageReportingService"
 )
 
 _PARTITION_ROOTS="
@@ -314,21 +314,26 @@ apply() {
       cmd appops set "$GMS_PKG" IGNORE_BATTERY_OPTIMIZATIONS allow >/dev/null 2>&1
       tiers=" fcm-whitelisted"
 
-      # Disable heavy non-FCM sub-services
-      for comp in "${GMS_HEAVY_COMPONENTS[@]}"; do
-        pm disable "$comp" >/dev/null 2>&1
-      done
-      tiers="${tiers} heavy-services-disabled"
-
-      # Disable Admin receivers
       local admin_count=0
       for _uid in $(_get_user_ids); do
+        # 1. Disable Heavy Components (Parallelized)
+        for _comp in "${GMS_HEAVY_COMPONENTS[@]}"; do
+          pm disable --user "$_uid" "$_comp" >/dev/null 2>&1 &
+        done
+
+        # 2. Disable Admin Receivers
         for _admin in "$GMS_ADMIN1" "$GMS_ADMIN2"; do
           pm disable --user "$_uid" "$_admin" >/dev/null 2>&1 && \
             admin_count=$((admin_count + 1))
         done
       done
+      wait # Wait for all background 'pm disable' calls across users to finish
+
+      tiers="${tiers} heavy-services-disabled"
       [ "$admin_count" -gt 0 ] && tiers="${tiers} gms-admin"
+
+      # Ping FCM Checkin service to re-establish socket immediately
+      am start-service -n "$GMS_PKG/$GMS_PKG.checkin.CheckinService" >/dev/null 2>&1 || true
 
       log_app "[OK] $GMS_PKG - optimized (FCM active):$tiers"
       count=$((count + 1))
@@ -386,15 +391,18 @@ revert() {
     cmd appops set "$pkg" IGNORE_BATTERY_OPTIMIZATIONS default 2>/dev/null
 
     if [ "$pkg" = "$GMS_PKG" ]; then
-      for comp in "${GMS_HEAVY_COMPONENTS[@]}"; do
-        pm enable "$comp" >/dev/null 2>&1
-      done
-
       for _uid in $(_get_user_ids); do
+        # 1. Re-enable Heavy Components (Parallelized)
+        for _comp in "${GMS_HEAVY_COMPONENTS[@]}"; do
+          pm enable --user "$_uid" "$_comp" >/dev/null 2>&1 &
+        done
+
+        # 2. Re-enable Admin Receivers
         for _admin in "$GMS_ADMIN1" "$GMS_ADMIN2"; do
           pm enable --user "$_uid" "$_admin" >/dev/null 2>&1
         done
       done
+      wait
     fi
 
     log_app "[OK] Restored: $pkg"
