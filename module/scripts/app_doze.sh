@@ -18,6 +18,22 @@ GMS_PKG="com.google.android.gms"
 GMS_ADMIN1="$GMS_PKG/$GMS_PKG.auth.managed.admin.DeviceAdminReceiver"
 GMS_ADMIN2="$GMS_PKG/$GMS_PKG.mdm.receivers.MdmDeviceAdminReceiver"
 
+# Heavy GMS background services to disable without breaking FCM push notifications
+GMS_HEAVY_COMPONENTS=(
+  "$GMS_PKG/.ads.AdRequestBrokerService"
+  "$GMS_PKG/.analytics.AnalyticsService"
+  "$GMS_PKG/.chime.service.ChimeMessageService"
+  "$GMS_PKG/.clearcut.service.ClearcutLoggerService"
+  "$GMS_PKG/.fitness.store.StoreService"
+  "$GMS_PKG/.freighter.service.FreighterService"
+  "$GMS_PKG/.location.service.FusedLocationProviderService"
+  "$GMS_PKG/.measurement.AppMeasurementService"
+  "$GMS_PKG/.measurement.PackageMeasurementService"
+  "$GMS_PKG/.nearby.discovery.service.DiscoveryService"
+  "$GMS_PKG/.phenotype.service.PhenotypeCoreService"
+  "$GMS_PKG/.usagereporting.UsageReportingService"
+)
+
 _PARTITION_ROOTS="
   /india /my_bigball /my_carrier /my_company /my_engineering /my_heytap
   /my_manifest /my_preload /my_product /my_region /my_reserve /my_stock
@@ -48,13 +64,8 @@ _load_packages() {
 _load_grep() {
   local pkgs=$(_load_packages) _grep
   for pkg in $pkgs; do
-    pat=""
     esc_pkg=$(printf '%s' "$pkg" | sed 's/\./\\./g')
-    if [ "$pkg" = "$GMS_PKG" ]; then
-      pat="<(allow-in-power-save|allow-in-data-usage-save)[^>]*\"$esc_pkg\"[^>]*/>"
-    fi
-    pat="${pat:+$pat|}<wl[^>]*>[[:space:]]*$esc_pkg[[:space:]]*</wl>"
-    _grep="${_grep:+$_grep|}$pat"
+    _grep="${_grep:+$_grep|}<wl[^>]*>[[:space:]]*$esc_pkg[[:space:]]*</wl>"
   done
   echo "$_grep"
 }
@@ -255,7 +266,7 @@ scan() {
       [ -d /apex ] && find /apex -maxdepth 5 -type f -name "*.xml" \
         \( -path "*/etc/sysconfig/*" -o -path "*/etc/permissions/*" \) 2>/dev/null
     } | xargs readlink -f 2>/dev/null | sort -u \
-      | xargs grep -lE 'allow-in-power-save|<wl[^/]' 2>/dev/null \
+      | xargs grep -lE '<wl[^/]' 2>/dev/null \
       | xargs grep -oE 'package="[^"]*"|>[[:space:]]*[a-z][a-zA-Z0-9_.]+\.[a-zA-Z0-9_.]+[[:space:]]*<' 2>/dev/null \
       | grep -oE '[a-z][a-zA-Z0-9_.]+\.[a-zA-Z0-9_.]+'
 
@@ -296,6 +307,34 @@ apply() {
 
     local tiers=""
 
+    if [ "$pkg" = "$GMS_PKG" ]; then
+      # Re-whitelist GMS so FCM socket stays open
+      dumpsys deviceidle whitelist +"$GMS_PKG" >/dev/null 2>&1
+      cmd deviceidle sys-whitelist +"$GMS_PKG" >/dev/null 2>&1
+      cmd appops set "$GMS_PKG" IGNORE_BATTERY_OPTIMIZATIONS allow >/dev/null 2>&1
+      tiers=" fcm-whitelisted"
+
+      # Disable heavy non-FCM sub-services
+      for comp in "${GMS_HEAVY_COMPONENTS[@]}"; do
+        pm disable "$comp" >/dev/null 2>&1
+      done
+      tiers="${tiers} heavy-services-disabled"
+
+      # Disable Admin receivers
+      local admin_count=0
+      for _uid in $(_get_user_ids); do
+        for _admin in "$GMS_ADMIN1" "$GMS_ADMIN2"; do
+          pm disable --user "$_uid" "$_admin" >/dev/null 2>&1 && \
+            admin_count=$((admin_count + 1))
+        done
+      done
+      [ "$admin_count" -gt 0 ] && tiers="${tiers} gms-admin"
+
+      log_app "[OK] $GMS_PKG - optimized (FCM active):$tiers"
+      count=$((count + 1))
+      continue
+    fi
+
     dumpsys deviceidle whitelist -"$pkg" >/dev/null 2>&1
     tiers="${tiers} user-wl"
 
@@ -315,18 +354,6 @@ apply() {
 
     cmd appops set "$pkg" IGNORE_BATTERY_OPTIMIZATIONS ignore 2>/dev/null && \
       tiers="${tiers} appops"
-
-    if [ "$pkg" = "$GMS_PKG" ]; then
-      local admin_count=0
-      for _uid in $(_get_user_ids); do
-        for _admin in "$GMS_ADMIN1" "$GMS_ADMIN2"; do
-          pm disable --user "$_uid" "$_admin" >/dev/null 2>&1 && \
-            admin_count=$((admin_count + 1))
-        done
-      done
-      [ "$admin_count" -gt 0 ] && tiers="${tiers} gms-admin"
-      am start-service -n "$GMS_PKG/.checkin.CheckinService" >/dev/null 2>&1 || true
-    fi
 
     log_app "[OK] $pkg - applied to:$tiers"
     count=$((count + 1))
@@ -359,6 +386,10 @@ revert() {
     cmd appops set "$pkg" IGNORE_BATTERY_OPTIMIZATIONS default 2>/dev/null
 
     if [ "$pkg" = "$GMS_PKG" ]; then
+      for comp in "${GMS_HEAVY_COMPONENTS[@]}"; do
+        pm enable "$comp" >/dev/null 2>&1
+      done
+
       for _uid in $(_get_user_ids); do
         for _admin in "$GMS_ADMIN1" "$GMS_ADMIN2"; do
           pm enable --user "$_uid" "$_admin" >/dev/null 2>&1
