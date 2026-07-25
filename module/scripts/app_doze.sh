@@ -311,23 +311,22 @@ apply() {
       # Re-whitelist GMS so FCM socket stays open
       dumpsys deviceidle whitelist +"$GMS_PKG" >/dev/null 2>&1
       cmd deviceidle sys-whitelist +"$GMS_PKG" >/dev/null 2>&1
-      cmd appops set "$GMS_PKG" IGNORE_BATTERY_OPTIMIZATIONS allow >/dev/null 2>&1
+      cmd appops set "$GMS_PKG" IGNORE_BATTERY_OPTIMIZATIONS allow 2>/dev/null
       tiers=" fcm-whitelisted"
 
       local admin_count=0
       for _uid in $(_get_user_ids); do
-        # 1. Disable Heavy Components (Parallelized)
+        # 1. Disable heavy components
         for _comp in "${GMS_HEAVY_COMPONENTS[@]}"; do
-          pm disable --user "$_uid" "$_comp" >/dev/null 2>&1 &
+          pm disable --user "$_uid" "$_comp" >/dev/null 2>&1
         done
 
-        # 2. Disable Admin Receivers
+        # 2. Disable admin receivers
         for _admin in "$GMS_ADMIN1" "$GMS_ADMIN2"; do
           pm disable --user "$_uid" "$_admin" >/dev/null 2>&1 && \
             admin_count=$((admin_count + 1))
         done
       done
-      wait # Wait for all background 'pm disable' calls across users to finish
 
       tiers="${tiers} heavy-services-disabled"
       [ "$admin_count" -gt 0 ] && tiers="${tiers} gms-admin"
@@ -392,17 +391,16 @@ revert() {
 
     if [ "$pkg" = "$GMS_PKG" ]; then
       for _uid in $(_get_user_ids); do
-        # 1. Re-enable Heavy Components (Parallelized)
+        # 1. Re-enable heavy components
         for _comp in "${GMS_HEAVY_COMPONENTS[@]}"; do
-          pm enable --user "$_uid" "$_comp" >/dev/null 2>&1 &
+          pm enable --user "$_uid" "$_comp" >/dev/null 2>&1
         done
 
-        # 2. Re-enable Admin Receivers
+        # 2. Re-enable admin receivers
         for _admin in "$GMS_ADMIN1" "$GMS_ADMIN2"; do
           pm enable --user "$_uid" "$_admin" >/dev/null 2>&1
         done
       done
-      wait
     fi
 
     log_app "[OK] Restored: $pkg"
