@@ -38,10 +38,10 @@ Frosty optimiert die Akkulaufzeit, indem es GMS-Dienste einfriert, systemweite D
 - **Screen-Off-Optimierung**: Deaktiviert ausgewählte Verbindungen (WLAN, Bluetooth, Daten, Standort) und führt optional die RAM-Bereinigung nach einer konfigurierbaren Bildschirm-Aus-Verzögerung aus. Stellt beim Entsperren wieder her.
 - **Google-Tracking deaktivieren**: Deaktiviert GMS-Analysen, Clearcut-Telemetrie, Phenotype-Polling und Ad-Tracking.
 - **Kernel-Tweaks**: Optimierungen für Scheduler, VM, Netzwerk und Debugging.
-- **RAM-Optimierer**: ZRAM-Auto-Tuning, LMK/LMKD/PSI-Schwellen, OEM-Reclaim-Deaktivierung, VM-Speicher-Parameter (Moderat / Maximum), konfigurierbarer RAM-Bereiniger.
+- **RAM-Optimierer**: ZRAM-Auto-Tuning, LMK/LMKD/PSI-Schwellen, OEM-Reclaim-Deaktivierung, VM-Speicher-Parameter (Moderat / Maximum), konfigurierbarer RAM-Bereiniger, Multitasking-Profil (Leistung / Ausgeglichen / Energiesparen)
 - **System-Props**: Deaktiviere Debug-Eigenschaften, um RAM und Akku zu sparen.
 - **Logs beenden**: Stoppt akkubelastende Log- und Debugging-Prozesse.
-- **Energiespar-Tuner**: Passe an, was der integrierte Android-Energiesparmodus macht, wenn er aktiv ist.
+- **Energiespar-Tuner**: Passe an, was der integrierte Android-Energiesparmodus macht, wenn er aktiv ist, einschließlich einer Option, die maximale Bildwiederholrate beizubehalten, während er aktiv ist.
 
 ## Installation
 
@@ -53,7 +53,11 @@ Frosty optimiert die Akkulaufzeit, indem es GMS-Dienste einfriert, systemweite D
 4. WebUI öffnen, um Funktionen zu aktivieren.
 
 > [!NOTE]
-> Magisk-Nutzer können [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) verwenden, um auf die WebUI zuzugreifen.
+> Magisk-Nutzer können [KsuWebUI](https://github.com/KOWX712/KsuWebUIStandalone/releases) / [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) verwenden, um auf die WebUI zuzugreifen.
+
+> [!NOTE]
+> Bei KernelSU/APatch fordert Frosty eine Hot-Install an. Wenn dein Manager dies unterstützt, aktualisiere die WebUI nach der Installation statt neu zu starten. Starte neu, wenn etwas nicht stimmt. Magisk erfordert immer einen Neustart.
+
 
 ## Verwendung
 
@@ -62,7 +66,7 @@ Frosty optimiert die Akkulaufzeit, indem es GMS-Dienste einfriert, systemweite D
 - **System-Tweaks**: Kernel-Tweaks, System-Props, Unschärfe deaktivieren, Logs beenden, Tracking-Blocker, RAM-Optimierer und -Bereiniger.
 - **Doze**: App-Doze mit App-Auswahl, Deep Doze mit Level-Auswahl und Whitelist-Editor.
 - **Screen-Off-Optimierung**: Schalter pro Verbindung, Verzögerungs-Timer, Wiederherstellung beim Entsperren.
-- **GMS-Kategorien**: Friere einzelne GMS-Dienstgruppen ein.
+- **GMS-Kategorien**: Friere einzelne GMS-Dienstgruppen ein, oder nutze Alle aktivieren / Alle deaktivieren, um diejenigen gebündelt umzustellen, die noch nicht im gewünschten Zustand sind.
 - **Energiespar-Tuner**: Feinabstimmung des Energiesparmodus-Verhaltens.
 - **Import / Export**: Sichern und Wiederherstellen deiner gesamten Konfiguration.
 
@@ -86,15 +90,15 @@ Frosty optimiert die Akkulaufzeit, indem es GMS-Dienste einfriert, systemweite D
 
 ## Deep-Doze-Stufen
 
-Beide Stufen schreiben Doze-Konstanten neu, erzwingen IDLE bei Bildschirm-Aus, führen nach 5 Min. Bildschirm-Aus einen Wakelock-Killer aus und aktivieren JobScheduler flex-idle auf Android 13+. **Maximum** verwendet zusätzlich den `restricted` Standby-Bucket (Moderat verwendet `rare`), verweigert `WAKE_LOCK`, deaktiviert den Bewegungssensor bei Bildschirm-Aus und beendet Wakelocks sofort beim Anwenden.
+Beide Stufen schreiben Doze-Konstanten neu, erzwingen IDLE, während das Gerät gesperrt ist, führen nach 5 Min. Sperrzeit einen Wakelock-Killer aus und aktivieren JobScheduler flex-idle auf Android 13+. Einschränkungen folgen dem Sperrzustand, nicht dem Bildschirmzustand: Uhrzeit prüfen oder auf die Ambient-Anzeige schauen setzt nichts zurück, nur das Entsperren. **Maximum** verwendet zusätzlich den `restricted` Standby-Bucket (Moderat verwendet `rare`), verweigert `WAKE_LOCK`, deaktiviert den Bewegungssensor im gesperrten Zustand und beendet Wakelocks sofort beim Anwenden.
 
 ## RAM-Optimierer
 
-Stellt ZRAM-Kompression, LMK-/LMKD-/PSI-Schwellen, OEM-Reclaim-Nodes und VM-Speicher-Parameter automatisch ein. **Maximum** skaliert LMK-Gewichte um ~60-70% nach oben und verwendet proaktivere LMKD/PSI-Schwellen.
+Stellt ZRAM-Kompression, LMK-/LMKD-/PSI-Schwellen, OEM-Reclaim-Nodes und VM-Speicher-Parameter automatisch ein. **Maximum** skaliert LMK-Gewichte um ~60-70% nach oben und verwendet proaktivere LMKD/PSI-Schwellen. Das Multitasking-Profil (Leistung / Ausgeglichen / Energiesparen) steuert separat, wie viele Hintergrund-Apps der ActivityManager für sofortiges Fortsetzen bereithält.
 ## FAQ
 
 **F: Warum sind meine Benachrichtigungen verzögert?**  
-A: App-Doze und Deep Doze schränken die Hintergrundaktivität ein. Füge deine Messenger-Apps in der WebUI zur Deep-Doze-Whitelist hinzu.
+A: App-Doze und Deep Doze schränken die Hintergrundaktivität ein. Füge deine Messenger-Apps in der WebUI zur Deep-Doze-Whitelist hinzu. GMS/Firebase selbst ist standardmäßig whitelistet, sodass die Push-Zuststellung intakt bleibt, aber Drittanbieter-Messenger-Apps müssen weiterhin in der WebUI zur Deep-Doze-Whitelist hinzugefügt werden.
 
 **F: Wo ist GMS-Doze geblieben?**  
 A: Es ist jetzt Teil von App-Doze. Öffne die App-Doze-Auswahl und wähle GMS – gleicher Effekt, einheitliche Oberfläche.
@@ -112,6 +116,7 @@ A: Nein. Standardmäßig ist alles ausgeschaltet. Aktiviere nur das, was du brau
 - **Azyrn** [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** [GMS Component Disable Script](https://t.me/MoZoiDStack/137)
 - **s1m** [SaverTuner](https://codeberg.org/s1m/savertuner)
+- [xizt158](https://github.com/xizt159) für viele hochwertige Beiträge
 
 ## Lizenz
 

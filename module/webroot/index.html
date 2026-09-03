@@ -80,6 +80,21 @@
   </div>
 </div>
 
+<div class="modal-overlay centered" id="bugreport-modal">
+  <div class="modal io-modal">
+    <div class="modal-head"><h3 data-i18n="bugreport_title">Bug Report</h3><button class="modal-x ripple" id="bugreport-close">&#x2715;</button></div>
+    <div class="io-body">
+      <div class="modal-notice"><span><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></span><span data-i18n="bugreport_notice">Collects device info, Frosty's config and logs, and a list of your other installed modules. No personal info (accounts, IMEI, phone number, Wi-Fi, location) is included. Attach this file when reporting a bug.</span></div>
+      <button class="io-action-btn ripple" id="bugreport-gen-btn">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-2 14H7v-2h10v2zm0-4H7v-2h10v2zm-3-5V3.5L18.5 8H14z"/></svg>
+        <span data-i18n="bugreport_generate">Generate Bug Report</span>
+      </button>
+      <div class="io-sep"><span data-i18n="bugreport_saved">Saved reports</span></div>
+      <div class="io-list" id="bugreport-list"><div class="io-empty" data-i18n="bugreport_empty">No bug reports found</div></div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay centered" id="lang-modal">
   <div class="modal lang-modal">
     <div class="modal-head"><h3 data-i18n="lang_title">Language</h3><button class="modal-x ripple" id="lang-close">&#x2715;</button></div>
@@ -109,16 +124,20 @@
           <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
         </button>
         <div class="hdr-dropdown" id="hdr-dropdown">
-          <button class="hdr-opt ripple" id="menu-io">
-            <span class="hdr-opt-ico"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm2 16H5V5h11.17L19 7.83V19zm-7-7a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm-5-5h8v4H7V7z"/></svg></span>
-            <span data-i18n="menu_io">Import / Export</span>
-          </button>
           <button class="hdr-opt ripple" id="menu-lang">
             <span class="hdr-opt-ico hdr-opt-ico--lang">
               <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56a15.65 15.65 0 0 0 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>
               <span class="hdr-opt-ico-zh">&#x6587;</span>
             </span>
             <span data-i18n="menu_lang">Language</span>
+          </button>
+          <button class="hdr-opt ripple" id="menu-io">
+            <span class="hdr-opt-ico"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm2 16H5V5h11.17L19 7.83V19zm-7-7a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm-5-5h8v4H7V7z"/></svg></span>
+            <span data-i18n="menu_io">Import / Export</span>
+          </button>
+          <button class="hdr-opt ripple" id="menu-bugreport">
+            <span class="hdr-opt-ico"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13.5" rx="5" ry="6.5"/><ellipse cx="12" cy="5.5" rx="2.2" ry="2"/><path d="M10 3.5 8.5 1.5M14 3.5 15.5 1.5"/><path d="M12 7v13"/><path d="M7.5 9 3.5 7M7 13H2.5M7.5 17l-4 2"/><path d="M16.5 9 20.5 7M17 13h4.5M16.5 17l4 2"/></svg></span>
+            <span data-i18n="menu_bugreport">Bug Report</span>
           </button>
           <button class="hdr-opt ripple" id="menu-about">
             <span class="hdr-opt-ico"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></span>
@@ -153,15 +172,15 @@
     </div>
     <div class="actions">
       <button class="act-btn freeze ripple" id="btn-freeze">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13l5.5 5.5L20 6"/></svg>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5L19.5 7"/></svg>
         <span data-i18n="btn_freeze">Enable All</span>
       </button>
       <button class="act-btn stock ripple" id="btn-stock">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
         <span data-i18n="btn_revert">Revert All</span>
       </button>
       <button class="act-btn reapply ripple" id="btn-reapply">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M5.5 4.5v15L20 12z"/></svg>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         <span data-i18n="btn_reapply">Force Reapply Settings</span>
       </button>
     </div>
@@ -232,6 +251,15 @@
           <button class="lvl-btn ripple" data-level="moderate" id="ram-lvl-mod"><span class="lvl-ico"><svg viewBox="-0.5 0 32 32" width="16" height="15" fill="currentColor"><path d="M30.000,32.000 L23.000,32.000 C22.447,32.000 22.000,31.552 22.000,31.000 L22.000,1.000 C22.000,0.448 22.447,-0.000 23.000,-0.000 L30.000,-0.000 C30.553,-0.000 31.000,0.448 31.000,1.000 L31.000,31.000 C31.000,31.552 30.553,32.000 30.000,32.000 ZM29.000,2.000 L24.000,2.000 L24.000,30.000 L29.000,30.000 L29.000,2.000 ZM19.000,32.000 L12.000,32.000 C11.448,32.000 11.000,31.552 11.000,31.000 L11.000,17.000 C11.000,16.448 11.448,16.000 12.000,16.000 L19.000,16.000 C19.553,16.000 20.000,16.448 20.000,17.000 L20.000,31.000 C20.000,31.552 19.553,32.000 19.000,32.000 ZM18.000,18.000 L13.000,18.000 L13.000,30.000 L18.000,30.000 L18.000,18.000 ZM8.000,32.000 L1.000,32.000 C0.448,32.000 0.000,31.552 0.000,31.000 L0.000,11.000 C0.000,10.448 0.448,10.000 1.000,10.000 L8.000,10.000 C8.552,10.000 9.000,10.448 9.000,11.000 L9.000,31.000 C9.000,31.552 8.552,32.000 8.000,32.000 ZM7.000,12.000 L2.000,12.000 L2.000,30.000 L7.000,30.000 L7.000,12.000 Z"/></svg></span><span class="lvl-name" data-i18n="lvl_moderate">Moderate</span></button>
           <button class="lvl-btn ripple" data-level="maximum" id="ram-lvl-max"><span class="lvl-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M3 13h2l3-7 3 11 3-8 2 4h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lvl-name" data-i18n="lvl_maximum">Maximum</span></button>
         </div>
+        <div class="tgl-info multitask-info">
+          <span class="tgl-name" data-i18n="multitask_title">Multitasking Profile</span>
+          <span class="tgl-desc" data-i18n="multitask_desc">How aggressively background apps get closed to free RAM. Performance keeps more ready to resume instantly. Power Saving closes more of them sooner.</span>
+        </div>
+        <div class="level-row">
+          <button class="lvl-btn ripple" data-level="performance" id="multitask-lvl-performance"><span class="lvl-name" data-i18n="lvl_performance">Performance</span></button>
+          <button class="lvl-btn ripple" data-level="balanced" id="multitask-lvl-balanced"><span class="lvl-name" data-i18n="lvl_balanced">Balanced</span></button>
+          <button class="lvl-btn ripple" data-level="powersaving" id="multitask-lvl-powersaving"><span class="lvl-name" data-i18n="lvl_powersaving">Power Saving</span></button>
+        </div>
       </div>
       <div class="bss-extras always-on">
         <button class="bss-cfg-btn ripple" id="ram-clean-open"><span><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="1" fill="currentColor" fill-opacity="0.18" stroke="currentColor"/><path d="M12 6V3m4 3V4M8 6V4m10 8h3m-3 4h2M18 8h2M12 18v3M8 18v2m8-2v2M6 12H3M6 8H4m2 8H4"/></svg></span><span data-i18n="ram_cleaner_btn">RAM Cleaner</span></button>
@@ -269,7 +297,8 @@
       </div>
       <div class="dd-extras" id="dd-extras">
         <div class="level-row">
-          <button class="lvl-btn ripple" data-level="moderate" id="lvl-mod"><span class="lvl-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17,8C8,10,5.9,16.17,3.82,21.34L5.71,22l1-2.3A4.49,4.49,0,0,0,8,20C19,20,22,3,22,3,21,5,14,5.25,9,6.25S2,11.5,2,13.5a6.22,6.22,0,0,0,1.75,3.75C7,8,17,8,17,8Z"/></svg></span><span class="lvl-name" data-i18n="lvl_moderate">Moderate</span></button>
+          <button class="lvl-btn ripple" data-level="minimum" id="lvl-min"><span class="lvl-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17,8C8,10,5.9,16.17,3.82,21.34L5.71,22l1-2.3A4.49,4.49,0,0,0,8,20C19,20,22,3,22,3,21,5,14,5.25,9,6.25S2,11.5,2,13.5a6.22,6.22,0,0,0,1.75,3.75C7,8,17,8,17,8Z"/></svg></span><span class="lvl-name" data-i18n="lvl_minimum">Minimum</span></button>
+          <button class="lvl-btn ripple" data-level="moderate" id="lvl-mod"><span class="lvl-ico"><svg viewBox="0 0 512 512" width="18" height="18" fill="currentColor"><path d="m500.609 322.275-57.428-162.834c.135.008.279.025.406.025 39.538.677 49.422-20.58 54.566-27.94 7.118-10.171-7.91-20.343-15.816-13.558-7.906 6.775-29.264 21.011-70.386 2.024-37.077-17.117-102.081-46.894-140.031-52.593v-39c0-8.799-7.127-15.921-15.918-15.921-8.795 0-15.922 7.122-15.922 15.921v39c-37.95 5.699-102.953 35.476-140.031 52.593-41.121 18.987-62.48 4.751-70.386-2.024-7.906-6.784-22.935 3.388-15.816 13.558 5.145 7.36 15.028 28.617 54.566 27.94.132 0 .276-.017.402-.025L11.391 322.275H0c11.497 38.025 46.804 65.736 88.595 65.736 41.786 0 77.093-27.711 88.59-65.736h-11.386l-60.355-171.134c37.183-11.467 89.569-31.056 134.636-34.072v24.23h-8.507v267.748H218.37v23.858h-24.874c-23.354 0-22.663 32.969-22.663 32.969-19.233 0-28.85 15.101-28.85 33.648h228.033c0-18.546-9.616-33.648-28.845-33.648 0 0 .686-32.969-22.668-32.969h-24.874v-23.858h-13.203V141.3h-8.507v-24.23c45.072 3.015 97.457 22.604 134.64 34.072l-60.358 171.134h-11.387c11.496 38.025 46.804 65.736 88.59 65.736 41.79 0 77.098-27.711 88.594-65.736zm-359.366 0H35.948L88.595 173zm229.515 0L423.41 173l52.643 149.275z"/></svg></span><span class="lvl-name" data-i18n="lvl_moderate">Moderate</span></button>
           <button class="lvl-btn ripple" data-level="maximum" id="lvl-max"><span class="lvl-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg></span><span class="lvl-name" data-i18n="lvl_maximum">Maximum</span></button>
         </div>
         <button class="wl-btn ripple" id="wl-open"><span data-i18n="wl_btn">&#x25B6; Manage Apps</span><span class="wl-count" id="wl-count">0</span></button>
@@ -296,7 +325,13 @@
   <!-- PAGE: GMS -->
   <div class="page" id="page-gms">
     <section class="card">
-      <h2 class="card-title" data-i18n="sec_gms">GMS Categories</h2>
+      <div class="card-title-row">
+        <h2 class="card-title" data-i18n="sec_gms">GMS Categories</h2>
+        <div class="cat-bulk-actions">
+          <button class="cat-bulk-btn cat-bulk-on ripple" id="cat-enable-all" type="button"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" aria-hidden="true"><path d="M4 12.5L9.5 18L20 6" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="cat_bulk_enable">Enable all</span></button>
+          <button class="cat-bulk-btn cat-bulk-off ripple" id="cat-disable-all" type="button"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" aria-hidden="true"><path d="M4 12.5L9.5 18L20 6" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="cat_bulk_disable">Disable all</span></button>
+        </div>
+      </div>
       <div class="cat-row ripple" data-cat="telemetry"><div class="cat-left"><div class="cat-ico">&#x1F4CA;</div><div class="cat-info"><span class="cat-name" data-i18n="cat_telemetry">Telemetry</span><span class="cat-tag safe" data-i18n="cat_telemetry_tag">Safe &#xB7; Ads, analytics</span></div></div><label class="tgl"><input type="checkbox" id="t-telemetry"><span class="tgl-sl"></span></label></div>
       <div class="cat-row ripple" data-cat="background"><div class="cat-left"><div class="cat-ico">&#x1F504;</div><div class="cat-info"><span class="cat-name" data-i18n="cat_background">Background</span><span class="cat-tag safe" data-i18n="cat_background_tag">Safe &#xB7; Updates, MDM</span></div></div><label class="tgl"><input type="checkbox" id="t-background"><span class="tgl-sl"></span></label></div>
       <div class="cat-row ripple" data-cat="location"><div class="cat-left"><div class="cat-ico">&#x1F4CD;</div><div class="cat-info"><span class="cat-name" data-i18n="cat_location">Location</span><span class="cat-tag warn" data-i18n="cat_location_tag">Breaks Maps, GPS</span></div></div><label class="tgl"><input type="checkbox" id="t-location"><span class="tgl-sl"></span></label></div>
@@ -384,6 +419,7 @@
       <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="bss_opt_force_standby">Force apps standby</span><span class="bss-opt-desc" data-i18n="bss_opt_force_standby_desc">Moves all background apps into the restricted standby bucket, heavily limiting their wakeups.</span></div><label class="tgl"><input type="checkbox" id="bss-t-force-standby"><span class="tgl-sl"></span></label></div>
       <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="bss_opt_force_bg">Force background check</span><span class="bss-opt-desc" data-i18n="bss_opt_force_bg_desc">Applies stricter enforcement of background execution limits across all apps.</span></div><label class="tgl"><input type="checkbox" id="bss-t-force-bg"><span class="tgl-sl"></span></label></div>
       <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="bss_opt_sensors">Disable optional sensors</span><span class="bss-opt-desc" data-i18n="bss_opt_sensors_desc">Turns off non-critical sensors like barometer, step counter, and rotation vector.</span></div><label class="tgl"><input type="checkbox" id="bss-t-sensors"><span class="tgl-sl"></span></label></div>
+      <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="bss_opt_max_refresh">Max refresh rate</span><span class="bss-opt-desc" data-i18n="bss_opt_max_refresh_desc">Keeps your screen at its highest refresh rate even while Battery Saver is on.</span></div><label class="tgl"><input type="checkbox" id="bss-t-max-refresh"><span class="tgl-sl"></span></label></div>
       <div class="bss-section-head" data-i18n="bss_opt_gps">Location mode</div>
       <div class="bss-mode-list">
         <div class="bss-mode-row" id="bss-gps-0" data-gps="0"><div class="bss-mode-dot"></div><div class="bss-mode-info"><span class="bss-mode-name" data-i18n="bss_gps_0">No restriction</span><span class="bss-mode-desc" data-i18n="bss_gps_hint_0">GPS and all location services work normally at all times. No restriction applied.</span></div></div>

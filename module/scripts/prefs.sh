@@ -43,7 +43,7 @@ remove_from_wl() {
   local wl="$MODDIR/config/doze_whitelist.txt"
   [ -f "$wl" ] || { echo '{"status":"ok"}'; return; }
   local escaped
-  escaped=$(printf '%s' "$pkg" | sed 's/\./\\./g')
+  escaped=$(printf '%s' "$pkg" | sed 's/[][\.*^$\/]/\\&/g')
   sed -i "/^${escaped}$/d" "$wl"
   echo '{"status":"ok"}'
 }
@@ -79,7 +79,7 @@ remove_from_ram_wl() {
   [ -z "$pkg" ] && { echo '{"status":"error"}'; return; }
   [ -f "$RAM_WL_FILE" ] || { echo '{"status":"ok"}'; return; }
   local escaped
-  escaped=$(printf '%s' "$pkg" | sed 's/\./\\./g')
+  escaped=$(printf '%s' "$pkg" | sed 's/[][\.*^$\/]/\\&/g')
   sed -i "/^${escaped}$/d" "$RAM_WL_FILE"
   echo '{"status":"ok"}'
 }

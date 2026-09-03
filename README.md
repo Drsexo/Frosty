@@ -38,10 +38,10 @@ Frosty optimizes battery life by freezing GMS services, applying system-wide doz
 - **Screen Off Optimization**: Disable selected connections (Wi-Fi, Bluetooth, data, location) and optionally run the RAM cleaner after a configurable screen-off delay, restores on unlock
 - **Kill Google Tracking**: Disables GMS analytics, Clearcut telemetry, Phenotype polling, and ad tracking
 - **Kernel Tweaks**: Scheduler, VM, network, and debug optimizations
-- **RAM Optimizer**: ZRAM auto-tuning, LMK/LMKD/PSI thresholds, OEM reclaim disabling, VM memory params (Moderate / Maximum), configurable RAM Cleaner
+- **RAM Optimizer**: ZRAM auto-tuning, LMK/LMKD/PSI thresholds, OEM reclaim disabling, VM memory params (Moderate / Maximum), configurable RAM Cleaner, Multitasking Profile (Performance / Balanced / Power Saving)
 - **System Props**: Disable debug properties to save RAM and battery
 - **Log Killing**: Stop battery-draining log and debug processes
-- **Battery Saver Tuner**: Customize what Android's built-in battery saver does when active
+- **Battery Saver Tuner**: Customize what Android's built-in battery saver does when active, including an option to keep max refresh rate while it's on
 
 ## Installation
 
@@ -53,7 +53,10 @@ Frosty optimizes battery life by freezing GMS services, applying system-wide doz
 4. Open the WebUI to enable features
 
 > [!NOTE]
-> Magisk users can use [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) to access the WebUI.
+> Magisk users can use [KsuWebUI](https://github.com/KOWX712/KsuWebUIStandalone/releases) / [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) to access the WebUI.
+
+> [!NOTE]
+> On KernelSU/APatch, Frosty requests a hot install. If your manager supports it, refresh the WebUI after installing instead of rebooting. Reboot if anything looks off. Magisk always requires a reboot.
 
 ## Usage
 
@@ -62,7 +65,7 @@ Open the WebUI from your root manager:
 - **System Tweaks**: kernel tweaks, system props, blur disable, log killing, tracking block, RAM optimizer and cleaner
 - **Doze**: App Doze with app picker, Deep Doze with level selector and whitelist editor
 - **Screen Off Optimization**: per-connection toggles, delay timers, restore on unlock
-- **GMS Categories**: freeze individual GMS service groups
+- **GMS Categories**: freeze individual GMS service groups, or use Enable all / Disable all to batch the ones not already in the state you want
 - **Battery Saver Tuner**: fine-tune battery saver behavior
 - **Import / Export**: back up and restore your full configuration
 
@@ -86,16 +89,16 @@ Open the WebUI from your root manager:
 
 ## Deep Doze Levels
 
-Both levels rewrite Doze constants, force IDLE on screen-off, run a 5-min screen-off wakelock killer, and enable JobScheduler flex-idle on Android 13+. **Maximum** additionally uses the `restricted` standby bucket (Moderate uses `rare`), denies `WAKE_LOCK`, disables the motion sensor on screen-off, and kills wakelocks immediately on apply.
+Both levels rewrite Doze constants, force IDLE while the device is locked, run a 5-min wakelock killer once it's been locked that long, and enable JobScheduler flex-idle on Android 13+. Restrictions follow lock state, not screen state: checking the time or glancing at ambient display doesn't reset anything, only unlocking does. **Maximum** additionally uses the `restricted` standby bucket (Moderate uses `rare`), denies `WAKE_LOCK`, disables the motion sensor while locked, and kills wakelocks immediately on apply.
 
 ## RAM Optimizer
 
-Auto-tunes ZRAM compression, LMK / LMKD / PSI thresholds, OEM reclaim nodes, and VM memory params. **Maximum** scales LMK weights up ~60-70% and uses more proactive LMKD/PSI thresholds.
+Auto-tunes ZRAM compression, LMK / LMKD / PSI thresholds, OEM reclaim nodes, and VM memory params. **Maximum** scales LMK weights up ~60-70% and uses more proactive LMKD/PSI thresholds. Multitasking Profile (Performance / Balanced / Power Saving) separately controls how many background apps ActivityManager keeps ready to resume instantly.
 
 ## FAQ
 
 **Q: Why are my notifications delayed?**  
-A: App Doze and Deep Doze restrict background activity. Add your messaging apps to the Deep Doze whitelist in the WebUI.
+A: App Doze and Deep Doze restrict background activity. GMS/Firebase itself is whitelisted by default so push delivery stays intact, but third-party messaging apps still need to be added to the Deep Doze whitelist in the WebUI.
 
 **Q: Where did GMS Doze go?**  
 A: It's now part of App Doze. Open the App Doze picker and select GMS, same effect, unified interface.
@@ -113,6 +116,7 @@ A: No. Everything is off by default. Enable only what you need.
 - **Azyrn** [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** [GMS Component Disable Script](https://t.me/MoZoiDStack/137)
 - **s1m** [SaverTuner](https://codeberg.org/s1m/savertuner)
+- [xizt158](https://github.com/xizt159) for many quality contributions
 
 ## License
 

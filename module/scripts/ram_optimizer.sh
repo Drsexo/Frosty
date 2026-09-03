@@ -72,8 +72,8 @@ apply_ram_optimizer() {
 
   local sdk=$(getprop ro.build.version.sdk 2>/dev/null)
   if [ "${sdk:-0}" -ge 30 ] 2>/dev/null; then
-    if content call --uri content://settings/config --method PUT_value \
-      --arg runtime_native/usap_pool_enabled --extra value:s:true 2>/dev/null >/dev/null; then
+    _devcfg_backup runtime_native usap_pool_enabled
+    if device_config put runtime_native usap_pool_enabled true >/dev/null 2>&1; then
       log_ram "[OK] usap_pool_enabled = true"
       kcount=$((kcount + 1))
     else
@@ -158,8 +158,10 @@ apply_ram_optimizer() {
       _f1=$(( _p * 15 / 1000 )); _f2=$(( _p / 50 ));        _f3=$(( _p * 25 / 1000 ))
       _f4=$(( _p * 3 / 100 ));   _f5=$(( _p * 35 / 1000 )); _f6=$(( _p / 20 ))
     fi
-    printf '%s,%s,%s,%s,%s,%s\n' "$_f1" "$_f2" "$_f3" "$_f4" "$_f5" "$_f6" > "$_lmk" 2>/dev/null && {
-      log_ram "[OK] LMK minfree set ($(( total_kb / 1024 ))MB device, $RAM_OPT_LEVEL)"
+    printf '%s,%s,%s,%s,%s,%s\n' \
+      "$((_f1/4))" "$((_f2/4))" "$((_f3/4))" "$((_f4/4))" "$((_f5/4))" "$((_f6/4))" \
+      > "$_lmk" 2>/dev/null && {
+      log_ram "[OK] LMK minfree set ($(( total_kb / 1024 ))MB device, $RAM_OPT_LEVEL, thresholds ${_f1}-${_f6}KB)"
       kcount=$((kcount + 1))
     }
   fi
@@ -175,6 +177,10 @@ apply_ram_optimizer() {
       grep -q "^${_lp}=" "$LMKD_BACKUP" 2>/dev/null && continue
       printf '%s=%s\n' "$_lp" "$(getprop "$_lp" 2>/dev/null)" >> "$LMKD_BACKUP"
     done
+
+    if ! command -v resetprop >/dev/null 2>&1; then
+      log_ram "[WARN] resetprop unavailable - LMKD ro.lmk.* properties need a reboot to take effect on this root solution"
+    fi
 
     if [ "${RAM_OPT_LEVEL:-moderate}" = "maximum" ]; then
       _set_prop ro.lmk.low 900
@@ -241,17 +247,32 @@ apply_ram_optimizer() {
   echo '{"status":"ok"}'
 }
 
+_revert_multitask_keys() {
+  local _mtkeyfile="$MODDIR/tmp/multitask_keys.txt"
+  [ -f "$_mtkeyfile" ] || return 1
+  while IFS= read -r _mtkey; do
+    [ -z "$_mtkey" ] && continue
+    _devcfg_restore activity_manager "$_mtkey"
+  done < "$_mtkeyfile"
+  rm -f "$_mtkeyfile"
+  cmd activity memory-factor set 1 >/dev/null 2>&1
+  return 0
+}
+
 revert_ram_optimizer() {
   echo "Frosty v${MODVER:-?} - RAM (revert) - $(date '+%Y-%m-%d %H:%M:%S')" > "$RAM_LOG"
   log_ram "Reverting RAM optimizer..."
+
+  local _zram_partial=0
 
   if [ -f "$RAM_BACKUP" ]; then
     local kcount=0 _zram_algo="" _zram_streams="" _zram_disksize=""
     while IFS= read -r line; do
       case "$line" in ''|'#'*) continue ;; esac
-      local val path
-      val=$(echo "$line" | cut -d= -f2)
-      path=$(echo "$line" | cut -d= -f3-)
+      local val path _rest
+      path="${line##*=}"
+      _rest="${line%=*}"
+      val="${_rest#*=}"
       case "$path" in
         */zram0/comp_algorithm)   _zram_algo="$val";    continue ;;
         */zram0/disksize)         _zram_disksize="$val"; continue ;;
@@ -278,6 +299,7 @@ revert_ram_optimizer() {
           kcount=$((kcount + 1))
         else
           log_ram "[WARN] ZRAM: swapoff failed, algo not restored"
+          _zram_partial=1
         fi
       elif [ "$_cur_algo" = "$_zram_algo" ] && [ -n "$_zram_streams" ]; then
         printf '%s\n' "$_zram_streams" > "$_z/max_comp_streams" 2>/dev/null && kcount=$((kcount + 1))
@@ -311,13 +333,63 @@ revert_ram_optimizer() {
     log_ram "[OK] LMKD props restored"
   fi
 
-  content call --uri content://settings/config --method DELETE_value \
-    --arg runtime_native/usap_pool_enabled >/dev/null 2>&1
-
+  _devcfg_restore runtime_native usap_pool_enabled
   _devcfg_restore activity_manager use_compaction
   _devcfg_restore activity_manager_native_boot use_freezer
   _devcfg_restore alarm_manager save_battery_on_idle
 
+  if _revert_multitask_keys; then
+    log_ram "[OK] Multitasking profile reverted"
+  fi
+
   log_ram "[OK] RAM optimizer reverted"
-  echo "{\"status\":\"ok\"}"
+  if [ "$_zram_partial" = "1" ]; then
+    echo "{\"status\":\"partial\",\"message\":\"ZRAM busy, algorithm not restored - retry later or reboot\"}"
+  else
+    echo "{\"status\":\"ok\"}"
+  fi
+}
+
+apply_multitasking() {
+  local _tier="$1" _mult _keyfile="$MODDIR/tmp/multitask_keys.txt"
+  case "$_tier" in
+    performance) _mult=125 ;;
+    balanced)    _mult=100 ;;
+    powersaving) _mult=75  ;;
+    *) echo '{"status":"error","message":"invalid tier"}'; return 1 ;;
+  esac
+
+  mkdir -p "$MODDIR/tmp"
+  : > "$_keyfile"
+  local _tmp="$MODDIR/tmp/_am_settings.tmp"
+  dumpsys activity settings 2>/dev/null | grep -iE 'cached' > "$_tmp"
+
+  local _count=0 _key _val _new
+  while IFS= read -r _line; do
+    _key=$(printf '%s' "$_line" | cut -d= -f1)
+    _val=$(printf '%s' "$_line" | cut -d= -f2 | grep -oE '^[0-9]+')
+    [ -z "$_val" ] && continue
+    _new=$(( _val * _mult / 100 ))
+    _devcfg_backup activity_manager "$_key"
+    if device_config put activity_manager "$_key" "$_new" >/dev/null 2>&1; then
+      echo "$_key" >> "$_keyfile"
+      _count=$((_count + 1))
+    fi
+  done < "$_tmp"
+  rm -f "$_tmp"
+
+  case "$_tier" in
+    performance) cmd activity memory-factor set 0 2>/dev/null ;;
+    balanced)    cmd activity memory-factor set 1 2>/dev/null ;;
+    powersaving) cmd activity memory-factor set 2 2>/dev/null ;;
+  esac
+
+  log_ram "[OK] Multitasking profile: $_tier ($_count keys)"
+  echo "{\"status\":\"ok\",\"applied\":$_count}"
+}
+
+revert_multitasking() {
+  _revert_multitask_keys
+  log_ram "[OK] Multitasking profile reverted"
+  echo '{"status":"ok"}'
 }

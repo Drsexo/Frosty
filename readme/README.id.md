@@ -38,10 +38,10 @@ Frosty mengoptimalkan masa pakai baterai dengan membekukan layanan GMS, menerapk
 - **Pengoptimalan Layar Mati**: Menonaktifkan koneksi terpilih (Wi-Fi, Bluetooth, data, lokasi) dan secara opsional menjalankan pembersih RAM setelah penundaan layar mati yang dapat dikonfigurasi, memulihkan semuanya saat tidak terkunci.
 - **Nonaktifkan Pelacakan Google**: Menonaktifkan analitik GMS, telemetri Clearcut, polling Phenotype, dan pelacakan iklan.
 - **Penyesuaian Kernel**: Optimalisasi penjadwal (scheduler), VM, jaringan, dan debug.
-- **Pengoptimal RAM**: Penalaan otomatis ZRAM, ambang batas LMK/LMKD/PSI, penonaktifan reclaim OEM, parameter memori VM (Moderat / Maksimum), pembersih RAM yang dapat dikonfigurasi.
+- **Pengoptimal RAM**: Penalaan otomatis ZRAM, ambang batas LMK/LMKD/PSI, penonaktifan reclaim OEM, parameter memori VM (Moderat / Maksimum), pembersih RAM yang dapat dikonfigurasi, Profil Multitasking (Performa / Seimbang / Hemat Daya)
 - **System Props**: Menonaktifkan properti debug untuk menghemat RAM dan baterai.
 - **Penghentian Log**: Menghentikan proses log dan debug yang menguras baterai.
-- **Penyetel Penghemat Baterai**: Menyesuaikan apa yang dilakukan penghemat baterai bawaan Android saat aktif.
+- **Penyetel Penghemat Baterai**: Menyesuaikan apa yang dilakukan penghemat baterai bawaan Android saat aktif, termasuk opsi untuk mempertahankan refresh rate maksimum saat aktif.
 
 ## Instalasi
 
@@ -53,7 +53,11 @@ Frosty mengoptimalkan masa pakai baterai dengan membekukan layanan GMS, menerapk
 4. Buka WebUI untuk mengaktifkan fitur.
 
 > [!NOTE]
-> Pengguna Magisk dapat menggunakan [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) untuk mengakses WebUI.
+> Pengguna Magisk dapat menggunakan [KsuWebUI](https://github.com/KOWX712/KsuWebUIStandalone/releases) / [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) untuk mengakses WebUI.
+
+> [!NOTE]
+> Di KernelSU/APatch, Frosty meminta hot install. Jika manager Anda mendukungnya, muat ulang WebUI setelah menginstal alih-alih mulai ulang. Mulai ulang jika ada yang terlihat tidak beres. Magisk selalu memerlukan mulai ulang.
+
 
 ## Penggunaan
 
@@ -62,7 +66,7 @@ Buka WebUI dari root manager Anda:
 - **Penyesuaian Sistem**: penyesuaian kernel, system props, nonaktifkan blur, penghentian log, nonaktifkan pelacakan, pengoptimal dan pembersih RAM.
 - **Doze**: App Doze dengan pemilih aplikasi, Deep Doze dengan pemilih level dan editor daftar putih (whitelist).
 - **Pengoptimalan Layar Mati**: tombol per koneksi, timer penundaan, pulihkan saat tidak terkunci.
-- **Kategori GMS**: bekukan setiap kelompok layanan GMS.
+- **Kategori GMS**: bekukan setiap kelompok layanan GMS, atau gunakan Aktifkan semua / Nonaktifkan semua untuk memproses batch yang belum berada di status yang Anda inginkan.
 - **Penyetel Penghemat Baterai**: sesuaikan perilaku penghemat baterai.
 - **Impor / Ekspor**: cadangkan dan pulihkan konfigurasi lengkap Anda.
 
@@ -86,15 +90,15 @@ Buka WebUI dari root manager Anda:
 
 ## Tingkat Deep Doze
 
-Kedua tingkat menulis ulang konstanta Doze, memaksa IDLE saat layar mati, menjalankan pembunuh wakelock setelah 5 menit layar mati, dan mengaktifkan kebijakan flex-idle JobScheduler di Android 13+. **Maksimum** tambahan menggunakan bucket standby `restricted` (Moderat menggunakan `rare`), menolak `WAKE_LOCK`, menonaktifkan sensor gerak saat layar mati, dan membunuh wakelock segera saat diterapkan.
+Kedua tingkat menulis ulang konstanta Doze, memaksa IDLE saat perangkat terkunci, menjalankan pembunuh wakelock setelah 5 menit terkunci, dan mengaktifkan kebijakan flex-idle JobScheduler di Android 13+. Pembatasan mengikuti status kunci, bukan status layar: memeriksa waktu atau melihat layar ambient tidak mereset apa pun, hanya membuka kunci yang melakukannya. **Maksimum** tambahan menggunakan bucket standby `restricted` (Moderat menggunakan `rare`), menolak `WAKE_LOCK`, menonaktifkan sensor gerak saat terkunci, dan membunuh wakelock segera saat diterapkan.
 
 ## Pengoptimal RAM
 
-Menala otomatis kompresi ZRAM, ambang batas LMK / LMKD / PSI, node reclaim OEM, dan parameter memori VM. **Maksimum** meningkatkan bobot LMK ~60-70% dan menggunakan ambang batas LMKD/PSI yang lebih proaktif.
+Menala otomatis kompresi ZRAM, ambang batas LMK / LMKD / PSI, node reclaim OEM, dan parameter memori VM. **Maksimum** meningkatkan bobot LMK ~60-70% dan menggunakan ambang batas LMKD/PSI yang lebih proaktif. Profil Multitasking (Performa / Seimbang / Hemat Daya) secara terpisah mengontrol berapa banyak aplikasi latar belakang yang disiapkan ActivityManager untuk dilanjutkan secara instan.
 ## FAQ
 
 **T: Mengapa notifikasi saya tertunda?**  
-J: App Doze dan Deep Doze membatasi aktivitas latar belakang. Tambahkan aplikasi pesan Anda ke daftar putih Deep Doze di WebUI.
+J: App Doze dan Deep Doze membatasi aktivitas latar belakang. Tambahkan aplikasi pesan Anda ke daftar putih Deep Doze di WebUI. GMS/Firebase itu sendiri sudah ada di daftar putih secara default sehingga pengiriman push tetap utuh, tetapi aplikasi pesan pihak ketiga masih perlu ditambahkan ke daftar putih Deep Doze di WebUI.
 
 **T: Ke mana perginya GMS Doze?**  
 J: Sekarang ini adalah bagian dari App Doze. Buka pemilih App Doze dan pilih GMS, efeknya sama, hanya saja antarmukanya disatukan.
@@ -112,6 +116,7 @@ J: Tidak. Semuanya dimatikan secara default. Aktifkan hanya fitur yang Anda butu
 - **Azyrn** [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** [Skrip Menonaktifkan Komponen GMS](https://t.me/MoZoiDStack/137)
 - **s1m** [SaverTuner](https://codeberg.org/s1m/savertuner)
+- [xizt158](https://github.com/xizt159) untuk banyak kontribusi berkualitas
 
 ## Lisensi
 

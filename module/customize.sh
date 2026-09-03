@@ -2,6 +2,10 @@
 # Frosty - GMS Freezer / Battery Saver
 # Author: Drsexo (GitHub)
 
+if [ "$KSU" = "true" ] || [ "$APATCH" = "true" ]; then
+  export MODULE_HOT_INSTALL_REQUEST="true"
+fi
+
 TIMEOUT=30
 
 COLS=$(stty size 2>/dev/null | awk '{print $2}')
@@ -19,13 +23,44 @@ BOX_BOT="  └${LINE}┘"
 unset _i _iw
 
 if ! command -v timeout >/dev/null 2>&1; then
-  timeout() { shift; "$@"; }
+  timeout() {
+    local _dur="$1"; shift
+    "$@" &
+    local _cpid=$!
+    (
+      sleep "$_dur"
+      kill -TERM "$_cpid" 2>/dev/null
+      sleep 1
+      kill -0 "$_cpid" 2>/dev/null && kill -KILL "$_cpid" 2>/dev/null
+    ) &
+    local _wpid=$!
+    wait "$_cpid" 2>/dev/null
+    local _rc=$?
+    kill "$_wpid" 2>/dev/null
+    return "$_rc"
+  }
 fi
 
 HAS_GETEVENT=1
 if ! command -v getevent >/dev/null 2>&1; then
   HAS_GETEVENT=0
 fi
+
+_wait_vol_key() {
+  local _budget="$1" _deadline _now _chunk _ev
+  _deadline=$(( $(date +%s) + _budget ))
+  while true; do
+    _now=$(date +%s)
+    _chunk=$(( _deadline - _now ))
+    [ "$_chunk" -le 0 ] && { echo timeout; return 0; }
+    [ "$_chunk" -gt 2 ] && _chunk=2
+    _ev=$(timeout "$_chunk" getevent -qlc 1 2>/dev/null)
+    case "$_ev" in
+      *KEY_VOLUMEUP*DOWN*)   echo up;   return 0 ;;
+      *KEY_VOLUMEDOWN*DOWN*) echo down; return 0 ;;
+    esac
+  done
+}
 
 print_banner() {
   ui_print ""
@@ -138,25 +173,11 @@ if [ -n "$_LANG_NAME" ]; then
   if [ "$HAS_GETEVENT" -eq 0 ]; then
     ui_print "  → English (auto - no getevent)"
   else
-    while :; do
-      _ev=$(timeout "$TIMEOUT" getevent -qlc 1 2>/dev/null)
-      _ec=$?
-      if [ "$_ec" -eq 124 ] || [ "$_ec" -eq 143 ]; then
-        ui_print "  → 🇬🇧 English (timeout)"
-        _chosen_lang="en"
-        break
-      fi
-      if echo "$_ev" | grep -q "KEY_VOLUMEUP.*DOWN"; then
-        ui_print "  → $_LANG_FLAG $_LANG_NAME ✅"
-        _chosen_lang="$_LANG"
-        break
-      fi
-      if echo "$_ev" | grep -q "KEY_VOLUMEDOWN.*DOWN"; then
-        ui_print "  → 🇬🇧 English ✅"
-        _chosen_lang="en"
-        break
-      fi
-    done
+    case "$(_wait_vol_key "$TIMEOUT")" in
+      up)   ui_print "  → $_LANG_FLAG $_LANG_NAME ✅"; _chosen_lang="$_LANG" ;;
+      down) ui_print "  → 🇬🇧 English ✅";              _chosen_lang="en" ;;
+      *)    ui_print "  → 🇬🇧 English (timeout)";       _chosen_lang="en" ;;
+    esac
   fi
   INSTALL_LANG="$_chosen_lang"
 fi
@@ -348,6 +369,36 @@ s() {
     ar:done_reboot)   echo "  🔄 أعد تشغيل جهازك" ;;
      *:done_reboot)   echo "  🔄 Reboot your device" ;;
 
+    fr:done_hotinstall)      echo "  ⚡ Installation à chaud demandée (KSU/APatch)" ;;
+    de:done_hotinstall)      echo "  ⚡ Hot-Install angefordert (KSU/APatch)" ;;
+    pl:done_hotinstall)      echo "  ⚡ Zażądano instalacji na gorąco (KSU/APatch)" ;;
+    it:done_hotinstall)      echo "  ⚡ Installazione a caldo richiesta (KSU/APatch)" ;;
+    es:done_hotinstall)      echo "  ⚡ Instalación en caliente solicitada (KSU/APatch)" ;;
+    pt:done_hotinstall)      echo "  ⚡ Instalação a quente solicitada (KSU/APatch)" ;;
+    tr:done_hotinstall)      echo "  ⚡ Sıcak kurulum istendi (KSU/APatch)" ;;
+    id:done_hotinstall)      echo "  ⚡ Instalasi panas diminta (KSU/APatch)" ;;
+    ru:done_hotinstall)      echo "  ⚡ Запрошена горячая установка (KSU/APatch)" ;;
+    uk:done_hotinstall)      echo "  ⚡ Запрошено гаряче встановлення (KSU/APatch)" ;;
+    zh:done_hotinstall)      echo "  ⚡ 已请求热安装 (KSU/APatch)" ;;
+    ja:done_hotinstall)      echo "  ⚡ ホットインストールが要求されました (KSU/APatch)" ;;
+    ar:done_hotinstall)      echo "  ⚡ تم طلب التثبيت الساخن (KSU/APatch)" ;;
+     *:done_hotinstall)      echo "  ⚡ Hot install requested (KSU/APatch)" ;;
+
+    fr:done_hotinstall_note)      echo "     Actualisez la page WebUI - redémarrez si quelque chose semble anormal" ;;
+    de:done_hotinstall_note)      echo "     WebUI-Seite aktualisieren - bei Auffälligkeiten neu starten" ;;
+    pl:done_hotinstall_note)      echo "     Odśwież stronę WebUI - uruchom ponownie, jeśli coś wygląda nie tak" ;;
+    it:done_hotinstall_note)      echo "     Aggiorna la pagina WebUI - riavvia se qualcosa sembra anomalo" ;;
+    es:done_hotinstall_note)      echo "     Actualiza la página WebUI - reinicia si algo se ve extraño" ;;
+    pt:done_hotinstall_note)      echo "     Atualize a página WebUI - reinicie se algo parecer estranho" ;;
+    tr:done_hotinstall_note)      echo "     WebUI sayfasını yenileyin - bir şeyler ters görünüyorsa yeniden başlatın" ;;
+    id:done_hotinstall_note)      echo "     Muat ulang halaman WebUI - mulai ulang jika ada yang terlihat tidak beres" ;;
+    ru:done_hotinstall_note)      echo "     Обновите страницу WebUI - перезагрузите, если что-то работает некорректно" ;;
+    uk:done_hotinstall_note)      echo "     Оновіть сторінку WebUI - перезавантажте, якщо щось працює некоректно" ;;
+    zh:done_hotinstall_note)      echo "     刷新 WebUI 页面 - 如有异常请重启" ;;
+    ja:done_hotinstall_note)      echo "     WebUI ページを更新してください - 異常があれば再起動してください" ;;
+    ar:done_hotinstall_note)      echo "     حدّث صفحة WebUI - أعد التشغيل إذا بدا أي شيء غير طبيعي" ;;
+     *:done_hotinstall_note)      echo "     Refresh the WebUI page - reboot if anything looks off" ;;
+
     fr:done_webui)    echo "  ⚙️  Ouvrez la WebUI pour activer les fonctionnalités" ;;
     de:done_webui)    echo "  ⚙️  Öffne die WebUI, um Funktionen zu aktivieren" ;;
     pl:done_webui)    echo "  ⚙️  Otwórz WebUI, aby aktywować funkcje" ;;
@@ -431,6 +482,7 @@ s() {
 EXISTING_PREFS="/data/adb/modules/$MODID/config/user_prefs"
 EXISTING_WHITELIST="/data/adb/modules/$MODID/config/doze_whitelist.txt"
 EXISTING_PATCHES="/data/adb/modules/$MODID/config/doze_patches.txt"
+EXISTING_RAM_WL="/data/adb/modules/$MODID/config/ram_clean_whitelist.txt"
 USE_EXISTING=0
 
 if [ -f "$EXISTING_PREFS" ]; then
@@ -445,25 +497,11 @@ if [ -f "$EXISTING_PREFS" ]; then
     ui_print "$(s cfg_kept) (auto - no getevent)"
     USE_EXISTING=1
   else
-    while :; do
-      event=$(timeout "$TIMEOUT" getevent -qlc 1 2>/dev/null)
-      code=$?
-      if [ "$code" -eq 124 ] || [ "$code" -eq 143 ]; then
-        ui_print "$(s cfg_kept) (timeout)"
-        USE_EXISTING=1
-        break
-      fi
-      if echo "$event" | grep -q "KEY_VOLUMEUP.*DOWN"; then
-        ui_print "$(s cfg_kept)"
-        USE_EXISTING=1
-        break
-      fi
-      if echo "$event" | grep -q "KEY_VOLUMEDOWN.*DOWN"; then
-        ui_print "$(s cfg_reset)"
-        USE_EXISTING=0
-        break
-      fi
-    done
+    case "$(_wait_vol_key "$TIMEOUT")" in
+      up)   ui_print "$(s cfg_kept)";           USE_EXISTING=1 ;;
+      down) ui_print "$(s cfg_reset)";          USE_EXISTING=0 ;;
+      *)    ui_print "$(s cfg_kept) (timeout)"; USE_EXISTING=1 ;;
+    esac
   fi
 fi
 
@@ -481,6 +519,9 @@ if [ "$USE_EXISTING" -eq 1 ]; then
   fi
   if [ -f "$EXISTING_PATCHES" ]; then
     cp -f "$EXISTING_PATCHES" "$MODPATH/config/doze_patches.txt"
+  fi
+  if [ -f "$EXISTING_RAM_WL" ]; then
+    cp -f "$EXISTING_RAM_WL" "$MODPATH/config/ram_clean_whitelist.txt"
   fi
   . "$MODPATH/config/user_prefs"
   SYSPROP="$MODPATH/system.prop"
@@ -500,7 +541,12 @@ fi
 
 print_section "$(s done_title)"
 ui_print ""
-ui_print "$(s done_reboot)"
+if [ "$KSU" = "true" ] || [ "$APATCH" = "true" ]; then
+  ui_print "$(s done_hotinstall)"
+  ui_print "$(s done_hotinstall_note)"
+else
+  ui_print "$(s done_reboot)"
+fi
 ui_print "$(s done_webui)"
 ui_print "$(s done_off)"
 ui_print "$(s done_logs)"

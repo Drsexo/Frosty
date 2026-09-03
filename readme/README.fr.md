@@ -38,10 +38,10 @@ Frosty optimise la durée de vie de la batterie en gelant les services GMS, en a
 - **Optimisation Écran Éteint** : Désactive les connexions sélectionnées (Wi-Fi, Bluetooth, données, localisation) et exécute optionnellement le nettoyage RAM après un délai configurable d'extinction de l'écran, restaure au déverrouillage.
 - **Désactiver le suivi Google** : Désactive les analyses GMS, la télémétrie Clearcut, le polling Phenotype et le suivi publicitaire.
 - **Ajustements du Kernel** : Optimisations du planificateur, de la VM, du réseau et du débogage.
-- **Optimiseur de RAM** : Réglage automatique ZRAM, seuils LMK/LMKD/PSI, désactivation de la récupération OEM, paramètres mémoire VM (Modéré / Maximum), Nettoyeur RAM configurable.
+- **Optimiseur de RAM** : Réglage automatique ZRAM, seuils LMK/LMKD/PSI, désactivation de la récupération OEM, paramètres mémoire VM (Modéré / Maximum), Nettoyeur RAM configurable, Profil multitâche (Performance / Équilibré / Économie d'énergie)
 - **Props Système** : Désactivez les propriétés de débogage pour économiser la RAM et la batterie.
 - **Arrêt des Logs** : Arrête les processus de journalisation (logs) et de débogage qui drainent la batterie.
-- **Tuner Économiseur de Batterie** : Personnalisez ce que fait l'économiseur de batterie intégré à Android lorsqu'il est actif.
+- **Tuner Économiseur de Batterie** : Personnalisez ce que fait l'économiseur de batterie intégré à Android lorsqu'il est actif, y compris une option pour conserver le taux de rafraîchissement maximal lorsqu'il est actif.
 
 ## Installation
 
@@ -53,7 +53,11 @@ Frosty optimise la durée de vie de la batterie en gelant les services GMS, en a
 4. Ouvrez la WebUI pour activer les fonctionnalités.
 
 > [!NOTE]
-> Les utilisateurs de Magisk peuvent utiliser [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) pour accéder à la WebUI.
+> Les utilisateurs de Magisk peuvent utiliser [KsuWebUI](https://github.com/KOWX712/KsuWebUIStandalone/releases) / [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) pour accéder à la WebUI.
+
+> [!NOTE]
+> Sur KernelSU/APatch, Frosty demande une installation à chaud. Si votre gestionnaire le prend en charge, actualisez la WebUI après l'installation au lieu de redémarrer. Redémarrez si quelque chose semble anormal. Magisk nécessite toujours un redémarrage.
+
 
 ## Utilisation
 
@@ -62,7 +66,7 @@ Ouvrez la WebUI depuis votre gestionnaire root :
 - **Ajustements Système** : Ajustements du kernel, props système, désactivation du flou, arrêt des logs, blocage du suivi, optimiseur et nettoyeur RAM.
 - **Doze** : App Doze avec sélecteur d'applications, Deep Doze avec sélecteur de niveau et éditeur de liste blanche.
 - **Optimisation Écran Éteint** : Interrupteurs par connexion, minuteries de délai, restauration au déverrouillage.
-- **Catégories GMS** : Gelez les groupes de services GMS individuels.
+- **Catégories GMS** : Gelez les groupes de services GMS individuels, ou utilisez Tout activer / Tout désactiver pour traiter par lot celles qui ne sont pas déjà dans l'état souhaité.
 - **Tuner Économiseur de Batterie** : Ajustez le comportement de l'économiseur de batterie.
 - **Importer / Exporter** : Sauvegardez et restaurez votre configuration complète.
 
@@ -86,15 +90,15 @@ Ouvrez la WebUI depuis votre gestionnaire root :
 
 ## Niveaux de Deep Doze
 
-Les deux niveaux réécrivent les constantes Doze, forcent l'état IDLE à l'extinction de l'écran, exécutent un tueur de wakelocks après 5 minutes d'écran éteint, et activent la politique flex-idle du JobScheduler sur Android 13+. Le niveau **Maximum** utilise en plus le bucket de standby `restricted` (le Modéré utilise `rare`), refuse `WAKE_LOCK`, désactive le capteur de mouvement à l'extinction de l'écran, et tue les wakelocks immédiatement lors de l'application.
+Les deux niveaux réécrivent les constantes Doze, forcent l'état IDLE pendant que l'appareil est verrouillé, exécutent un tueur de wakelocks après 5 minutes de verrouillage, et activent la politique flex-idle du JobScheduler sur Android 13+. Les restrictions suivent l'état de verrouillage, pas l'état de l'écran : consulter l'heure ou regarder l'écran ambiant ne réinitialise rien, seul le déverrouillage le fait. Le niveau **Maximum** utilise en plus le bucket de standby `restricted` (le Modéré utilise `rare`), refuse `WAKE_LOCK`, désactive le capteur de mouvement pendant le verrouillage, et tue les wakelocks immédiatement lors de l'application.
 
 ## Optimiseur RAM
 
-Réglage automatique de la compression ZRAM, des seuils LMK / LMKD / PSI, des nœuds de récupération OEM et des paramètres mémoire VM. Le niveau **Maximum** augmente les poids LMK d'environ 60-70 % et utilise des seuils LMKD/PSI plus proactifs.
+Réglage automatique de la compression ZRAM, des seuils LMK / LMKD / PSI, des nœuds de récupération OEM et des paramètres mémoire VM. Le niveau **Maximum** augmente les poids LMK d'environ 60-70 % et utilise des seuils LMKD/PSI plus proactifs. Le Profil multitâche (Performance / Équilibré / Économie d'énergie) contrôle séparément le nombre d'applications en arrière-plan que l'ActivityManager garde prêtes à reprendre instantanément.
 ## FAQ
 
 **Q : Pourquoi mes notifications sont-elles retardées ?**  
-R : App Doze et Deep Doze restreignent l'activité en arrière-plan. Ajoutez vos applications de messagerie à la liste blanche de Deep Doze dans la WebUI.
+R : App Doze et Deep Doze restreignent l'activité en arrière-plan. Ajoutez vos applications de messagerie à la liste blanche de Deep Doze dans la WebUI. GMS/Firebase lui-même est sur liste blanche par défaut, donc la livraison push reste intacte, mais les applications de messagerie tierces doivent toujours être ajoutées à la liste blanche de Deep Doze dans la WebUI.
 
 **Q : Où est passé GMS Doze ?**  
 R : Il fait désormais partie de App Doze. Ouvrez le sélecteur d'App Doze et sélectionnez GMS, même effet, interface unifiée.
@@ -112,6 +116,7 @@ R : Non. Tout est désactivé par défaut. Activez uniquement ce dont vous avez 
 - **Azyrn** [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** [Script de désactivation des composants GMS](https://t.me/MoZoiDStack/137)
 - **s1m** [SaverTuner](https://codeberg.org/s1m/savertuner)
+- [xizt158](https://github.com/xizt159) pour de nombreuses contributions de qualité
 
 ## Licence
 

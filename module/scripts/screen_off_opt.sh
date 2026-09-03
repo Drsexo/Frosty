@@ -12,6 +12,8 @@ LOGDIR="$MODDIR/logs"
 SOO_LOG="$LOGDIR/screen_off_opt.log"
 USER_PREFS="$MODDIR/config/user_prefs"
 PID_FILE="$MODDIR/tmp/soo_monitor.pid"
+MONITOR_LOCKDIR="$MODDIR/tmp/soo_monitor.lock"
+EVENT_PIPE="$MODDIR/tmp/soo_events.fifo"
 
 DISABLED_FILE="$MODDIR/tmp/soo_disabled"
 
@@ -32,7 +34,7 @@ SOO_RAM_CLEAN_DELAY=5
 mkdir -p "$LOGDIR" "$MODDIR/tmp"
 log_soo() { echo "[$(date '+%H:%M:%S')] $1" >> "$SOO_LOG"; }
 
-
+. "$MODDIR/scripts/monitor_common.sh"
 
 _get_screen_state() {
   local s
@@ -45,20 +47,6 @@ _get_screen_state() {
   case "$w" in Awake) echo "ON" ;; Asleep|Dozing|Dreaming) echo "OFF" ;; esac
 }
 
-_is_locked() {
-  local _trust
-  _trust=$(dumpsys trust 2>/dev/null | grep -m1 "Keyguard showing")
-  case "$_trust" in
-    *true*)  return 0 ;;
-    *false*) return 1 ;;
-  esac
-  dumpsys window policy 2>/dev/null | \
-    grep -qE "isKeyguardShowing=true|mShowingLockscreen=true" && return 0
-  dumpsys activity activities 2>/dev/null | \
-    grep -qm1 "mKeyguardShowing=true" && return 0
-  return 1
-}
-
 _wifi_is_on() {
   [ "$(settings get global wifi_on 2>/dev/null)" = "1" ] || \
   dumpsys wifi 2>/dev/null | grep -qim1 "wi-fi is enabled"
@@ -68,28 +56,44 @@ _bt_is_on() {
   dumpsys bluetooth_manager 2>/dev/null | grep -qm1 "^enabled: true"
 }
 _media_active()   { dumpsys media_session 2>/dev/null | grep -qm1 "state=PlaybackState {state=3"; }
-_data_is_on()     { [ "$(settings get global mobile_data 2>/dev/null)" = "1" ]; }
+_call_active() {
+  local _mode
+  _mode=$(dumpsys audio 2>/dev/null | grep -m1 "mMode=" | sed 's/.*mMode=//;s/[, ].*//')
+  case "$_mode" in
+    MODE_IN_CALL|MODE_IN_COMMUNICATION|MODE_RINGTONE) return 0 ;;
+  esac
+  return 1
+}
+_data_is_on() {
+  local _v
+  _v=$(settings get global mobile_data1 2>/dev/null)
+  if [ -n "$_v" ] && [ "$_v" != "null" ]; then
+    [ "$_v" = "1" ]
+    return $?
+  fi
+  [ "$(settings get global mobile_data 2>/dev/null)" = "1" ]
+}
 _location_mode()  {
   local m
   m=$(settings get secure location_mode 2>/dev/null)
   case "$m" in 1|2|3|4|5) echo "$m" ;; *) echo "0" ;; esac
 }
+_is_tethering() {
+  [ "$(settings get global tether_on 2>/dev/null)" = "1" ] && return 0
+  dumpsys connectivity 2>/dev/null | grep -qim1 "TetheredState\|tethering.*true" && return 0
+  return 1
+}
+_data_guard() { _call_active || _is_tethering; }
 
 _disable_sensors() {
-  settings put global sensors_off 1 2>/dev/null
+  settings put global sensors_off 1 >/dev/null 2>&1
   echo "sensors" >> "$DISABLED_FILE"
   log_soo "[OK] Sensors disabled"
 }
 
 _restore_sensors() {
-  settings put global sensors_off 0 2>/dev/null
+  settings put global sensors_off 0 >/dev/null 2>&1
   log_soo "[OK] Sensors restored"
-}
-
-_is_tethering() {
-  [ "$(settings get global tether_on 2>/dev/null)" = "1" ] && return 0
-  dumpsys connectivity 2>/dev/null | grep -qim1 "TetheredState\|tethering.*true" && return 0
-  return 1
 }
 
 _svc_toggle() {
@@ -109,50 +113,66 @@ _svc_toggle() {
   return "$_rc"
 }
 
-_disable_connections() {
-  rm -f "$DISABLED_FILE"
+_soo_manage_conn() {
+  local _tag="$1" _svcname="$2" _pref="$3" _is_on_fn="$4" _guard_fn="$5" _guard_label="$6" _label="$7"
 
-  if [ "$SOO_KILL_WIFI" = "1" ] && _wifi_is_on; then
-    _svc_toggle wifi disable "Wi-Fi" && echo "wifi" >> "$DISABLED_FILE"
-  fi
+  [ "$_pref" != "1" ] && { echo settled; return; }
 
-  if [ "$SOO_KILL_BT" = "1" ] && _bt_is_on; then
-    if _media_active; then
-      log_soo "[SKIP] Bluetooth - media playback active"
+  if grep -q "^${_tag}$" "$DISABLED_FILE" 2>/dev/null; then
+    if "$_guard_fn"; then
+      _svc_toggle "$_svcname" enable "$_label"
+      grep -v "^${_tag}$" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
+      mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null
+      log_soo "[OK] $_label restored - $_guard_label became active"
+      echo pending
     else
-      _svc_toggle bluetooth disable "Bluetooth" && echo "bt" >> "$DISABLED_FILE"
+      echo settled
     fi
+    return
   fi
 
-  if [ "$SOO_KILL_DATA" = "1" ] && _data_is_on; then
-    if _is_tethering; then
-      log_soo "[SKIP] Mobile data - tethering active"
-    else
-      _svc_toggle data disable "Mobile data" && echo "data" >> "$DISABLED_FILE"
-    fi
-  fi
+  if ! "$_is_on_fn"; then echo settled; return; fi
 
-  if [ "$SOO_KILL_LOCATION" = "1" ]; then
+  if "$_guard_fn"; then
+    log_soo "[SKIP] $_label - $_guard_label active, will re-check"
+    echo pending
+  else
+    _svc_toggle "$_svcname" disable "$_label" && echo "$_tag" >> "$DISABLED_FILE"
+    echo settled
+  fi
+}
+
+_step_connections() {
+  local wifi_r bt_r data_r
+
+  wifi_r=$(_soo_manage_conn wifi wifi "$SOO_KILL_WIFI" _wifi_is_on _data_guard "a call" "Wi-Fi")
+  bt_r=$(_soo_manage_conn bt bluetooth "$SOO_KILL_BT" _bt_is_on _media_active "media playback" "Bluetooth")
+  data_r=$(_soo_manage_conn data data "$SOO_KILL_DATA" _data_is_on _data_guard "a call" "Mobile data")
+
+  if [ "$SOO_KILL_LOCATION" = "1" ] && ! grep -q "^location:" "$DISABLED_FILE" 2>/dev/null; then
     local _mode
     _mode=$(_location_mode)
     if [ "$_mode" != "0" ]; then
-      settings put secure location_mode 0 2>/dev/null
+      settings put secure location_mode 0 >/dev/null 2>&1
       echo "location:$_mode" >> "$DISABLED_FILE"
       log_soo "[OK] Location disabled (was mode $_mode)"
     fi
   fi
 
-  if [ "$SOO_KILL_SENSORS" = "1" ]; then
+  if [ "$SOO_KILL_SENSORS" = "1" ] && ! grep -q "^sensors$" "$DISABLED_FILE" 2>/dev/null; then
     _disable_sensors
   fi
 
-  if [ "$SOO_KILL_PANEL_LPM" = "1" ]; then
-    settings put global display_panel_lpm 1 2>/dev/null
+  if [ "$SOO_KILL_PANEL_LPM" = "1" ] && ! grep -q "^panel_lpm$" "$DISABLED_FILE" 2>/dev/null; then
+    settings put global display_panel_lpm 1 >/dev/null 2>&1
     echo "panel_lpm" >> "$DISABLED_FILE"
     log_soo "[OK] Panel LPM enabled"
   fi
 
-  [ -f "$DISABLED_FILE" ] || log_soo "[INFO] No connections were on - nothing disabled"
+  case "$wifi_r$bt_r$data_r" in
+    *pending*) echo pending ;;
+    *) echo settled ;;
+  esac
 }
 
 _restore_connections() {
@@ -178,7 +198,7 @@ _restore_connections() {
     local _loc
     _loc=$(echo "$_what" | grep "^location:" | cut -d: -f2)
     if [ -n "$_loc" ]; then
-      settings put secure location_mode "$_loc" 2>/dev/null
+      settings put secure location_mode "$_loc" >/dev/null 2>&1
       log_soo "[OK] Location restored (mode $_loc)"
     fi
   } &
@@ -193,68 +213,95 @@ _restore_connections() {
   rm -f "$DISABLED_FILE"
 }
 
+_rearm_display_restrictions() {
+  [ "$SOO_KILL_SENSORS" = "1" ] && ! grep -q "^sensors$" "$DISABLED_FILE" 2>/dev/null && _disable_sensors
+  if [ "$SOO_KILL_PANEL_LPM" = "1" ] && ! grep -q "^panel_lpm$" "$DISABLED_FILE" 2>/dev/null; then
+    settings put global display_panel_lpm 1 >/dev/null 2>&1
+    echo "panel_lpm" >> "$DISABLED_FILE"
+    log_soo "[OK] Panel LPM re-armed (still locked)"
+  fi
+}
 
 _monitor_loop() {
-  trap 'exit 0' TERM INT
+  trap 'kill -0 "$feed_pid" 2>/dev/null && kill "$feed_pid" 2>/dev/null; rm -f "$EVENT_PIPE"; rmdir "$MONITOR_LOCKDIR" 2>/dev/null; exit 0' TERM INT
 
-  local screen_was_off=0 off_since=0
-  local conn_done=0 cache_done=0
+  local was_locked=0 locked_since=0
+  local conn_started=0 conn_settled=0 cache_done=0
+  local was_screen_on=0
 
+  _MONITOR_PIDFILE="$PID_FILE"
+  event_fd=0
+  feed_pid=""
+  feed_fails=0
+  _init_event_pipe
+  _start_feed
+
+  local _idle_wait=15
   while true; do
     local screen
     screen=$(_get_screen_state)
 
-    if [ "$screen" = "ON" ] || [ -z "$screen" ]; then
-      if [ "$screen_was_off" = "1" ]; then
-        if [ -f "$DISABLED_FILE" ]; then
-          if grep -q "^sensors$" "$DISABLED_FILE" 2>/dev/null; then
-            _restore_sensors
-            grep -v "^sensors$" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
-            mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null
-          fi
-          if grep -q "^panel_lpm$" "$DISABLED_FILE" 2>/dev/null; then
-            settings put global display_panel_lpm 0 2>/dev/null
-            grep -v "^panel_lpm$" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
-            mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null
-            log_soo "[OK] Panel LPM disabled"
-          fi
-        fi
-        if [ "$SOO_RESTORE_ON_UNLOCK" = "1" ] && [ -f "$DISABLED_FILE" ]; then
-          sleep 1
-          if ! _is_locked; then
-            log_soo "Unlocked - restoring"
-            _restore_connections
-            screen_was_off=0; conn_done=0; cache_done=0; off_since=0
-            sleep 15; continue
-          fi
-          sleep 1; continue
-        else
-          rm -f "$DISABLED_FILE"
-          screen_was_off=0; conn_done=0; cache_done=0; off_since=0
-        fi
+    if [ "$screen" = "ON" ] && [ -f "$DISABLED_FILE" ]; then
+      was_screen_on=1
+      if grep -q "^sensors$" "$DISABLED_FILE" 2>/dev/null; then
+        _restore_sensors
+        grep -v "^sensors$" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
+        mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null
       fi
-      sleep 15
+      if grep -q "^panel_lpm$" "$DISABLED_FILE" 2>/dev/null; then
+        settings put global display_panel_lpm 0 >/dev/null 2>&1
+        grep -v "^panel_lpm$" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
+        mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null
+        log_soo "[OK] Panel LPM disabled"
+      fi
+    elif [ "$screen" != "ON" ] && [ "$was_screen_on" = "1" ]; then
+      was_screen_on=0
+      if _is_locked && [ "$conn_started" = "1" ]; then
+        _rearm_display_restrictions
+      fi
+    fi
+
+    if ! _is_locked; then
+      if [ "$was_locked" = "1" ]; then
+        if [ "$SOO_RESTORE_ON_UNLOCK" = "1" ] && [ -f "$DISABLED_FILE" ]; then
+          log_soo "Unlocked - restoring"
+          _restore_connections
+        fi
+        was_locked=0; conn_started=0; conn_settled=0; cache_done=0; locked_since=0
+      fi
+      _wait_event "$_idle_wait"
+      if [ "$event_fd" != "1" ]; then
+        [ "$_idle_wait" -lt 60 ] && _idle_wait=$((_idle_wait + 15))
+      else
+        _idle_wait=15
+      fi
       continue
     fi
+    _idle_wait=15
 
     local now
     now=$(date +%s)
 
-    if [ "$screen_was_off" = "0" ]; then
-      screen_was_off=1
-      off_since=$now
-      conn_done=0; cache_done=0
-      log_soo "Screen off - conn=${SOO_CONN_DELAY}m clean=${SOO_RAM_CLEAN_DELAY}m[${SOO_RAM_CLEAN_MODE}]"
+    if [ "$was_locked" = "0" ]; then
+      was_locked=1
+      locked_since=$now
+      conn_started=0; conn_settled=0; cache_done=0
+      log_soo "Locked - conn=${SOO_CONN_DELAY}m clean=${SOO_RAM_CLEAN_DELAY}m[${SOO_RAM_CLEAN_MODE}]"
     fi
 
-    local elapsed=$(( now - off_since ))
+    local elapsed=$(( now - locked_since ))
+    local _any_conn_feature="$(( SOO_KILL_WIFI + SOO_KILL_BT + SOO_KILL_DATA + SOO_KILL_LOCATION + SOO_KILL_SENSORS + SOO_KILL_PANEL_LPM ))"
 
-    if [ "$conn_done" = "0" ] && \
-       [ "$(( SOO_KILL_WIFI + SOO_KILL_BT + SOO_KILL_DATA + SOO_KILL_LOCATION + SOO_KILL_SENSORS + SOO_KILL_PANEL_LPM ))" -gt 0 ] && \
-       [ "$elapsed" -ge "$(( SOO_CONN_DELAY * 60 ))" ]; then
-      log_soo "Connections delay reached (${elapsed}s)"
-      _disable_connections
-      conn_done=1
+    if [ "$_any_conn_feature" -gt 0 ] && [ "$elapsed" -ge "$(( SOO_CONN_DELAY * 60 ))" ]; then
+      if [ "$conn_started" = "0" ]; then
+        log_soo "Connections delay reached (${elapsed}s)"
+        conn_started=1
+      fi
+      if [ "$(_step_connections)" = "settled" ]; then
+        conn_settled=1
+      else
+        conn_settled=0
+      fi
     fi
 
     if [ "$SOO_RAM_CLEAN_MODE" != "off" ] && [ -n "$SOO_RAM_CLEAN_MODE" ] && \
@@ -265,13 +312,15 @@ _monitor_loop() {
     fi
 
     local all_done=1
-    if [ "$(( SOO_KILL_WIFI + SOO_KILL_BT + SOO_KILL_DATA + SOO_KILL_LOCATION + SOO_KILL_SENSORS + SOO_KILL_PANEL_LPM ))" -gt 0 ] && [ "$conn_done" = "0" ]; then all_done=0; fi
+    [ "$_any_conn_feature" -gt 0 ] && { [ "$conn_started" = "0" ] || [ "$conn_settled" = "0" ]; } && all_done=0
     if [ "$SOO_RAM_CLEAN_MODE" != "off" ] && [ -n "$SOO_RAM_CLEAN_MODE" ] && [ "$cache_done" = "0" ]; then all_done=0; fi
 
     if [ "$all_done" = "1" ]; then
-      sleep 5
+      _wait_event 5
+    elif [ "$conn_started" = "1" ] && [ "$conn_settled" = "0" ]; then
+      _wait_event 20
     else
-      sleep 3
+      _wait_event 3
     fi
   done
 }
@@ -280,6 +329,11 @@ start() {
   stop
   echo "Frosty v${MODVER:-?} - Screen Off Optimization (START) - $(date '+%Y-%m-%d %H:%M:%S')" > "$SOO_LOG"
   [ "$ENABLE_SCREEN_OFF_OPT" != "1" ] && { log_soo "[SKIP] disabled"; return 0; }
+
+  if ! mkdir "$MONITOR_LOCKDIR" 2>/dev/null; then
+    log_soo "[WARN] Monitor lock busy, skipping start"
+    return 0
+  fi
 
   _monitor_loop &
   echo "$!" > "$PID_FILE"
@@ -290,12 +344,10 @@ start() {
 }
 
 stop() {
-  if [ -f "$PID_FILE" ]; then
-    local pid
-    pid=$(cat "$PID_FILE" 2>/dev/null)
-    [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null && kill "$pid" 2>/dev/null && log_soo "[OK] Stopped PID $pid"
-    rm -f "$PID_FILE"
-  fi
+  local _was_running=0
+  [ -f "$PID_FILE" ] && _was_running=1
+  _stop_monitor_daemon "$PID_FILE" "$MONITOR_LOCKDIR" "$EVENT_PIPE"
+  [ "$_was_running" = "1" ] && log_soo "[OK] Stopped"
   [ -f "$DISABLED_FILE" ] && { log_soo "Restoring on stop..."; _restore_connections; }
 }
 

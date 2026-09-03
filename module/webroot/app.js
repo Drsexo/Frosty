@@ -206,6 +206,13 @@
     return d.innerHTML;
   }
 
+  // Shell single-quote escaping for raw API.run() calls (distinct from esc() above,
+  // which HTML-escapes). File paths here can come from list_backups()'s glob match,
+  // not just typed input, so this stays defense-in-depth even for "safe" names.
+  function shEsc(s) {
+    return String(s).replace(/'/g, "'\\''");
+  }
+
 
   // ── Toast ──
 
@@ -313,7 +320,8 @@
       else ddx.classList.remove('on');
     }
 
-    var mod = $('lvl-mod'), max = $('lvl-max');
+    var min = $('lvl-min'), mod = $('lvl-mod'), max = $('lvl-max');
+    if (min) { if (p.deep_doze_level === 'minimum') min.classList.add('on'); else min.classList.remove('on'); }
     if (mod) { if (p.deep_doze_level === 'moderate') mod.classList.add('on'); else mod.classList.remove('on'); }
     if (max) { if (p.deep_doze_level === 'maximum') max.classList.add('on'); else max.classList.remove('on'); }
 
@@ -326,6 +334,7 @@
     var ramMod = $('ram-lvl-mod'), ramMax = $('ram-lvl-max');
     if (ramMod) { if (p.ram_optimizer_level === 'moderate') ramMod.classList.add('on'); else ramMod.classList.remove('on'); }
     if (ramMax) { if (p.ram_optimizer_level === 'maximum') ramMax.classList.add('on'); else ramMax.classList.remove('on'); }
+    renderMultitaskButtons();
 
     setChk('t-bss', p.battery_saver);
     var bssx = $('bss-extras');
@@ -344,6 +353,10 @@
     // ── GMS Categories ──
     var cats = ['telemetry', 'background', 'location', 'connectivity', 'cloud', 'payments', 'wearables', 'games'];
     cats.forEach(function (cat) { setChk('t-' + cat, c[cat]); });
+    var catsOnCount = cats.filter(function (cat) { return !!c[cat]; }).length;
+    var catEnableBtn = $('cat-enable-all'), catDisableBtn = $('cat-disable-all');
+    if (catEnableBtn) catEnableBtn.disabled = catsOnCount === cats.length;
+    if (catDisableBtn) catDisableBtn.disabled = catsOnCount === 0;
     updateStatusCards();
   }
 
@@ -525,6 +538,49 @@
     busy = false;
   }
 
+  // ── Toggle All Categories ──
+
+  async function toggleAllCategories(targetOn) {
+    if (busy) return;
+    var cats = ['telemetry', 'background', 'location', 'connectivity', 'cloud', 'payments', 'wearables', 'games'];
+    var c = state.categories || {};
+    var pending = cats.filter(function (cat) { return !!c[cat] !== targetOn; });
+
+    if (pending.length === 0) {
+      toast(t(targetOn ? 'toast_cats_already_on' : 'toast_cats_already_off'), 'info');
+      return;
+    }
+
+    busy = true;
+    showLoading(t(targetOn ? 'loading_enabling_all_cats' : 'loading_disabling_all_cats'));
+
+    var okCount = 0, failCount = 0;
+    for (var i = 0; i < pending.length; i++) {
+      var cat = pending[i];
+      updateLoading(tf('loading_cat_progress', tkey(cat), i + 1, pending.length));
+      try {
+        var res = await API.setPref(cat, targetOn ? 1 : 0);
+        if (res.status !== 'ok') { failCount++; continue; }
+        var r = targetOn ? await API.freezeCategory(cat) : await API.unfreezeCategory(cat);
+        if (r.status === 'ok') {
+          state.categories[cat] = targetOn ? 1 : 0;
+          okCount++;
+        } else {
+          failCount++;
+        }
+      } catch (e) {
+        failCount++;
+      }
+    }
+
+    logAction(tf(targetOn ? 'log_cats_all_enabled' : 'log_cats_all_disabled', okCount, failCount), failCount > 0 ? 'warn' : 'ok');
+    toast(tf(targetOn ? 'toast_cats_enabled_n' : 'toast_cats_disabled_n', okCount), failCount > 0 ? 'warn' : 'ok');
+
+    render();
+    hideLoading();
+    busy = false;
+  }
+
   // ── Doze Level ──
 
   async function setDozeLevel(level) {
@@ -551,6 +607,36 @@
     } catch (e) { toast(t('toast_error'), 'err'); }
     hideLoading();
     busy = false;
+  }
+
+  function renderMultitaskButtons() {
+    var tier = state.prefs.ram_multitask_profile || 'balanced';
+    ['performance', 'balanced', 'powersaving'].forEach(function (t) {
+      var el = $('multitask-lvl-' + t);
+      if (!el) return;
+      if (tier === t) el.classList.add('on'); else el.classList.remove('on');
+    });
+  }
+
+  async function setMultitaskProfile(tier) {
+    if (busy) return;
+    if (tier === state.prefs.ram_multitask_profile) return;
+    busy = true;
+    showLoading(t('loading_setting_level'));
+    try {
+      var res = await API.setPref('ram_multitask_profile', tier);
+      if (res.status === 'ok') {
+        toast(tf('log_multitask_profile', tier), 'ok');
+        logAction(tf('log_multitask_profile', tier), 'info');
+        await API.applyMultitask(tier);
+        logAction(t('log_multitask_reapplied'), 'ok');
+        state.prefs.ram_multitask_profile = tier;
+        renderMultitaskButtons();
+      }
+    } finally {
+      busy = false;
+      hideLoading();
+    }
   }
 
   async function setRamOptLevel(level) {
@@ -591,6 +677,7 @@
     setChk('bss-t-force-standby', p.bss_force_standby);
     setChk('bss-t-force-bg',      p.bss_force_bg_check);
     setChk('bss-t-sensors',       p.bss_sensors_disabled);
+    setChk('bss-t-max-refresh',   p.bss_max_refresh);
 
     var gpsMode = p.bss_gps_mode || 0;
     _bssGpsSelected = gpsMode;
@@ -675,6 +762,7 @@
         bss_force_standby:          $('bss-t-force-standby').checked ? 1 : 0,
         bss_force_bg_check:         $('bss-t-force-bg').checked      ? 1 : 0,
         bss_sensors_disabled:       $('bss-t-sensors').checked       ? 1 : 0,
+        bss_max_refresh:            $('bss-t-max-refresh').checked   ? 1 : 0,
         bss_gps_mode:               _bssGpsSelected
       };
       for (var k in opts) { await API.setPref(k, opts[k]); state.prefs[k] = opts[k]; }
@@ -931,6 +1019,19 @@
     }
   }
 
+  function resolvePkgInfo(pkgs) {
+    var infoMap = {};
+    var CHUNK = 40;
+    for (var c = 0; c < pkgs.length; c += CHUNK) {
+      var chunk = pkgs.slice(c, c + CHUNK);
+      var infos = API.nativeGetPackagesInfo(chunk);
+      for (var k = 0; k < infos.length; k++) {
+        if (infos[k].appLabel) infoMap[infos[k].packageName] = infos[k].appLabel;
+      }
+    }
+    return infoMap;
+  }
+
   async function loadAllApps() {
     wlAllApps = [];
     try {
@@ -953,23 +1054,12 @@
       // If native API returned nothing (unsupported KSU build), fall through to pm fallback
       if (all.length === 0) throw new Error('nativeListPackages empty');
 
-      var CHUNK = 40;
-      for (var c = 0; c < all.length; c += CHUNK) {
-        var chunk = all.slice(c, c + CHUNK);
-        var names = chunk.map(function (a) { return a.pkg; });
-        var infos = API.nativeGetPackagesInfo(names);
-        var infoMap = {};
-        for (var k = 0; k < infos.length; k++) infoMap[infos[k].packageName] = infos[k];
+      var infoMap = resolvePkgInfo(all.map(function (a) { return a.pkg; }));
 
-        for (var m = 0; m < chunk.length; m++) {
-          var info = infoMap[chunk[m].pkg];
-          wlAllApps.push({
-            pkg: chunk[m].pkg,
-            label: info ? (info.appLabel || chunk[m].pkg) : chunk[m].pkg,
-            system: chunk[m].system
-          });
-        }
-      }
+      wlAllApps = all.map(function (a) {
+        var label = infoMap[a.pkg];
+        return { pkg: a.pkg, label: label || a.pkg, system: a.system };
+      });
 
       wlAllApps.sort(function (a, b) {
         return a.label.toLowerCase().localeCompare(b.label.toLowerCase());
@@ -1462,18 +1552,11 @@
 
       var all = Object.keys(merged).sort();
 
-      // Get app labels via nativeGetPackagesInfo
-      var infos = API.nativeGetPackagesInfo(all);
-      var infoMap = {};
-      for (var k = 0; k < infos.length; k++) infoMap[infos[k].packageName] = infos[k];
+      var infoMap = resolvePkgInfo(all);
 
       cadAllApps = all.map(function(pkg) {
-        var info = infoMap[pkg];
-        return {
-          pkg: pkg,
-          label: info ? (info.appLabel || pkg) : pkg,
-          system: false
-        };
+        var label = infoMap[pkg];
+        return { pkg: pkg, label: label || pkg, system: false };
       });
 
       cadAllApps.sort(function(a, b) {
@@ -1760,7 +1843,7 @@
         delBtn.title = t('io_btn_delete');
         delBtn.addEventListener('click', (function(path, el) { return async function() {
           delBtn.disabled = true;
-          await API.run('rm -f "' + path + '"');
+          await API.run("rm -f '" + shEsc(path) + "'");
           el.remove();
           var remaining = $('io-list').querySelectorAll('.io-item').length;
           if (!remaining) $('io-list').innerHTML = '<div class="io-empty">' + t('io_empty') + '</div>';
@@ -1774,7 +1857,7 @@
           var newName = window.prompt(t('io_rename_prompt'), curName);
           if (!newName || newName === curName) return;
           var newPath = dir + 'frosty_' + newName.replace(/[\/\:*?"<>|`$]/g, '_') + '.json';
-          API.run('mv "' + path + '" "' + newPath + '"').then(function() {
+          API.run("mv '" + shEsc(path) + "' '" + shEsc(newPath) + "'").then(function() {
             spanEl.textContent = newName;
             bObj.path = newPath;
             importBtn.onclick = null;
@@ -1787,7 +1870,7 @@
             delBtn.onclick = null;
             delBtn.addEventListener('click', (function(p, el) { return async function() {
               delBtn.disabled = true;
-              await API.run('rm -f "' + p + '"');
+              await API.run("rm -f '" + shEsc(p) + "'");
               el.remove();
               var remaining = $('io-list').querySelectorAll('.io-item').length;
               if (!remaining) $('io-list').innerHTML = '<div class="io-empty">' + t('io_empty') + '</div>';
@@ -1795,6 +1878,41 @@
           }).catch(function() { toast(t('toast_rename_failed'), 'err'); });
         }; })(b.path, span, b));
         acts.appendChild(renameBtn); acts.appendChild(importBtn); acts.appendChild(delBtn);
+        item.appendChild(span); item.appendChild(acts);
+        list.appendChild(item);
+      });
+    } catch(e) { list.innerHTML = '<div class="io-empty">' + t('io_error') + '</div>'; }
+  }
+
+  async function loadBugReportList() {
+    var list = $('bugreport-list');
+    if (!list) return;
+    list.innerHTML = '<div class="io-empty">' + t('io_loading') + '</div>';
+    try {
+      var reports = await API.listBugReports();
+      if (!reports.length) {
+        list.innerHTML = '<div class="io-empty">' + t('bugreport_empty') + '</div>';
+        return;
+      }
+      list.innerHTML = '';
+      reports.forEach(function (r) {
+        var name = r.name.replace('frosty_bugreport_', '').replace('.txt', '');
+        var m = name.match(/(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})/);
+        var label = m ? m[1]+'-'+m[2]+'-'+m[3]+'  '+m[4]+':'+m[5]+':'+m[6] : r.name;
+        var item = document.createElement('div'); item.className = 'io-item';
+        var span = document.createElement('span'); span.className = 'io-item-name'; span.textContent = label;
+        var acts = document.createElement('div'); acts.className = 'io-item-acts';
+        var delBtn = document.createElement('button'); delBtn.className = 'io-item-del ripple';
+        delBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12 1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+        delBtn.title = t('io_btn_delete');
+        delBtn.addEventListener('click', (function(path, el) { return async function() {
+          delBtn.disabled = true;
+          await API.run("rm -f '" + shEsc(path) + "'");
+          el.remove();
+          var remaining = $('bugreport-list').querySelectorAll('.io-item').length;
+          if (!remaining) $('bugreport-list').innerHTML = '<div class="io-empty">' + t('bugreport_empty') + '</div>';
+        }; })(r.path, item));
+        acts.appendChild(delBtn);
         item.appendChild(span); item.appendChild(acts);
         list.appendChild(item);
       });
@@ -1841,6 +1959,11 @@
     loadIOList();
   }
 
+  async function openBugReport() {
+    $('bugreport-modal').classList.add('open');
+    loadBugReportList();
+  }
+
   // Back Button Handler
   var _MODAL_ORDER = [
     { id: 'cad-modal',           close: function() { closeCustomAppDoze(); } },
@@ -1850,6 +1973,7 @@
     { id: 'soo-modal',           close: function() { closeSooModal(); } },
     { id: 'about-modal',         close: function() { $('about-modal').classList.remove('open'); } },
     { id: 'io-modal',            close: function() { $('io-modal').classList.remove('open'); } },
+    { id: 'bugreport-modal',     close: function() { $('bugreport-modal').classList.remove('open'); } },
     { id: 'lang-modal',          close: function() { $('lang-modal').classList.remove('open'); } },
     { id: 'lang-confirm-backdrop', close: function() { $('lang-confirm-backdrop').classList.remove('open'); } }
   ];
@@ -1989,6 +2113,7 @@
     });
 
     // ── Doze ──
+    $('lvl-min').addEventListener('click', function () { setDozeLevel('minimum'); });
     $('lvl-mod').addEventListener('click', function () { setDozeLevel('moderate'); });
     $('lvl-max').addEventListener('click', function () { setDozeLevel('maximum'); });
 
@@ -2173,6 +2298,9 @@
 
     $('ram-lvl-mod').addEventListener('click', function () { setRamOptLevel('moderate'); });
     $('ram-lvl-max').addEventListener('click', function () { setRamOptLevel('maximum'); });
+    $('multitask-lvl-performance').addEventListener('click', function () { setMultitaskProfile('performance'); });
+    $('multitask-lvl-balanced').addEventListener('click', function () { setMultitaskProfile('balanced'); });
+    $('multitask-lvl-powersaving').addEventListener('click', function () { setMultitaskProfile('powersaving'); });
 
     // ── GMS Categories ──
     var cats = ['telemetry', 'background', 'location', 'connectivity', 'cloud', 'payments', 'wearables', 'games'];
@@ -2180,6 +2308,8 @@
       var el = $('t-' + cat);
       if (el) el.addEventListener('change', function () { toggleCategory(cat); });
     });
+    $('cat-enable-all').addEventListener('click', function () { toggleAllCategories(true); });
+    $('cat-disable-all').addEventListener('click', function () { toggleAllCategories(false); });
 
     // ── 3-dots menu ──
     var dropdown = $('hdr-dropdown');
@@ -2242,6 +2372,33 @@
           toast(t('toast_export_failed'), 'err');
         }
       } catch(e) { toast(t('toast_export_failed') + ': ' + String(e.message || e).substring(0, 60), 'err'); }
+      btn.disabled = false;
+    });
+
+    // ── Bug Report ──
+    $('menu-bugreport').addEventListener('click', function () {
+      dropdown.classList.remove('open');
+      _pushModalHistory();
+      openBugReport();
+    });
+    $('bugreport-close').addEventListener('click', function () {
+      $('bugreport-modal').classList.remove('open');
+    });
+    $('bugreport-modal').addEventListener('click', function (e) {
+      if (e.target === this) this.classList.remove('open');
+    });
+    $('bugreport-gen-btn').addEventListener('click', async function () {
+      var btn = this;
+      btn.disabled = true;
+      try {
+        var res = await API.generateBugReport();
+        if (res && res.status === 'ok') {
+          toast(t('bugreport_generated'), 'ok');
+          loadBugReportList();
+        } else {
+          toast(t('bugreport_failed'), 'err');
+        }
+      } catch(e) { toast(t('bugreport_failed') + ': ' + String(e.message || e).substring(0, 60), 'err'); }
       btn.disabled = false;
     });
 
@@ -2487,7 +2644,7 @@
     var appEl = null;
 
     function isModalOpen() {
-      var ids = ['wl-modal', 'ramwl-modal', 'cad-modal', 'bss-modal', 'soo-modal', 'about-modal', 'io-modal', 'lang-modal', 'lang-confirm-backdrop'];
+      var ids = ['wl-modal', 'ramwl-modal', 'cad-modal', 'bss-modal', 'soo-modal', 'about-modal', 'io-modal', 'bugreport-modal', 'lang-modal', 'lang-confirm-backdrop'];
       for (var i = 0; i < ids.length; i++) {
         var m = document.getElementById(ids[i]);
         if (m && m.classList.contains('open')) return true;

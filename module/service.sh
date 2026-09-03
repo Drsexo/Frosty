@@ -29,6 +29,22 @@ until [ "$(getprop sys.boot_completed)" = "1" ] && [ -d /sdcard ]; do sleep 5; d
 sleep 10
 log_boot "Boot initialized"
 
+for _pf in "$MODDIR"/tmp/*.pid; do
+  [ -f "$_pf" ] || continue
+  _opid=$(cat "$_pf" 2>/dev/null)
+  if [ -n "$_opid" ] && kill -0 "$_opid" 2>/dev/null; then
+    kill "$_opid" 2>/dev/null
+    _i=0
+    while [ "$_i" -lt 10 ] && kill -0 "$_opid" 2>/dev/null; do
+      sleep 1
+      _i=$((_i + 1))
+    done
+    kill -0 "$_opid" 2>/dev/null && kill -9 "$_opid" 2>/dev/null
+  fi
+  rm -f "$_pf"
+done
+unset _pf _opid _i
+
 mkdir -p "$MODDIR/config"
 . "$MODDIR/config/user_prefs" 2>/dev/null || true
 

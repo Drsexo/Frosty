@@ -39,7 +39,7 @@ if [ -f "$_DIXML" ] && grep -q '<un-wl ' "$_DIXML" 2>/dev/null; then
 fi
 
 if [ "$ENABLE_CUSTOM_APP_DOZE" = "1" ] && [ -f "$_CAD_PATCHES" ] && [ -f "$_DIXML" ]; then
-  _cad_pkgs=$(sed 's/###.*//;s/#.*//;s/[[:space:]]//g' "$_CAD_PATCHES" 2>/dev/null | grep -v '^$')
+  _cad_pkgs=$(sed 's/#.*//;s/[[:space:]]//g' "$_CAD_PATCHES" 2>/dev/null | grep -v '^$')
   if [ -n "$_cad_pkgs" ]; then
     _tmp="${_DIXML}.cad.tmp"
     cp -af "$_DIXML" "$_tmp" 2>/dev/null
@@ -70,10 +70,13 @@ unset _DIXML _CAD_PATCHES _cad_pkgs _pkg _tmp
 
 _set_prop() {
   if command -v resetprop >/dev/null 2>&1; then
-    resetprop -n "$1" "$2"
-  else
-    setprop "$1" "$2" 2>/dev/null
+    resetprop "$1" "$2"
+    return $?
   fi
+  case "$1" in
+    ro.*) setprop "$1" "$2" 2>/dev/null; return 1 ;;
+  esac
+  setprop "$1" "$2" 2>/dev/null
 }
 
 if [ "$ENABLE_BLUR_DISABLE" = "1" ]; then
@@ -108,7 +111,7 @@ if [ "$ENABLE_LOG_KILLING" = "1" ]; then
   for bin in atrace bugreport bugreport_procdump bugreportz \
             diag_socket_log dmabuf_dump dmesgd \
             dumpstate i2cdump log logcat logcatd logd logger logname \
-            logpersist.cat logpersist.start logpersist.stop logwrapper \
+            logpersist.cat logpersist.start logpersist.stop \
             lpdump lpdumpd notify_traceur.sh tcpdump traced \
             traced_perf traced_probes tracepath tracepath6 traceroute6; do
     printf '#!/system/bin/sh\nexit 0\n' > "$BINDIR/$bin"

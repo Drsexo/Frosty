@@ -1,6 +1,6 @@
 # Frosty - Doze Whitelist
-# Apps listed here are excluded from Deep Doze restrictions.
-# Add package names one per line. Lines starting with # are comments.
+# Apps listed here are excluded from Deep Doze restrictions (standby bucket, wakelock killing, sensor/motion disabling).
+# Default apps are detected live at apply time and don't need to be listed here 
 
 # Core System & UI
 android
@@ -10,6 +10,12 @@ com.android.settings.intelligence
 com.android.shell
 com.android.permissioncontroller
 com.android.packageinstaller
+
+# Notification-critical 
+# Fixes push notifications arriving after unlock instead of instantly
+com.google.android.gms
+com.google.android.gsf
+com.google.firebase
 
 # Hardware & Connectivity
 com.android.bluetooth
@@ -28,82 +34,42 @@ com.android.providers.media
 com.google.android.providers.media.module
 com.android.keychain
 
-# Launchers
-com.google.android.apps.nexuslauncher
-com.android.launcher3
-com.sec.android.app.launcher
-com.miui.home
-com.poco.launcher
-com.oppo.launcher
-com.huawei.android.launcher
-com.sonymobile.home
-com.motorola.launcher3
-com.nothing.launcher
-com.teslacoilsw.launcher
-ch.deletescape.lawnchair.plah
-app.lawnchair
-bitpit.launcher
-
-# Telephony & Dialer
+# Telephony framework & OEM phone companions
 com.android.phone
 com.android.server.telecom
-com.android.dialer
-com.google.android.dialer
-com.samsung.android.dialer
 com.samsung.android.incallui
-com.sec.android.app.telephonyui
-com.oneplus.dialer
-com.miui.phone
+com.samsung.android.dialer.telephonyui
 com.miui.voip
-com.oppo.dialer
 com.coloros.phonemanager
-com.huawei.dialer
-
-# SMS & Messaging
-com.android.mms
-com.android.messaging
-com.google.android.apps.messaging
-com.google.android.ims
-com.samsung.android.messaging
-com.oneplus.mms
-com.miui.mms
-com.oppo.mms
-com.huawei.mms
-com.sonyericsson.conversations
-com.asus.message
 
 # Contacts
 com.android.contacts
 com.google.android.contacts
-com.samsung.android.contacts
-com.sonyericsson.socialphonebook
-com.asus.contacts
-com.vivo.contacts
+com.samsung.android.app.contacts
+com.miui.contacts
+com.oppo.contacts
+com.huawei.contacts
 
 # Clocks & Alarms
 com.android.deskclock
 com.google.android.deskclock
 com.sec.android.app.clockpackage
-com.samsung.android.app.clockpackage
-com.samsung.android.alarm
-com.oneplus.deskclock
 com.miui.clock
-com.oppo.clock
+com.oneplus.deskclock
 com.coloros.alarmclock
+com.oppo.alarmclock
+com.android.alarmclock
+com.transsion.deskclock
 com.huawei.deskclock
 com.asus.deskclock
 com.sonyericsson.organizer
-com.android.BBKClock
-
-# Keyboards
-com.android.inputmethod.latin
-com.google.android.inputmethod.latin
-com.samsung.android.honeyboard
-com.touchtype.swiftkey
+com.lge.clock
+com.motorola.timeweatherwidget
+com.zui.deskclock
 
 # Emergency, Security & Biometrics
 com.android.emergency
-com.google.android.apps.safetyhub
+com.google.android.safetyhub
 com.android.biometrics.face
 
 # User added apps

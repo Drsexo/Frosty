@@ -141,6 +141,73 @@ apply_kernel() {
     fi
   done
 
+  log_tweak ""
+  log_tweak "# CPU GOVERNOR (dynamic)"
+  for cpudir in /sys/devices/system/cpu/cpu[0-9]*; do
+    [ -d "$cpudir" ] || continue
+    [ -f "$cpudir/online" ] && [ "$(cat "$cpudir/online" 2>/dev/null)" = "0" ] && continue
+    [ -f "$cpudir/cpufreq/scaling_governor" ] || continue
+    local _cpunum _gov _govdir _maxf _minf
+    _cpunum=$(basename "$cpudir" | sed 's/cpu//')
+    _gov=$(cat "$cpudir/cpufreq/scaling_governor" 2>/dev/null)
+    case "$_gov" in
+      schedutil)   _govdir="$cpudir/cpufreq/schedutil" ;;
+      interactive) _govdir="$cpudir/cpufreq/interactive" ;;
+      *) continue ;;
+    esac
+    [ -d "$_govdir" ] || continue
+    _maxf=$(cat "$cpudir/cpufreq/cpuinfo_max_freq" 2>/dev/null)
+    _minf=$(cat "$cpudir/cpufreq/cpuinfo_min_freq" 2>/dev/null)
+
+    if [ "$_gov" = "schedutil" ]; then
+      for _path_val in \
+        "up_rate_limit_us|20000" \
+        "down_rate_limit_us|10000"; do
+        local _p _v _key
+        _p=$(printf '%s' "$_path_val" | cut -d'|' -f1)
+        _v=$(printf '%s' "$_path_val" | cut -d'|' -f2)
+        [ -f "$_govdir/$_p" ] || continue
+        _key="${_p}_cpu${_cpunum}"
+        if ! grep -q "^${_key}=" "$KERNEL_BACKUP" 2>/dev/null; then
+          printf '%s=%s=%s\n' "$_key" "$(cat "$_govdir/$_p" 2>/dev/null)" "$_govdir/$_p" >> "$KERNEL_BACKUP"
+        fi
+        local _old_v
+        _old_v=$(cat "$_govdir/$_p" 2>/dev/null)
+        if printf '%s\n' "$_v" > "$_govdir/$_p" 2>/dev/null; then
+          log_tweak "[OK] $_key: $_old_v -> $_v"
+          count=$((count + 1))
+        fi
+      done
+    fi
+
+    if [ -f "$_govdir/go_hispeed_load" ]; then
+      local _key_hs _old_hs
+      _key_hs="go_hispeed_load_cpu${_cpunum}"
+      if ! grep -q "^${_key_hs}=" "$KERNEL_BACKUP" 2>/dev/null; then
+        printf '%s=%s=%s\n' "$_key_hs" "$(cat "$_govdir/go_hispeed_load" 2>/dev/null)" "$_govdir/go_hispeed_load" >> "$KERNEL_BACKUP"
+      fi
+      _old_hs=$(cat "$_govdir/go_hispeed_load" 2>/dev/null)
+      if printf '95\n' > "$_govdir/go_hispeed_load" 2>/dev/null; then
+        log_tweak "[OK] $_key_hs: $_old_hs -> 95"
+        count=$((count + 1))
+      fi
+    fi
+
+    if [ -f "$_govdir/hispeed_freq" ] && [ -n "$_maxf" ] && [ -n "$_minf" ]; then
+      local _key_freq _old_freq _hispeed_val
+      _hispeed_val=$(( _minf + (_maxf - _minf) * 20 / 100 ))
+      _key_freq="hispeed_freq_cpu${_cpunum}"
+      if ! grep -q "^${_key_freq}=" "$KERNEL_BACKUP" 2>/dev/null; then
+        printf '%s=%s=%s\n' "$_key_freq" "$(cat "$_govdir/hispeed_freq" 2>/dev/null)" "$_govdir/hispeed_freq" >> "$KERNEL_BACKUP"
+      fi
+      _old_freq=$(cat "$_govdir/hispeed_freq" 2>/dev/null)
+      if printf '%s\n' "$_hispeed_val" > "$_govdir/hispeed_freq" 2>/dev/null; then
+        log_tweak "[OK] $_key_freq: $_old_freq -> $_hispeed_val"
+        count=$((count + 1))
+      fi
+    fi
+  done
+
   echo "{\"status\":\"ok\",\"applied\":$count,\"failed\":$fail,\"skipped\":$skip,\"debug_masks\":$debug_count}"
 }
 
@@ -151,12 +218,28 @@ revert_kernel() {
   if [ -f "$KERNEL_BACKUP" ]; then
     while IFS= read -r line; do
       case "$line" in ''|'#'*) continue ;; esac
-      name=$(echo "$line" | cut -d= -f1)
-      val=$(echo "$line" | cut -d= -f2)
-      path=$(echo "$line" | cut -d= -f3-)
+      path="${line##*=}"
+      _rest="${line%=*}"
+      name="${_rest%%=*}"
+      val="${_rest#*=}"
       [ ! -e "$path" ] && continue
-      _cur=$(cat "$path" 2>/dev/null | tr '\n' ' ' | sed 's/ *$//')
       chmod +w "$path" 2>/dev/null
+
+      if [ "$name" = "sched_features" ]; then
+        local _tok _restored=0
+        for _tok in $val; do
+          printf '%s\n' "$_tok" > "$path" 2>/dev/null && _restored=$((_restored + 1))
+        done
+        if [ "$_restored" -gt 0 ]; then
+          log_tweak "[OK] $name: restored $_restored tokens"
+          count=$((count + 1))
+        else
+          log_tweak "[FAIL] $name"
+        fi
+        continue
+      fi
+
+      _cur=$(cat "$path" 2>/dev/null | tr '\n' ' ' | sed 's/ *$//')
       if printf '%s\n' "$val" > "$path" 2>/dev/null; then
         log_tweak "[OK] $name: $_cur -> $val (restored)"
         count=$((count + 1))

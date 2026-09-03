@@ -38,10 +38,10 @@ Frosty, GMS hizmetlerini dondurarak, sistem genelinde Doze iyileştirmeleri uygu
 - **Ekran Kapalı Optimizasyonu**: Seçili bağlantıları (Wi-Fi, Bluetooth, mobil veri, konum) devre dışı bırakır ve yapılandırılabilir bir ekran kapalı gecikmesinden sonra isteğe bağlı olarak RAM temizleyiciyi çalıştırır, kilit açıldığında her şeyi geri yükler.
 - **Google İzlemeyi Devre Dışı Bırakma**: GMS analizlerini, Clearcut telemetrisini, Phenotype sorgulamalarını ve reklam izlemeyi devre dışı bırakır.
 - **Çekirdek (Kernel) Ayarları**: Zamanlayıcı (scheduler), VM, ağ ve hata ayıklama optimizasyonları.
-- **RAM İyileştirici**: ZRAM otomatik ayarı, LMK/LMKD/PSI eşikleri, OEM reclaim devre dışı bırakma, VM bellek parametreleri (Orta / Maksimum), yapılandırılabilir RAM Temizleyici.
+- **RAM İyileştirici**: ZRAM otomatik ayarı, LMK/LMKD/PSI eşikleri, OEM reclaim devre dışı bırakma, VM bellek parametreleri (Orta / Maksimum), yapılandırılabilir RAM Temizleyici, Çoklu görev profili (Performans / Dengeli / Güç Tasarrufu).
 - **Sistem Props**: RAM ve pilden tasarruf etmek için hata ayıklama (debug) özelliklerini devre dışı bırakın.
 - **Günlükleri Sonlandırma**: Pili tüketen günlük (log) ve hata ayıklama işlemlerini zorla durdurun.
-- **Pil Tasarrufu Ayarlayıcı**: Etkinken Android'in yerleşik pil tasarrufunun ne yapacağını özelleştirin.
+- **Pil Tasarrufu Ayarlayıcı**: Etkinken Android'in yerleşik pil tasarrufunun ne yapacağını özelleştirin, açıkken maksimum yenileme hızını koruma seçeneği de dahil.
 
 ## Kurulum
 
@@ -53,7 +53,11 @@ Frosty, GMS hizmetlerini dondurarak, sistem genelinde Doze iyileştirmeleri uygu
 4. Özellikleri etkinleştirmek için WebUI'yi açın.
 
 > [!NOTE]
-> Magisk kullanıcıları WebUI'ye erişmek için [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) kullanabilir.
+> Magisk kullanıcıları WebUI'ye erişmek için [KsuWebUI](https://github.com/KOWX712/KsuWebUIStandalone/releases) / [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) kullanabilir.
+
+> [!NOTE]
+> KernelSU/APatch üzerinde Frosty sıcak kurulum ister. Yöneticiniz destekliyorsa, yeniden başlatmak yerine kurulumdan sonra WebUI'yi yenileyin. Bir şeyler ters görünüyorsa yeniden başlatın. Magisk her zaman yeniden başlatma gerektirir.
+
 
 ## Kullanım
 
@@ -62,7 +66,7 @@ Root yöneticinizden WebUI'yi açın:
 - **Sistem İnce Ayarları**: Çekirdek ayarları, sistem Props, bulanıklığı devre dışı bırakma, günlükleri sonlandırma, izleme engelleme, RAM iyileştirici ve temizleyici.
 - **Doze**: Uygulama seçici ile App Doze, seviye seçici ve beyaz liste düzenleyicisi ile Deep Doze.
 - **Ekran Kapalı Optimizasyonu**: Bağlantı başına geçişler, gecikme zamanlayıcıları, kilit açıldığında geri yükleme.
-- **GMS Kategorileri**: Ayrı ayrı GMS hizmet gruplarını dondurun.
+- **GMS Kategorileri**: Ayrı ayrı GMS hizmet gruplarını dondurun, veya henüz istediğiniz durumda olmayanları toplu işlemek için Tümünü etkinleştir / Tümünü devre dışı bırak kullanın.
 - **Pil Tasarrufu Ayarlayıcı**: Pil tasarrufu davranışına ince ayar yapın.
 - **İçe / Dışa Aktar**: Tam yapılandırmanızı yedekleyin ve geri yükleyin.
 
@@ -86,15 +90,15 @@ Root yöneticinizden WebUI'yi açın:
 
 ## Deep Doze Seviyeleri
 
-Her iki seviye de Doze sabitlerini yeniden yazar, ekran kapandığında IDLE durumuna zorlar, ekran kapalı 5 dakika sonra bir wakelock sonlandırıcı çalıştırır ve Android 13+ üzerinde JobScheduler flex-idle politikasını etkinleştirir. **Maksimum** ayrıca `restricted` standby bucket'ını kullanır (Orta `rare` kullanır), `WAKE_LOCK`'u reddeder, ekran kapandığında hareket sensörünü devre dışı bırakır ve uygulama sırasında wakelock'ları anında sonlandırır.
+Her iki seviye de Doze sabitlerini yeniden yazar, cihaz kilitliyken IDLE durumuna zorlar, 5 dakika kilitli kaldıktan sonra bir wakelock sonlandırıcı çalıştırır ve Android 13+ üzerinde JobScheduler flex-idle politikasını etkinleştirir. Kısıtlamalar ekran durumunu değil kilit durumunu izler: saati kontrol etmek veya ambient ekrana bakmak hiçbir şeyi sıfırlamaz, sadece kilidi açmak sıfırlar. **Maksimum** ayrıca `restricted` standby bucket'ını kullanır (Orta `rare` kullanır), `WAKE_LOCK`'u reddeder, kilitliyken hareket sensörünü devre dışı bırakır ve uygulama sırasında wakelock'ları anında sonlandırır.
 
 ## RAM İyileştirici
 
-ZRAM sıkıştırmasını, LMK / LMKD / PSI eşiklerini, OEM reclaim düğümlerini ve VM bellek parametrelerini otomatik olarak ayarlar. **Maksimum** LMK ağırlıklarını ~%60-70 yukarı ölçekler ve daha proaktif LMKD/PSI eşikleri kullanır.
+ZRAM sıkıştırmasını, LMK / LMKD / PSI eşiklerini, OEM reclaim düğümlerini ve VM bellek parametrelerini otomatik olarak ayarlar. **Maksimum** LMK ağırlıklarını ~%60-70 yukarı ölçekler ve daha proaktif LMKD/PSI eşikleri kullanır. Çoklu görev profili (Performans / Dengeli / Güç Tasarrufu), ActivityManager'ın anında devam ettirmeye hazır tuttuğu arka plan uygulamalarının sayısını ayrı olarak kontrol eder.
 ## SSS
 
 **S: Bildirimlerim neden gecikiyor?**
-C: App Doze ve Deep Doze arka plan etkinliğini kısıtlar. Mesajlaşma uygulamalarınızı WebUI'deki Deep Doze beyaz listesine ekleyin.
+C: App Doze ve Deep Doze arka plan etkinliğini kısıtlar. Mesajlaşma uygulamalarınızı WebUI'deki Deep Doze beyaz listesine ekleyin. GMS/Firebase'in kendisi varsayılan olarak beyaz listededir, bu nedenle push teslimatı bozulmadan kalır, ancak üçüncü taraf mesajlaşma uygulamalarının yine de WebUI'deki Deep Doze beyaz listesine eklenmesi gerekir.
 
 **S: GMS Doze nereye gitti?**
 C: Artık App Doze'un bir parçası. App Doze seçiciyi açın ve GMS'i seçin; aynı etkiyi sağlayan birleşik bir arayüzdür.
@@ -112,6 +116,7 @@ C: Hayır. Varsayılan olarak her şey kapalıdır. Yalnızca ihtiyacınız olan
 - **Azyrn** [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** [GMS Bileşeni Devre Dışı Bırakma Betiği](https://t.me/MoZoiDStack/137)
 - **s1m** [SaverTuner](https://codeberg.org/s1m/savertuner)
+- [xizt158](https://github.com/xizt159) birçok kaliteli katkı için
 
 ## Lisans
 

@@ -1,5 +1,5 @@
 #!/system/bin/sh
-# Frosty - Uninstallation Handler
+# Frosty - Delayed Uninstallation Handler
 
 MODDIR="${0%/*}"
 [ -z "$MODDIR" ] && MODDIR="/data/adb/modules/Frosty"
@@ -16,6 +16,12 @@ mkdir -p "$TEMP_DIR"
 [ -f "$MODDIR/backup/bss_values.txt" ]   && cp -f "$MODDIR/backup/bss_values.txt"   "$TEMP_DIR/"
 [ -f "$MODDIR/config/dropbox_tags.txt" ] && cp -f "$MODDIR/config/dropbox_tags.txt" "$TEMP_DIR/"
 [ -f "$MODDIR/backup/devcfg_values.txt" ] && cp -f "$MODDIR/backup/devcfg_values.txt" "$TEMP_DIR/"
+[ -f "$MODDIR/tmp/multitask_keys.txt" ] && cp -f "$MODDIR/tmp/multitask_keys.txt" "$TEMP_DIR/"
+[ -f "$MODDIR/backup/kernel_values.txt" ] && cp -f "$MODDIR/backup/kernel_values.txt" "$TEMP_DIR/"
+[ -f "$MODDIR/backup/ram_values.txt" ] && cp -f "$MODDIR/backup/ram_values.txt" "$TEMP_DIR/"
+[ -f "$MODDIR/backup/kill_tracking.txt" ] && cp -f "$MODDIR/backup/kill_tracking.txt" "$TEMP_DIR/"
+[ -f "$MODDIR/tmp/soo_disabled" ]         && cp -f "$MODDIR/tmp/soo_disabled"         "$TEMP_DIR/"
+[ -f "$MODDIR/config/doze_xml_overlays.txt" ] && cp -f "$MODDIR/config/doze_xml_overlays.txt" "$TEMP_DIR/"
 
 # Kill Deep Doze screen monitor
 if [ -f "$MODDIR/tmp/screen_monitor.pid" ]; then
@@ -51,9 +57,9 @@ _devcfg_restore() {
   local _ns="$1" _key="$2" _orig
   _orig=$(grep -F "${_ns}.${_key}=" "$DEVCFG_BACKUP" 2>/dev/null | cut -d= -f2-)
   if [ -n "$_orig" ] && [ "$_orig" != "null" ]; then
-    device_config put "$_ns" "$_key" "$_orig" 2>/dev/null
+    device_config put "$_ns" "$_key" "$_orig" >/dev/null 2>&1
   else
-    device_config delete "$_ns" "$_key" 2>/dev/null
+    device_config delete "$_ns" "$_key" >/dev/null 2>&1
   fi
 }
 
@@ -69,26 +75,51 @@ sleep 5
 log "Reverting resetprop..."
 for prop in tombstoned.max_tombstone_count tombstoned.max_anr_count ro.lmk.debug ro.lmk.log_stats \
             dalvik.vm.dex2oat-minidebuginfo dalvik.vm.minidebuginfo \
-            disableBlurs enable_blurs_on_windows ro.launcher.blur.appLaunch \
-            ro.sf.blurs_are_expensive ro.surface_flinger.supports_background_blur \
-            persist.traced.enable; do
+            disableBlurs disableBackgroundBlur enable_blurs_on_windows \
+            windowBlurBehindEnabled windowBlurBehindRadius sys.use_frost_effect \
+            ro.launcher.blur.appLaunch ro.sf.blurs_are_expensive \
+            ro.surface_flinger.force_disable_blur ro.surface_flinger.supports_background_blur \
+            ro.miui.has_blur ro.miui.has_real_blur ro.miui.backdrop_sampling_enabled \
+            persist.sys.sf.disable_blurs persist.sys.background_blur_supported \
+            persist.sys.background_blur_status_default persist.sys.background_blur_version \
+            persist.sys.add_blurnoise_supported persist.sys.enable_third_blur \
+            persist.sys.dynamic_blur_enabled persist.sysui.miui_blur_enabled \
+            persist.miui.ui.optimize_blur persist.sys.oneplus.blur.enabled \
+            persist.sys.oplus.ui.blur persist.sys.oppo.blur.enable persist.sys.samsung.blur.disable \
+            persist.perf.wm_static_blur persist.sys.static_blur_mode persist.vendor.sf.blur.type \
+            persist.sys.disable_blur_view persist.meizu.gpu_blur persist.sys.force_no_blur \
+            persist.sys.disable_glass_blur \
+            persist.traced.enable sys.wifitracing.started persist.vendor.wifienhancelog; do
   _del_prop "$prop"
 done
+_bl_sdk=$(getprop ro.build.version.sdk 2>/dev/null)
+if [ "${_bl_sdk:-0}" -ge 29 ]; then
+  cmd window disable-blur 0 >/dev/null 2>&1
+else
+  cmd wm disable-blur 0 >/dev/null 2>&1
+fi
 
 LOGS_BACKUP="$TEMP_DIR/logs_values.txt"
 if [ -f /sys/kernel/tracing/tracing_on ]; then
   _trv=$(grep '^tracing_on=' "$LOGS_BACKUP" 2>/dev/null | cut -d= -f2)
-  echo "${_trv:-1}" > /sys/kernel/tracing/tracing_on 2>/dev/null
+  [ -n "$_trv" ] && echo "$_trv" > /sys/kernel/tracing/tracing_on 2>/dev/null
 fi
-rm -f "$LOGS_BACKUP"
 
 # Revert RAM optimizer
 log "Reverting RAM optimizer..."
-content call --uri content://settings/config --method DELETE_value \
-  --arg runtime_native/usap_pool_enabled >/dev/null 2>&1
+_devcfg_restore runtime_native usap_pool_enabled
 _devcfg_restore activity_manager use_compaction
 _devcfg_restore activity_manager_native_boot use_freezer
 _devcfg_restore alarm_manager save_battery_on_idle
+MULTITASK_KEYS="$TEMP_DIR/multitask_keys.txt"
+if [ -f "$MULTITASK_KEYS" ]; then
+  while IFS= read -r _mtkey; do
+    [ -z "$_mtkey" ] && continue
+    _devcfg_restore activity_manager "$_mtkey"
+  done < "$MULTITASK_KEYS"
+  rm -f "$MULTITASK_KEYS"
+fi
+cmd activity memory-factor set 1 >/dev/null 2>&1
 
 LMKD_BACKUP="$TEMP_DIR/lmkd_values.txt"
 if [ -f "$LMKD_BACKUP" ]; then
@@ -106,12 +137,71 @@ if [ -f "$LMKD_BACKUP" ]; then
   _set_prop lmkd.reinit 1 2>/dev/null || { _lp=$(pidof lmkd 2>/dev/null); [ -n "$_lp" ] && kill -HUP "$_lp" 2>/dev/null; }
 fi
 
+RAM_BACKUP="$TEMP_DIR/ram_values.txt"
+if [ -f "$RAM_BACKUP" ]; then
+  _zram_algo=""; _zram_streams=""; _zram_disksize=""
+  while IFS= read -r _line; do
+    case "$_line" in ''|'#'*) continue ;; esac
+    _rpath="${_line##*=}"
+    _rrest="${_line%=*}"
+    _rval="${_rrest#*=}"
+    case "$_rpath" in
+      */zram0/comp_algorithm)   _zram_algo="$_rval";    continue ;;
+      */zram0/disksize)         _zram_disksize="$_rval"; continue ;;
+      */zram0/max_comp_streams) _zram_streams="$_rval";  continue ;;
+    esac
+    [ ! -f "$_rpath" ] && continue
+    chmod +w "$_rpath" 2>/dev/null
+    printf '%s\n' "$_rval" > "$_rpath" 2>/dev/null
+  done < "$RAM_BACKUP"
+
+  if [ -d /sys/block/zram0 ] && [ -n "$_zram_algo" ]; then
+    _z=/sys/block/zram0; _dev=/dev/block/zram0
+    _cur_algo=$(cat "$_z/comp_algorithm" 2>/dev/null | sed -n 's/.*\[\([a-z0-9-]*\)\].*/\1/p')
+    if [ "$_cur_algo" != "$_zram_algo" ] && [ -b "$_dev" ]; then
+      if timeout 15 swapoff "$_dev" 2>/dev/null; then
+        printf '1\n' > "$_z/reset" 2>/dev/null
+        printf '%s\n' "$_zram_algo" > "$_z/comp_algorithm" 2>/dev/null
+        [ -n "$_zram_streams" ] && printf '%s\n' "$_zram_streams" > "$_z/max_comp_streams" 2>/dev/null
+        [ -n "$_zram_disksize" ] && printf '%s\n' "$_zram_disksize" > "$_z/disksize" 2>/dev/null
+        mkswap "$_dev" >/dev/null 2>&1
+        swapon -p 32767 "$_dev" 2>/dev/null || swapon "$_dev" 2>/dev/null
+      fi
+    elif [ "$_cur_algo" = "$_zram_algo" ] && [ -n "$_zram_streams" ]; then
+      printf '%s\n' "$_zram_streams" > "$_z/max_comp_streams" 2>/dev/null
+    fi
+  fi
+  rm -f "$RAM_BACKUP"
+fi
+
+KERNEL_BACKUP="$TEMP_DIR/kernel_values.txt"
+if [ -f "$KERNEL_BACKUP" ]; then
+  while IFS= read -r _line; do
+    case "$_line" in ''|'#'*) continue ;; esac
+    _kpath="${_line##*=}"
+    _krest="${_line%=*}"
+    _kname="${_krest%%=*}"
+    _kval="${_krest#*=}"
+    [ -e "$_kpath" ] || continue
+    chmod +w "$_kpath" 2>/dev/null
+    printf '%s\n' "$_kval" > "$_kpath" 2>/dev/null
+  done < "$KERNEL_BACKUP"
+  rm -f "$KERNEL_BACKUP"
+fi
+
 # Revert Kill Logs device_config
 log "Reverting Kill Logs device_config..."
 _devcfg_restore activity_manager disable_app_profiler_pss_profiling
 _devcfg_restore activity_manager activity_start_pss_defer
 _devcfg_restore interaction_jank_monitor enabled
 _devcfg_restore interaction_jank_monitor trace_threshold_frame_time_millis
+settings delete global netstats_enabled >/dev/null 2>&1
+logcat -G 256k 2>/dev/null
+_clv=$(grep '^console_loglevel=' "$LOGS_BACKUP" 2>/dev/null | cut -d= -f2)
+dmesg -n "${_clv:-7}" 2>/dev/null
+echo 5 > /proc/sys/kernel/printk_ratelimit 2>/dev/null
+echo 10 > /proc/sys/kernel/printk_ratelimit_burst 2>/dev/null
+rm -f "$LOGS_BACKUP"
 
 # Revert App Doze (including GMS if it was in the list)
 log "Reverting App Doze..."
@@ -138,12 +228,12 @@ if [ -f "$PATCHES_FILE" ]; then
     dumpsys deviceidle whitelist +"$pkg" >/dev/null 2>&1
     cmd deviceidle sys-whitelist +"$pkg" >/dev/null 2>&1
     cmd deviceidle except-idle-whitelist +"$pkg" >/dev/null 2>&1
-    cmd appops set "$pkg" IGNORE_BATTERY_OPTIMIZATIONS default 2>/dev/null
+    cmd appops set "$pkg" IGNORE_BATTERY_OPTIMIZATIONS default >/dev/null 2>&1
   done < "$PATCHES_FILE"
 fi
 
 # Remove XML overlays (unified list from app_doze.sh)
-XML_OVERLAYS="/data/adb/modules/Frosty/config/doze_xml_overlays.txt"
+XML_OVERLAYS="$TEMP_DIR/doze_xml_overlays.txt"
 if [ -f "$XML_OVERLAYS" ]; then
   while IFS= read -r file; do
     case "$file" in '#'*|'') continue ;; esac
@@ -153,7 +243,7 @@ if [ -f "$XML_OVERLAYS" ]; then
 fi
 
 # Revert Screen Off Optimization connection state if left disabled
-SOO_STATE="/data/adb/modules/Frosty/tmp/soo_disabled"
+SOO_STATE="$TEMP_DIR/soo_disabled"
 if [ -f "$SOO_STATE" ]; then
   log "Restoring Screen Off Optimization connection state..."
   while IFS= read -r line; do
@@ -171,24 +261,30 @@ fi
 
 # Revert Battery Saver
 log "Reverting Battery Saver..."
-settings delete global battery_saver_constants 2>/dev/null
+settings delete global battery_saver_constants >/dev/null 2>&1
 BSS_BACKUP="$TEMP_DIR/bss_values.txt"
 if [ -f "$BSS_BACKUP" ]; then
   _lp=$(grep '^low_power=' "$BSS_BACKUP" | cut -d= -f2)
   _lps=$(grep '^low_power_sticky=' "$BSS_BACKUP" | cut -d= -f2)
+  _lpsad=$(grep '^low_power_sticky_auto_disable_enabled=' "$BSS_BACKUP" | cut -d= -f2)
+  if [ -n "$_lpsad" ] && [ "$_lpsad" != "null" ]; then settings put global low_power_sticky_auto_disable_enabled "$_lpsad" 2>/dev/null; else settings put global low_power_sticky_auto_disable_enabled 1 2>/dev/null; fi
   if [ -n "$_lps" ] && [ "$_lps" != "null" ]; then settings put global low_power_sticky "$_lps" 2>/dev/null; else settings put global low_power_sticky 0 2>/dev/null; fi
   if [ -n "$_lp" ] && [ "$_lp" != "null" ]; then settings put global low_power "$_lp" 2>/dev/null; else settings put global low_power 0 2>/dev/null; fi
+  _prr=$(grep '^peak_refresh_rate=' "$BSS_BACKUP" | cut -d= -f2)
+  _mrr=$(grep '^min_refresh_rate=' "$BSS_BACKUP" | cut -d= -f2)
+  if [ -n "$_prr" ] && [ "$_prr" != "null" ]; then settings put global peak_refresh_rate "$_prr" 2>/dev/null; else settings delete global peak_refresh_rate >/dev/null 2>&1; fi
+  if [ -n "$_mrr" ] && [ "$_mrr" != "null" ]; then settings put global min_refresh_rate "$_mrr" 2>/dev/null; else settings delete global min_refresh_rate >/dev/null 2>&1; fi
   rm -f "$BSS_BACKUP"
 else
-  settings put global low_power_sticky 0 2>/dev/null
-  settings put global low_power 0 2>/dev/null
+  settings put global low_power_sticky 0 >/dev/null 2>&1
+  settings put global low_power 0 >/dev/null 2>&1
 fi
 
 # Revert Deep Doze
 log "Reverting Deep Doze..."
-settings delete global device_idle_constants 2>/dev/null
-settings delete global app_standby_enabled 2>/dev/null
-settings delete global adaptive_battery_management_enabled 2>/dev/null
+settings delete global device_idle_constants >/dev/null 2>&1
+settings delete global app_standby_enabled >/dev/null 2>&1
+settings delete global adaptive_battery_management_enabled >/dev/null 2>&1
 
 for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
   appops set "$pkg" WAKE_LOCK allow 2>/dev/null
@@ -197,23 +293,24 @@ for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
 done
 dumpsys sensorservice enable 2>/dev/null
 dumpsys deviceidle unforce 2>/dev/null
+_sdk=$(getprop ro.build.version.sdk 2>/dev/null); _sdk="${_sdk%%[!0-9]*}"
+[ -n "$_sdk" ] && [ "$_sdk" -ge 33 ] 2>/dev/null && cmd jobscheduler reset-flex-policy 2>/dev/null
 
 # Revert DropBox
 log "Reverting DropBox..."
 DROPBOX_TAGS="$TEMP_DIR/dropbox_tags.txt"
 for tag in $(cat "$DROPBOX_TAGS" 2>/dev/null); do
-  content call --uri content://settings/global --method DELETE_value \
-    --arg "dropbox:$tag" 2>/dev/null >/dev/null
+  settings delete global "dropbox:$tag" >/dev/null 2>&1
 done
-settings delete global battery_stats_constants 2>/dev/null
+settings delete global battery_stats_constants >/dev/null 2>&1
 
 # Revert NetworkStats and WiFi scan
 log "Reverting NetworkStats..."
-settings delete global netstats_poll_interval 2>/dev/null
-settings delete global netstats_persist_threshold 2>/dev/null
-settings delete global netstats_global_alert_bytes 2>/dev/null
-settings delete global wifi_scan_throttle_enabled 2>/dev/null
-settings delete global wifi_scan_always_enabled 2>/dev/null
+settings delete global netstats_poll_interval >/dev/null 2>&1
+settings delete global netstats_persist_threshold >/dev/null 2>&1
+settings delete global netstats_global_alert_bytes >/dev/null 2>&1
+settings delete global wifi_scan_throttle_enabled >/dev/null 2>&1
+settings delete global wifi_scan_always_enabled >/dev/null 2>&1
 
 # Revert Kill Tracking netpolicy for GMS
 _gms_uid=$(dumpsys package com.google.android.gms 2>/dev/null | grep -m1 "userId=" | grep -o 'userId=[0-9]*' | cut -d= -f2)
@@ -236,19 +333,38 @@ settings delete global bug_report_in_power_menu >/dev/null 2>&1
 settings delete global usage_stats_enabled >/dev/null 2>&1
 settings delete global usagestats_collection_enabled >/dev/null 2>&1
 settings delete global network_watchlist_enabled >/dev/null 2>&1
-settings delete global limit_ad_tracking >/dev/null 2>&1
+_adt_backup="$TEMP_DIR/kill_tracking.txt"
+_adt_orig=$(grep '^limit_ad_tracking=' "$_adt_backup" 2>/dev/null | cut -d= -f2-)
+if [ -n "$_adt_orig" ] && [ "$_adt_orig" != "null" ]; then
+  settings put global limit_ad_tracking "$_adt_orig" >/dev/null 2>&1
+else
+  settings delete global limit_ad_tracking >/dev/null 2>&1
+fi
 settings delete global tron_enabled >/dev/null 2>&1
-settings delete global gms_checkin_timeout_min 2>/dev/null
-settings delete global binder_calls_stats 2>/dev/null
+settings delete global gms_checkin_timeout_min >/dev/null 2>&1
+settings delete global binder_calls_stats >/dev/null 2>&1
 
 # Re-enable GMS services
+_all_user_ids() {
+  local _ids
+  _ids=$(pm list users 2>/dev/null | grep -oE 'UserInfo\{[0-9]+' | grep -oE '[0-9]+')
+  [ -z "$_ids" ] && _ids=$(ls /data/user 2>/dev/null)
+  [ -z "$_ids" ] && _ids="0"
+  echo "$_ids"
+}
+_user_ids=$(_all_user_ids)
+
 _frozen_file="$TEMP_DIR/frozen_services.txt"
 if [ -f "$_frozen_file" ]; then
   log "Re-enabling GMS services from tracking file..."
   count=0
   while IFS= read -r service; do
     case "$service" in '#'*|'') continue ;; esac
-    pm enable "$service" >/dev/null 2>&1 && count=$((count + 1))
+    _any_ok=0
+    for _uid in $_user_ids; do
+      pm enable --user "$_uid" "$service" >/dev/null 2>&1 && _any_ok=1
+    done
+    [ "$_any_ok" = "1" ] && count=$((count + 1))
   done < "$_frozen_file"
   rm -f "$_frozen_file"
   log "Re-enabled $count services"
@@ -258,7 +374,15 @@ elif [ -f "$GMS_LIST" ]; then
   while IFS='|' read -r service category || [ -n "$service" ]; do
     case "$service" in '#'*|'') continue ;; esac
     service=$(echo "$service" | tr -d ' ')
-    pm enable "$service" >/dev/null 2>&1 && count=$((count + 1))
+    _svc_pkg=$(printf '%s' "$service" | cut -d/ -f1)
+    if pm list packages --user 0 -d 2>/dev/null | grep -Fx "package:$_svc_pkg" >/dev/null 2>&1; then
+      continue
+    fi
+    _any_ok=0
+    for _uid in $_user_ids; do
+      pm enable --user "$_uid" "$service" >/dev/null 2>&1 && _any_ok=1
+    done
+    [ "$_any_ok" = "1" ] && count=$((count + 1))
   done < "$GMS_LIST"
   log "Re-enabled $count services"
 fi
@@ -272,4 +396,4 @@ rm -f "/data/adb/frosty_uninstall_runner.sh"
 UNINSTALL_EOF
 
 chmod +x "/data/adb/frosty_uninstall_runner.sh"
-nohup sh "/data/adb/frosty_uninstall_runner.sh" >/dev/null 2>&1 &
+nohup sh "/data/adb/frosty_uninstall_runner.sh" >/dev/null 2>&1 & 

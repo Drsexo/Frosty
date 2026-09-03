@@ -38,10 +38,10 @@ Frosty optimiza la duración de la batería congelando los servicios de GMS, apl
 - **Optimización con Pantalla Apagada**: Desactiva las conexiones seleccionadas (Wi-Fi, Bluetooth, datos, ubicación) y ejecuta opcionalmente el limpiador de RAM tras un retraso configurable de pantalla apagada, restaura todo al desbloquear.
 - **Deshabilitar Rastreo de Google**: Deshabilita los análisis de GMS, la telemetría Clearcut, los sondeos Phenotype y el rastreo de anuncios.
 - **Ajustes del Kernel**: Optimizaciones del programador (scheduler), la máquina virtual (VM), red y depuración.
-- **Optimizador de RAM**: Autoajuste de ZRAM, umbrales LMK/LMKD/PSI, desactivación de reclaim OEM, parámetros de memoria VM (Moderado / Máximo), limpiador de RAM configurable.
+- **Optimizador de RAM**: Autoajuste de ZRAM, umbrales LMK/LMKD/PSI, desactivación de reclaim OEM, parámetros de memoria VM (Moderado / Máximo), limpiador de RAM configurable, Perfil de multitarea (Rendimiento / Equilibrado / Ahorro de energía)
 - **Props del Sistema**: Deshabilita las propiedades de depuración para ahorrar RAM y batería.
 - **Terminación de Registros**: Detiene los procesos de depuración y registro que consumen batería.
-- **Afinador de Ahorro de Batería**: Personaliza lo que hace el ahorro de batería incorporado en Android cuando está activo.
+- **Afinador de Ahorro de Batería**: Personaliza lo que hace el ahorro de batería incorporado en Android cuando está activo, incluyendo una opción para mantener la tasa de refresco máxima mientras está activo.
 
 ## Instalación
 
@@ -53,7 +53,11 @@ Frosty optimiza la duración de la batería congelando los servicios de GMS, apl
 4. Abre la WebUI para habilitar las características.
 
 > [!NOTE]
-> Los usuarios de Magisk pueden usar [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) para acceder a la WebUI.
+> Los usuarios de Magisk pueden usar [KsuWebUI](https://github.com/KOWX712/KsuWebUIStandalone/releases) / [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) para acceder a la WebUI.
+
+> [!NOTE]
+> En KernelSU/APatch, Frosty solicita una instalación en caliente. Si tu gestor lo soporta, actualiza la WebUI tras instalar en lugar de reiniciar. Reinicia si algo se ve extraño. Magisk siempre requiere reinicio.
+
 
 ## Uso
 
@@ -62,7 +66,7 @@ Abre la WebUI desde tu administrador root:
 - **Ajustes del Sistema**: Ajustes del kernel, props del sistema, desactivación de desenfoque, terminación de registros, deshabilitación de rastreo, optimizador y limpiador de RAM.
 - **Doze**: App Doze con selector de aplicaciones, Deep Doze con selector de nivel y editor de lista blanca.
 - **Optimización con Pantalla Apagada**: Interruptores por conexión, temporizadores de retraso, restaurar al desbloquear.
-- **Categorías de GMS**: Congela grupos individuales de servicios de GMS.
+- **Categorías de GMS**: Congela grupos individuales de servicios de GMS, o usa Activar todas / Desactivar todas para procesar en lote las que aún no están en el estado que quieres.
 - **Afinador de Ahorro de Batería**: Ajusta el comportamiento del ahorro de batería.
 - **Importar / Exportar**: Realiza copias de seguridad y restaura toda tu configuración.
 
@@ -86,15 +90,15 @@ Abre la WebUI desde tu administrador root:
 
 ## Niveles de Deep Doze
 
-Ambos niveles reescriben las constantes de Doze, fuerzan IDLE al apagar la pantalla, ejecutan un terminador de wakelocks tras 5 minutos de pantalla apagada y activan la política flex-idle de JobScheduler en Android 13+. **Máximo** adicionalmente usa el bucket de standby `restricted` (Moderado usa `rare`), deniega `WAKE_LOCK`, desactiva el sensor de movimiento al apagar la pantalla y termina wakelocks inmediatamente al aplicar.
+Ambos niveles reescriben las constantes de Doze, fuerzan IDLE mientras el dispositivo está bloqueado, ejecutan un terminador de wakelocks tras 5 minutos de bloqueo, y activan la política flex-idle de JobScheduler en Android 13+. Las restricciones siguen el estado de bloqueo, no el estado de la pantalla: consultar la hora o mirar la pantalla ambiente no reinicia nada, solo desbloquear lo hace. **Máximo** adicionalmente usa el bucket de standby `restricted` (Moderado usa `rare`), deniega `WAKE_LOCK`, desactiva el sensor de movimiento mientras está bloqueado, y termina wakelocks inmediatamente al aplicar.
 
 ## Optimizador de RAM
 
-Autoajusta la compresión ZRAM, los umbrales LMK / LMKD / PSI, los nodos de reclaim OEM y los parámetros de memoria VM. **Máximo** escala los pesos LMK ~60-70% hacia arriba y usa umbrales LMKD/PSI más proactivos.
+Autoajusta la compresión ZRAM, los umbrales LMK / LMKD / PSI, los nodos de reclaim OEM y los parámetros de memoria VM. **Máximo** escala los pesos LMK ~60-70% hacia arriba y usa umbrales LMKD/PSI más proactivos. El Perfil de multitarea (Rendimiento / Equilibrado / Ahorro de energía) controla por separado cuántas aplicaciones en segundo plano mantiene ActivityManager listas para reanudarse al instante.
 ## Preguntas Frecuentes
 
 **P: ¿Por qué se retrasan mis notificaciones?**  
-R: App Doze y Deep Doze restringen la actividad en segundo plano. Agrega tus aplicaciones de mensajería a la lista blanca de Deep Doze en la WebUI.
+R: App Doze y Deep Doze restringen la actividad en segundo plano. Agrega tus aplicaciones de mensajería a la lista blanca de Deep Doze en la WebUI. GMS/Firebase en sí está en la lista blanca por defecto, por lo que la entrega de push se mantiene intacta, pero las aplicaciones de mensajería de terceros aún deben añadirse a la lista blanca de Deep Doze en la WebUI.
 
 **P: ¿A dónde fue GMS Doze?**  
 R: Ahora es parte de App Doze. Abre el selector de App Doze y elige GMS; tiene el mismo efecto, pero con una interfaz unificada.
@@ -112,6 +116,7 @@ R: No. Todo está apagado de forma predeterminada. Habilita solo lo que necesite
 - **Azyrn** [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** [Script de desactivación de componentes de GMS](https://t.me/MoZoiDStack/137)
 - **s1m** [SaverTuner](https://codeberg.org/s1m/savertuner)
+- [xizt158](https://github.com/xizt159) por muchas contribuciones de calidad
 
 ## Licencia
 

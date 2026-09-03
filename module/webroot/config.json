@@ -1,0 +1,9 @@
+{
+  "title": "Frosty",
+  "icon": "icon.png",
+  "windowResize": false,
+  "exitConfirm": false,
+  "backHandler": true,
+  "backInterceptor": "javascript",
+  "refreshInterceptor": "javascript"
+}

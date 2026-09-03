@@ -1,4 +1,4 @@
-# FROSTY - Complete GMS Services List
+# Frosty - Complete GMS Services List
 
 
 # TELEMETRY - Ads, Tracking, Analytics, Reporting
@@ -144,7 +144,8 @@ com.google.android.gms/com.google.android.gms.chimera.CastPersistentBoundBrokerS
 com.google.android.gms/com.google.android.gms.cast.service.CastService|connectivity
 com.google.android.gms/com.google.android.gms.cast.service.media.CastMediaService|connectivity
 com.google.android.gms/com.google.android.gms.cast.service.session.CastSessionService|connectivity
-com.google.android.gms/com.google.firebase.components.ComponentDiscoveryService|connectivity
+com.google.android.gms/com.google.firebase.components.ComponentDiscoveryService|keep
+com.google.firebase/com.google.firebase.components.ComponentDiscoveryService|keep
 com.google.android.gms/com.google.mlkit.common.internal.MlKitComponentDiscoveryService|connectivity
 com.google.android.gms/com.google.android.gms.mobiledataplan.service.MobileDataPlanService|connectivity
 com.google.android.gms/com.google.android.gms.fido.fido2.pollux.CableAuthenticatorService|connectivity

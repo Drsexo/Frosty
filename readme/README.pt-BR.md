@@ -38,10 +38,10 @@ O Frosty otimiza a duração da bateria congelando os serviços do GMS, aplicand
 - **Otimização de Tela Desligada**: Desativa as conexões selecionadas (Wi-Fi, Bluetooth, dados, localização) e executa opcionalmente o limpador de RAM após um atraso configurável de tela desligada, restaura tudo ao desbloquear.
 - **Desativar Rastreamento do Google**: Desativa as análises do GMS, a telemetria Clearcut, as pesquisas Phenotype e o rastreamento de anúncios.
 - **Ajustes do Kernel**: Otimizações de agendamento (scheduler), VM, rede e depuração.
-- **Otimizador de RAM**: Autoajuste de ZRAM, limiares LMK/LMKD/PSI, desativação de reclaim OEM, parâmetros de memória VM (Moderado / Máximo), limpador de RAM configurável.
+- **Otimizador de RAM**: Autoajuste de ZRAM, limiares LMK/LMKD/PSI, desativação de reclaim OEM, parâmetros de memória VM (Moderado / Máximo), limpador de RAM configurável, Perfil de multitarefa (Desempenho / Equilibrado / Economia de energia).
 - **Props do Sistema**: Desative as propriedades de depuração para economizar RAM e bateria.
 - **Encerramento de Logs**: Pare processos de log e depuração que esgotam a bateria.
-- **Afinador de Economia de Bateria**: Personalize o que a economia de bateria integrada do Android faz quando ativa.
+- **Afinador de Economia de Bateria**: Personalize o que a economia de bateria integrada do Android faz quando ativa, incluindo uma opção para manter a taxa de atualização máxima enquanto está ativo.
 
 ## Instalação
 
@@ -53,7 +53,11 @@ O Frosty otimiza a duração da bateria congelando os serviços do GMS, aplicand
 4. Abra a WebUI para habilitar os recursos.
 
 > [!NOTE]
-> Usuários do Magisk podem usar a [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) para acessar a WebUI.
+> Usuários do Magisk podem usar a [KsuWebUI](https://github.com/KOWX712/KsuWebUIStandalone/releases) / [WebUI-X](https://github.com/MMRLApp/WebUI-X-Portable/releases) para acessar a WebUI.
+
+> [!NOTE]
+> No KernelSU/APatch, o Frosty solicita uma instalação a quente. Se o seu gerenciador suportar, atualize a WebUI após instalar em vez de reiniciar. Reinicie se algo parecer estranho. Magisk sempre exige reinício.
+
 
 ## Uso
 
@@ -62,7 +66,7 @@ Abra a WebUI do seu gerenciador root:
 - **Ajustes do Sistema**: ajustes do kernel, props do sistema, desativar desfoque, encerramento de logs, desativação de rastreamento, otimizador e limpador de RAM.
 - **Doze**: App Doze com seletor de aplicativos, Deep Doze com seletor de nível e editor de lista branca.
 - **Otimização de Tela Desligada**: interruptores por conexão, cronômetros de atraso, restaurar ao desbloquear.
-- **Categorias do GMS**: congele grupos individuais de serviços do GMS.
+- **Categorias do GMS**: congele grupos individuais de serviços do GMS, ou use Ativar todas / Desativar todas para processar em lote as que ainda não estão no estado desejado.
 - **Afinador de Economia de Bateria**: ajuste fino do comportamento de economia de bateria.
 - **Importar / Exportar**: faça backup e restaure toda a sua configuração.
 
@@ -86,15 +90,15 @@ Abra a WebUI do seu gerenciador root:
 
 ## Níveis do Deep Doze
 
-Ambos os níveis reescrevem as constantes Doze, forçam IDLE ao desligar a tela, executam um matador de wakelocks após 5 minutos de tela desligada e ativam a política flex-idle do JobScheduler no Android 13+. **Máximo** adicionalmente usa o bucket de standby `restricted` (Moderado usa `rare`), nega `WAKE_LOCK`, desativa o sensor de movimento ao desligar a tela e mata wakelocks imediatamente ao aplicar.
+Ambos os níveis reescrevem as constantes Doze, forçam IDLE enquanto o dispositivo está bloqueado, executam um matador de wakelocks após 5 minutos de bloqueio e ativam a política flex-idle do JobScheduler no Android 13+. As restrições seguem o estado de bloqueio, não o estado da tela: verificar as horas ou olhar a tela ambiente não reinicia nada, apenas desbloquear o faz. **Máximo** adicionalmente usa o bucket de standby `restricted` (Moderado usa `rare`), nega `WAKE_LOCK`, desativa o sensor de movimento enquanto bloqueado e mata wakelocks imediatamente ao aplicar.
 
 ## Otimizador de RAM
 
-Autoajusta a compressão ZRAM, os limiares LMK / LMKD / PSI, os nós de reclaim OEM e os parâmetros de memória VM. **Máximo** escala os pesos LMK em ~60-70% para cima e usa limiares LMKD/PSI mais proativos.
+Autoajusta a compressão ZRAM, os limiares LMK / LMKD / PSI, os nós de reclaim OEM e os parâmetros de memória VM. **Máximo** escala os pesos LMK em ~60-70% para cima e usa limiares LMKD/PSI mais proativos. O Perfil de multitarefa (Desempenho / Equilibrado / Economia de energia) controla separadamente quantos aplicativos em segundo plano o ActivityManager mantém prontos para retomar instantaneamente.
 ## FAQ
 
 **P: Por que minhas notificações estão atrasadas?**  
-R: O App Doze e o Deep Doze restringem a atividade em segundo plano. Adicione seus aplicativos de mensagens à lista branca do Deep Doze na WebUI.
+R: O App Doze e o Deep Doze restringem a atividade em segundo plano. Adicione seus aplicativos de mensagens à lista branca do Deep Doze na WebUI. O próprio GMS/Firebase está na lista branca por padrão, então a entrega de push permanece intacta, mas aplicativos de mensagens de terceiros ainda precisam ser adicionados à lista branca do Deep Doze na WebUI.
 
 **P: Para onde foi o GMS Doze?**  
 R: Agora faz parte do App Doze. Abra o seletor do App Doze e selecione o GMS, o mesmo efeito, mas em uma interface unificada.
@@ -112,6 +116,7 @@ R: Não. Tudo está desligado por padrão. Ative apenas o que você precisa.
 - **Azyrn** [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** [Script de desativação de componentes do GMS](https://t.me/MoZoiDStack/137)
 - **s1m** [SaverTuner](https://codeberg.org/s1m/savertuner)
+- [xizt158](https://github.com/xizt159) por muitas contribuições de qualidade
 
 ## Licença
 

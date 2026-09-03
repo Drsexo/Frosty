@@ -19,6 +19,7 @@ backup_settings() {
   "prefs": {
     "ENABLE_KERNEL_TWEAKS": ${ENABLE_KERNEL_TWEAKS:-0},
     "ENABLE_RAM_OPTIMIZER": ${ENABLE_RAM_OPTIMIZER:-0},
+    "RAM_MULTITASK_PROFILE": "${RAM_MULTITASK_PROFILE:-balanced}",
     "ENABLE_SYSTEM_PROPS": ${ENABLE_SYSTEM_PROPS:-0},
     "ENABLE_BLUR_DISABLE": ${ENABLE_BLUR_DISABLE:-0},
     "ENABLE_LOG_KILLING": ${ENABLE_LOG_KILLING:-0},
@@ -35,6 +36,7 @@ backup_settings() {
     "BSS_SENSORS_DISABLED": ${BSS_SENSORS_DISABLED:-0},
     "BSS_GPS_MODE": ${BSS_GPS_MODE:-0},
     "BSS_DATASAVER": ${BSS_DATASAVER:-0},
+    "BSS_MAX_REFRESH": ${BSS_MAX_REFRESH:-0},
     "DISABLE_TELEMETRY": ${DISABLE_TELEMETRY:-0},
     "DISABLE_BACKGROUND": ${DISABLE_BACKGROUND:-0},
     "DISABLE_LOCATION": ${DISABLE_LOCATION:-0},
@@ -64,22 +66,35 @@ ENDJSON
   echo "$out"
 }
 
+_valid_enum() {
+  local _val="$1"; shift
+  local _opt
+  for _opt in "$@"; do
+    [ "$_val" = "$_opt" ] && return 0
+  done
+  return 1
+}
+
 restore_settings() {
   local file="$1"
   [ ! -f "$file" ] && { echo "ERROR: File not found"; return 1; }
 
-  pi()  { grep "\"$1\"" "$file" | grep -o '[0-9]*' | head -1; }
-  ps_() { grep "\"$1\"" "$file" | sed 's/.*: *"//;s/".*//' | head -1; }
+  pi()  { grep "\"$1\":" "$file" | grep -o '[0-9]*' | head -1; }
+  ps_() { grep "\"$1\":" "$file" | sed 's/.*: *"//;s/".*//' | head -1; }
 
   local ram_opt=$(pi ENABLE_RAM_OPTIMIZER);         [ -z "$ram_opt" ] && ram_opt=0
-  local ram_lvl=$(ps_ RAM_OPT_LEVEL);                [ -z "$ram_lvl" ] && ram_lvl="moderate"
+  local ram_lvl=$(ps_ RAM_OPT_LEVEL)
+  _valid_enum "$ram_lvl" moderate maximum || ram_lvl="moderate"
+  local ram_mt=$(ps_ RAM_MULTITASK_PROFILE)
+  _valid_enum "$ram_mt" performance balanced powersaving || ram_mt="balanced"
   local ker_twe=$(pi ENABLE_KERNEL_TWEAKS);         [ -z "$ker_twe" ] && ker_twe=0
   local sys_pro=$(pi ENABLE_SYSTEM_PROPS);          [ -z "$sys_pro" ] && sys_pro=0
   local blu_dis=$(pi ENABLE_BLUR_DISABLE);          [ -z "$blu_dis" ] && blu_dis=0
   local log_kil=$(pi ENABLE_LOG_KILLING);           [ -z "$log_kil" ] && log_kil=0
   local kil_tra=$(pi ENABLE_KILL_TRACKING);         [ -z "$kil_tra" ] && kil_tra=0
   local dep_doz=$(pi ENABLE_DEEP_DOZE);             [ -z "$dep_doz" ] && dep_doz=0
-  local dep_lvl=$(ps_ DEEP_DOZE_LEVEL);             [ -z "$dep_lvl" ] && dep_lvl="moderate"
+  local dep_lvl=$(ps_ DEEP_DOZE_LEVEL)
+  _valid_enum "$dep_lvl" minimum moderate maximum || dep_lvl="moderate"
   local bss_ena=$(pi ENABLE_BATTERY_SAVER);         [ -z "$bss_ena" ] && bss_ena=0
   local bss_snd=$(pi BSS_SOUNDTRIGGER_DISABLED);    [ -z "$bss_snd" ] && bss_snd=0
   local bss_fbu=$(pi BSS_FULLBACKUP_DEFERRED);      [ -z "$bss_fbu" ] && bss_fbu=0
@@ -89,6 +104,7 @@ restore_settings() {
   local bss_sen=$(pi BSS_SENSORS_DISABLED);         [ -z "$bss_sen" ] && bss_sen=0
   local bss_gps=$(pi BSS_GPS_MODE);                 [ -z "$bss_gps" ] && bss_gps=0
   local bss_dat=$(pi BSS_DATASAVER);                [ -z "$bss_dat" ] && bss_dat=0
+  local bss_mrf=$(pi BSS_MAX_REFRESH);              [ -z "$bss_mrf" ] && bss_mrf=0
   local dis_tel=$(pi DISABLE_TELEMETRY);            [ -z "$dis_tel" ] && dis_tel=0
   local dis_bac=$(pi DISABLE_BACKGROUND);           [ -z "$dis_bac" ] && dis_bac=0
   local dis_loc=$(pi DISABLE_LOCATION);             [ -z "$dis_loc" ] && dis_loc=0
@@ -109,14 +125,21 @@ restore_settings() {
   if [ -z "$soo_rcm" ]; then
     [ "$(pi SOO_KILL_CACHE)" = "1" ] && soo_rcm="safe" || soo_rcm="off"
   fi
+  _valid_enum "$soo_rcm" off safe aggressive extreme || soo_rcm="off"
   local soo_rcd; soo_rcd=$(pi SOO_RAM_CLEAN_DELAY)
   [ -z "$soo_rcd" ] && { soo_rcd=$(pi SOO_CACHE_DELAY); [ -z "$soo_rcd" ] && soo_rcd=5; }
   local soo_sensors=$(pi SOO_KILL_SENSORS);          [ -z "$soo_sensors" ] && soo_sensors=0
   local soo_panel_lpm=$(pi SOO_KILL_PANEL_LPM);      [ -z "$soo_panel_lpm" ] && soo_panel_lpm=0
 
+  local legacy_gms_doze=$(pi ENABLE_GMS_DOZE)
+  if [ "$legacy_gms_doze" = "1" ] && [ "$cad_ena" != "1" ]; then
+    cad_ena=1
+  fi
+
   cat > "$MODDIR/config/user_prefs.tmp" << ENDPREFS
 ENABLE_RAM_OPTIMIZER=$ram_opt
 RAM_OPT_LEVEL=$ram_lvl
+RAM_MULTITASK_PROFILE=$ram_mt
 ENABLE_KERNEL_TWEAKS=$ker_twe
 ENABLE_SYSTEM_PROPS=$sys_pro
 ENABLE_BLUR_DISABLE=$blu_dis
@@ -133,6 +156,7 @@ BSS_FORCE_BG_CHECK=$bss_fbg
 BSS_SENSORS_DISABLED=$bss_sen
 BSS_GPS_MODE=$bss_gps
 BSS_DATASAVER=$bss_dat
+BSS_MAX_REFRESH=$bss_mrf
 DISABLE_TELEMETRY=$dis_tel
 DISABLE_BACKGROUND=$dis_bac
 DISABLE_LOCATION=$dis_loc
@@ -174,6 +198,13 @@ ENDPREFS
     _wl=$(printf '%s' "$ram_wl_data" | base64 -d 2>/dev/null | grep -v '^[[:space:]#]*$')
     [ -n "$_wl" ] && printf '%s\n' "$_wl" > "$RAM_WL_FILE"
   fi
+
+  if [ "$legacy_gms_doze" = "1" ]; then
+    mkdir -p "$MODDIR/config"
+    grep -qFx "com.google.android.gms" "$MODDIR/config/doze_patches.txt" 2>/dev/null || \
+      echo "com.google.android.gms" >> "$MODDIR/config/doze_patches.txt"
+  fi
+
   echo "OK"
 }
 

@@ -74,6 +74,8 @@ var API = (function () {
     bss_sensors_disabled:       'BSS_SENSORS_DISABLED',
     bss_gps_mode:               'BSS_GPS_MODE',
     bss_datasaver:              'BSS_DATASAVER',
+    bss_max_refresh:            'BSS_MAX_REFRESH',
+    ram_multitask_profile:      'RAM_MULTITASK_PROFILE',
     custom_app_doze:            'ENABLE_CUSTOM_APP_DOZE',
     screen_off_opt:             'ENABLE_SCREEN_OFF_OPT',
     soo_kill_wifi:              'SOO_KILL_WIFI',
@@ -96,6 +98,13 @@ var API = (function () {
     payments:     'DISABLE_PAYMENTS',
     wearables:    'DISABLE_WEARABLES',
     games:        'DISABLE_GAMES'
+  };
+
+  var ENUM_VALUES = {
+    deep_doze_level:       ['minimum', 'moderate', 'maximum'],
+    ram_optimizer_level:   ['moderate', 'maximum'],
+    ram_multitask_profile: ['performance', 'balanced', 'powersaving'],
+    soo_ram_clean_mode:    ['off', 'safe', 'aggressive', 'extreme']
   };
 
   async function getPrefs() {
@@ -126,6 +135,8 @@ var API = (function () {
         prefs[pk] = vals[envKey] || 'moderate';
       } else if (pk === 'ram_optimizer_level') {
         prefs[pk] = vals[envKey] || 'moderate';
+      } else if (pk === 'ram_multitask_profile') {
+        prefs[pk] = vals[envKey] || 'balanced';
       } else if (pk === 'soo_ram_clean_mode') {
         prefs[pk] = vals[envKey] || 'off';
       } else if (BSS_DEFAULT_1[pk] !== undefined) {
@@ -150,6 +161,14 @@ var API = (function () {
     if (!envKey) return { status: 'error', message: 'Unknown key: ' + key };
 
     var val = String(value);
+    if (ENUM_VALUES[key]) {
+      if (ENUM_VALUES[key].indexOf(val) === -1) {
+        return { status: 'error', message: 'Invalid value for ' + key };
+      }
+    } else if (!/^-?[0-9]+$/.test(val)) {
+      return { status: 'error', message: 'Invalid value for ' + key };
+    }
+
     var sedVal = esc(escSed(val));
     var cmd = "if grep -q '^" + envKey + "=' '" + PREFS + "' 2>/dev/null; then " +
       "sed -i 's|^" + envKey + "=.*|" + envKey + "=" + sedVal + "|' '" + PREFS + "'; " +
@@ -177,6 +196,14 @@ var API = (function () {
 
   async function revertRamOptimizer() {
     return await runJSON('sh ' + MODDIR + '/scripts/frosty.sh revert_ram 2>/dev/null');
+  }
+
+  async function applyMultitask(tier) {
+    return await runJSON('sh ' + MODDIR + '/scripts/frosty.sh apply_multitask ' + tier + ' 2>/dev/null');
+  }
+
+  async function revertMultitask() {
+    return await runJSON('sh ' + MODDIR + '/scripts/frosty.sh revert_multitask 2>/dev/null');
   }
 
   async function killLogs() {
@@ -344,8 +371,13 @@ var API = (function () {
     return result.trim() === 'OK';
   }
 
-  async function shareBackup(filePath) {
-    await run("sh '" + MODDIR + "/scripts/frosty.sh' share_backup '" + esc(filePath) + "' 2>&1");
+  async function generateBugReport() {
+    return await runJSON('sh ' + MODDIR + '/scripts/frosty.sh bug_report 2>&1');
+  }
+
+  async function listBugReports() {
+    var raw = await run('sh ' + MODDIR + '/scripts/frosty.sh list_bug_reports 2>&1');
+    try { return JSON.parse(raw.trim()); } catch(e) { return []; }
   }
 
   async function ramClean(mode, exclude) {
@@ -384,7 +416,7 @@ var API = (function () {
     getPrefs, setPref,
     applyKernelTweaks, revertKernelTweaks,
     toggleSystemProps,
-    applyRamOptimizer, revertRamOptimizer,
+    applyRamOptimizer, revertRamOptimizer, applyMultitask, revertMultitask,
     killLogs, revertKillLogs,
     applyKillTracking, revertKillTracking,
     applyBatterySaver, revertBatterySaver,
@@ -395,7 +427,8 @@ var API = (function () {
     applyScreenOffOpt, revertScreenOffOpt,
     getWhitelist, addWhitelist, removeWhitelist,
     getRamWhitelist, addRamWhitelist, removeRamWhitelist,
-    listBackups, exportSettings, importSettings, shareBackup,
+    listBackups, exportSettings, importSettings,
+    generateBugReport, listBugReports,
     appendLog, nativeListPackages, nativeGetPackagesInfo,
     ramClean, ramCleanPoll, getFgPkg
   };

@@ -4,6 +4,11 @@ title: "[Bug]: "
 labels: ["bug"]
 body:
 
+  - type: markdown
+    attributes:
+      value: |
+        ## ⚠️ BUG REPORTS WITHOUT ATTACHING LOGS WILL BE IGNORED. I AM NOT A MENTALIST.
+
   - type: checkboxes
     id: preflight
     attributes:
@@ -115,29 +120,5 @@ body:
   - type: markdown
     attributes:
       value: |
-        **Frosty logs** *(optional but highly recommended)*
-        Run the following command in Termux or any terminal app:
-        ```sh
-        VER=$(su -c "grep '^version=' /data/adb/modules/Frosty/module.prop | cut -d= -f2" 2>/dev/null)
-        OUT="/sdcard/Frosty_${VER:-unknown}_$(date +%Y%m%d_%H%M%S).txt"
-        su -c '
-        D=/data/adb/modules/Frosty
-        L=$(ls "$D/logs/"*.log 2>/dev/null)
-        [ -z "$L" ] && echo "No logs found" >&2 && exit 1
-        echo "Installed modules:"
-        i=1; for m in $(ls /data/adb/modules 2>/dev/null); do echo "  $i. $m"; i=$((i+1)); done
-        echo ""
-        echo "File list:"
-        for f in $L; do echo "  $(basename "$f")"; done
-        echo ""
-        for f in $L; do echo "====$(basename "$f")===="; cat "$f"; echo ""; done
-        ' > "$OUT" && echo "Saved: $OUT" || echo "Error: grant storage permission in Termux first"
-        ```
-        Then attach the `Frosty_*.txt` file found in the root of your internal storage below (click the attach file button).
-
-  - type: textarea
-    id: logs
-    attributes:
-      label: Frosty logs
-      description: Attach the exported Frosty_*.txt file here, or paste relevant log content directly. Remove any personal info before posting.
-      placeholder: Drag and drop the Frosty_*.txt file here, or paste log content...
+        **Frosty logs** ⬆️
+        Open Frosty's WebUI, tap the three-dot menu, and select **Bug Report** to generate a log file. Attach the resulting file from `Frosty/Logs` on your internal storage below (click the attach file button).

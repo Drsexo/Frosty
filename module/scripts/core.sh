@@ -43,9 +43,12 @@ _bool() { [ "$1" = "1" ] && echo "true" || echo "false"; }
 _set_prop() {
   if command -v resetprop >/dev/null 2>&1; then
     resetprop "$1" "$2"
-  else
-    setprop "$1" "$2" 2>/dev/null
+    return $?
   fi
+  case "$1" in
+    ro.*) setprop "$1" "$2" 2>/dev/null; return 1 ;;
+  esac
+  setprop "$1" "$2" 2>/dev/null
 }
 
 _del_prop() {
@@ -66,9 +69,9 @@ _devcfg_restore() {
   local _orig
   _orig=$(grep -F "${_ns}.${_key}=" "$DEVCFG_BACKUP" 2>/dev/null | cut -d= -f2-)
   if [ -n "$_orig" ] && [ "$_orig" != "null" ]; then
-    device_config put "$_ns" "$_key" "$_orig" 2>/dev/null
+    device_config put "$_ns" "$_key" "$_orig" >/dev/null 2>&1
   else
-    device_config delete "$_ns" "$_key" 2>/dev/null
+    device_config delete "$_ns" "$_key" >/dev/null 2>&1
   fi
   if [ -f "$DEVCFG_BACKUP" ]; then
     grep -vF "${_ns}.${_key}=" "$DEVCFG_BACKUP" > "${DEVCFG_BACKUP}.tmp" 2>/dev/null

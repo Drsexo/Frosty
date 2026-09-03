@@ -163,7 +163,8 @@ ram_clean_silent() {
     rm -f "$_RAM_CLEAN_PID"
   fi
   mkdir -p "$MODDIR/tmp"
-  _ram_clean_worker "$mode" ""
+  _ram_clean_worker "$mode" "" &
+  printf '%s\n' "$!" > "$_RAM_CLEAN_PID"
 }
 
 ram_clean_poll() {
@@ -186,17 +187,4 @@ ram_clean_poll() {
     : "${_apps:=0}" "${_freed:=0}"
   fi
   printf '{"running":%s,"apps":%s,"freed":%s}\n' "$_running" "$_apps" "$_freed"
-}
-
-get_fg_pkg() {
-  local _pkg=""
-  _pkg=$(dumpsys activity activities 2>/dev/null | \
-    grep -m1 "mResumedActivity\|topResumedActivity" | \
-    sed -n 's/.*{[^ ]* [^ ]* \([^/]*\)\/.*/\1/p' | tr -d ' ')
-  if [ -z "$_pkg" ]; then
-    _pkg=$(dumpsys window windows 2>/dev/null | \
-      grep -m1 "mCurrentFocus\|mFocusedWindow" | \
-      sed -n 's/.*{[^ ]* [^ ]* \([^/]*\)\/.*/\1/p' | tr -d ' ')
-  fi
-  printf '{"pkg":"%s"}\n' "${_pkg:-}"
 }

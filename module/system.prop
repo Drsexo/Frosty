@@ -44,8 +44,8 @@ profiler.debugmonitor=false
 profiler.launch=false
 profiler.hung.dumpdobugreport=false
 ro.config.nocheckin=1
-profiler.forse_disable_err_rpt=1
-profiler.forse_disable_ulog=1
+profiler.force_disable_err_rpt=1
+profiler.force_disable_ulog=1
 
 # StrictMode
 persist.android.strictmode=0
@@ -53,9 +53,6 @@ persist.android.strictmode=0
 # Battery Logging
 ro.sf.battery_log=0
 ro.sf.battery.log.enabled=0
-
-# Telephony
-ro.telephony.call_ring.multiple=false
 
 # IMS Logging
 persist.ims.disableDebugLogs=1
