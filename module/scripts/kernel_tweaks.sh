@@ -5,17 +5,8 @@ apply_kernel() {
   fi
 
   echo "Frosty v${MODVER:-?} - Tweaks (apply) - $(date '+%Y-%m-%d %H:%M:%S')" > "$TWEAKS_LOG"
-
-  if [ ! -f "$KERNEL_BACKUP" ]; then
-    mkdir -p "$MODDIR/backup"
-    printf "# Kernel Backup - $(date)\n" > "$KERNEL_BACKUP"
-    while IFS= read -r _line; do
-      case "$_line" in ''|'#'*) continue ;; esac
-      _path=$(printf '%s' "$_line" | cut -d'|' -f1 | tr -d ' ')
-      [ ! -e "$_path" ] && continue
-      printf "%s=%s=%s\n" "$(basename "$_path")" "$(cat "$_path" 2>/dev/null)" "$_path" >> "$KERNEL_BACKUP"
-    done < "$KERNEL_TWEAKS"
-  fi
+  mkdir -p "$MODDIR/backup"
+  [ -f "$KERNEL_BACKUP" ] || printf "# Kernel Backup - $(date)\n" > "$KERNEL_BACKUP"
 
   local last_section="" section="" count=0 fail=0 skip=0
   while IFS= read -r _line; do
@@ -44,10 +35,16 @@ apply_kernel() {
       continue
     fi
 
+    if ! grep -q "=${_path}\$" "$KERNEL_BACKUP" 2>/dev/null; then
+      printf "%s=%s=%s\n" "$_name" "$(cat "$_path" 2>/dev/null)" "$_path" >> "$KERNEL_BACKUP"
+    fi
+
     _old=$(cat "$_path" 2>/dev/null | tr '\n' ' ' | sed 's/ *$//')
     chmod +w "$_path" 2>/dev/null
     if printf '%s\n' "$_val" > "$_path" 2>/dev/null; then
-      if [ "$_old" = "$_val" ]; then
+      if [ "$_name" = "sched_features" ]; then
+        log_tweak "[OK] $_name: toggled $_val"
+      elif [ "$_old" = "$_val" ]; then
         log_tweak "[OK] $_name = $_val (unchanged)"
       else
         log_tweak "[OK] $_name: $_old -> $_val"
@@ -64,7 +61,7 @@ apply_kernel() {
   local debug_count=0
   for pattern in debug_mask log_level debug_level enable_event_log; do
     for dpath in $(find /sys/ -maxdepth 4 -type f -name "$pattern" 2>/dev/null | head -20); do
-      if ! grep -qF "=$dpath" "$KERNEL_BACKUP" 2>/dev/null; then
+      if ! grep -q "=${dpath}\$" "$KERNEL_BACKUP" 2>/dev/null; then
         printf '%s=%s=%s\n' "$(basename "$dpath")" "$(cat "$dpath" 2>/dev/null)" "$dpath" >> "$KERNEL_BACKUP"
       fi
       chmod +w "$dpath" 2>/dev/null
@@ -143,11 +140,12 @@ apply_kernel() {
 
   log_tweak ""
   log_tweak "# CPU GOVERNOR (dynamic)"
+  local _gov_seen=""
   for cpudir in /sys/devices/system/cpu/cpu[0-9]*; do
     [ -d "$cpudir" ] || continue
     [ -f "$cpudir/online" ] && [ "$(cat "$cpudir/online" 2>/dev/null)" = "0" ] && continue
     [ -f "$cpudir/cpufreq/scaling_governor" ] || continue
-    local _cpunum _gov _govdir _maxf _minf
+    local _cpunum _gov _govdir _maxf _minf _real
     _cpunum=$(basename "$cpudir" | sed 's/cpu//')
     _gov=$(cat "$cpudir/cpufreq/scaling_governor" 2>/dev/null)
     case "$_gov" in
@@ -156,6 +154,9 @@ apply_kernel() {
       *) continue ;;
     esac
     [ -d "$_govdir" ] || continue
+    _real=$(readlink -f "$_govdir" 2>/dev/null)
+    case " $_gov_seen " in *" $_real "*) continue ;; esac
+    _gov_seen="$_gov_seen $_real"
     _maxf=$(cat "$cpudir/cpufreq/cpuinfo_max_freq" 2>/dev/null)
     _minf=$(cat "$cpudir/cpufreq/cpuinfo_min_freq" 2>/dev/null)
 

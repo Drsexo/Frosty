@@ -34,14 +34,14 @@ Frosty optimiza la duración de la batería congelando los servicios de GMS, apl
 
 - **Congelación de GMS**: Desactiva los servicios de GMS en 8 categorías.
 - **App Doze**: Elimina cualquier aplicación de la lista de exenciones de ahorro de energía de Doze de Android. GMS también se puede seleccionar aquí, reemplazando el antiguo interruptor dedicado de GMS Doze.
-- **Deep Doze**: Restricciones agresivas en segundo plano para todas las aplicaciones (Moderado / Máximo).
-- **Optimización con Pantalla Apagada**: Desactiva las conexiones seleccionadas (Wi-Fi, Bluetooth, datos, ubicación) y ejecuta opcionalmente el limpiador de RAM tras un retraso configurable de pantalla apagada, restaura todo al desbloquear.
+- **Deep Doze**: Restricciones en segundo plano para todas las apps mientras el dispositivo está bloqueado (Mínimo / Moderado / Máximo)
+- **Optimización con Pantalla Apagada**: Desactiva las conexiones seleccionadas (Wi-Fi, Bluetooth, datos, NFC, ubicación, sensores, modo de bajo consumo del panel) y ejecuta opcionalmente el limpiador de RAM tras un retraso configurable de bloqueo del dispositivo, restaura todo al desbloquear
 - **Deshabilitar Rastreo de Google**: Deshabilita los análisis de GMS, la telemetría Clearcut, los sondeos Phenotype y el rastreo de anuncios.
 - **Ajustes del Kernel**: Optimizaciones del programador (scheduler), la máquina virtual (VM), red y depuración.
-- **Optimizador de RAM**: Autoajuste de ZRAM, umbrales LMK/LMKD/PSI, desactivación de reclaim OEM, parámetros de memoria VM (Moderado / Máximo), limpiador de RAM configurable, Perfil de multitarea (Rendimiento / Equilibrado / Ahorro de energía)
+- **Optimizador de RAM**: Autoajuste de ZRAM, umbrales LMK/LMKD/PSI, desactivación de reclaim OEM, parámetros de memoria VM (Moderado / Máximo), limpiador de RAM configurable.
 - **Props del Sistema**: Deshabilita las propiedades de depuración para ahorrar RAM y batería.
 - **Terminación de Registros**: Detiene los procesos de depuración y registro que consumen batería.
-- **Afinador de Ahorro de Batería**: Personaliza lo que hace el ahorro de batería incorporado en Android cuando está activo, incluyendo una opción para mantener la tasa de refresco máxima mientras está activo.
+- **Afinador de Ahorro de Batería**: Personaliza lo que hace el ahorro de batería incorporado en Android cuando está activo.
 
 ## Instalación
 
@@ -90,15 +90,19 @@ Abre la WebUI desde tu administrador root:
 
 ## Niveles de Deep Doze
 
-Ambos niveles reescriben las constantes de Doze, fuerzan IDLE mientras el dispositivo está bloqueado, ejecutan un terminador de wakelocks tras 5 minutos de bloqueo, y activan la política flex-idle de JobScheduler en Android 13+. Las restricciones siguen el estado de bloqueo, no el estado de la pantalla: consultar la hora o mirar la pantalla ambiente no reinicia nada, solo desbloquear lo hace. **Máximo** adicionalmente usa el bucket de standby `restricted` (Moderado usa `rare`), deniega `WAKE_LOCK`, desactiva el sensor de movimiento mientras está bloqueado, y termina wakelocks inmediatamente al aplicar.
+Todos los niveles reescriben las constantes de Doze y activan la política flex-idle de JobScheduler en Android 14+ donde el sistema lo soporta. **Mínimo** es el nivel más suave: timeouts de Doze más cortos y el bucket de standby `frequent`, sin terminador de wakelocks, sin denegación de `WAKE_LOCK` y sin restricción de sensores. **Moderado** y **Máximo** fuerzan IDLE mientras el dispositivo está bloqueado y ejecutan un terminador de wakelocks tras 5 minutos de bloqueo; después de esos 5 minutos las apps pasan al bucket `rare` (Moderado) o `restricted` (Máximo), y desbloquear las restaura. Las restricciones siguen el estado de bloqueo, no el estado de la pantalla: consultar la hora o mirar la pantalla ambiente no reinicia nada, solo desbloquear lo hace. **Máximo** adicionalmente deniega `WAKE_LOCK` para apps restringidas, bloquea el acceso a sensores (incluyendo levantar para despertar) para todas las apps excepto el marcador predeterminado mientras está bloqueado (restaurado durante llamadas y al desbloquear), y termina wakelocks inmediatamente al aplicar.
 
 ## Optimizador de RAM
 
-Autoajusta la compresión ZRAM, los umbrales LMK / LMKD / PSI, los nodos de reclaim OEM y los parámetros de memoria VM. **Máximo** escala los pesos LMK ~60-70% hacia arriba y usa umbrales LMKD/PSI más proactivos. El Perfil de multitarea (Rendimiento / Equilibrado / Ahorro de energía) controla por separado cuántas aplicaciones en segundo plano mantiene ActivityManager listas para reanudarse al instante.
+Autoajusta la compresión ZRAM, los umbrales LMK / LMKD / PSI, los nodos de reclaim OEM y los parámetros de memoria VM. **Máximo** escala los pesos LMK ~50-70% hacia arriba y usa umbrales LMKD/PSI más proactivos. El Perfil de multitarea (Rendimiento / Equilibrado / Ahorro de energía) controla por separado cuántas aplicaciones en segundo plano mantiene ActivityManager listas para reanudarse al instante.
 ## Preguntas Frecuentes
 
 **P: ¿Por qué se retrasan mis notificaciones?**  
-R: App Doze y Deep Doze restringen la actividad en segundo plano. Agrega tus aplicaciones de mensajería a la lista blanca de Deep Doze en la WebUI. GMS/Firebase en sí está en la lista blanca por defecto, por lo que la entrega de push se mantiene intacta, pero las aplicaciones de mensajería de terceros aún deben añadirse a la lista blanca de Deep Doze en la WebUI.
+R: App Doze y Deep Doze restringen la actividad en segundo plano. Agrega tus aplicaciones de mensajería a la lista blanca de Deep Doze en la WebUI.
+
+
+**P: ¿Qué pasa si deshabilito el módulo en el gestor en lugar de apagar las funciones?**  
+R: Frosty deja de funcionar en el próximo reinicio, pero las configuraciones que ya escribió (constantes de Doze, buckets de standby, app ops, ajustes del sistema) permanecen y sus monitores siguen funcionando hasta que reinicies. Apaga las funciones en la WebUI primero, luego deshabilita el módulo. Eliminar el módulo ejecuta la reversión de desinstalación de Frosty en el próximo reinicio.
 
 **P: ¿A dónde fue GMS Doze?**  
 R: Ahora es parte de App Doze. Abre el selector de App Doze y elige GMS; tiene el mismo efecto, pero con una interfaz unificada.
@@ -116,7 +120,7 @@ R: No. Todo está apagado de forma predeterminada. Habilita solo lo que necesite
 - **Azyrn** [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** [Script de desactivación de componentes de GMS](https://t.me/MoZoiDStack/137)
 - **s1m** [SaverTuner](https://codeberg.org/s1m/savertuner)
-- [xizt158](https://github.com/xizt159) por muchas contribuciones de calidad
+- [xizt159](https://github.com/xizt159) por muchas contribuciones de calidad
 
 ## Licencia
 

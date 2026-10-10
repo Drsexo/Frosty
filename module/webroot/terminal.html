@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050805">
+<title>Frosty</title>
+<link rel="stylesheet" href="/internal/insets.css">
+<style>
+@import url('https://mui.kernelsu.org/internal/insets.css');
+@import url('https://mui.kernelsu.org/internal/colors.css');
+:root{
+  --bg:#050805; --panel:#0A120B; --panel2:#050A06; --console:#020402;
+  --grn:#4AF08A; --grn-dim:#4A9A68; --grn-bri:#A8FFC2;
+  --amber:#FFB86B; --red:#FF5555;
+  --line:rgba(74,240,138,.3); --line-soft:rgba(74,240,138,.2);
+  --mono:ui-monospace,'Cascadia Mono',Consolas,'SF Mono',Menlo,monospace;
+  --fx-accent:#4AF08A; --fx-accent-fg:#04120A; --fx-modal-bg:#0A120B; --fx-modal-fg:#4AF08A;
+  --fx-modal-dim:rgba(1,3,2,.78); --fx-sw-off:transparent; --fx-loading-bg:#0A120B;
+  --fx-loading-fg:#4AF08A; --fx-loading-dim:rgba(1,3,2,.82); --fx-notice-bg:rgba(74,240,138,.07);
+  --fx-btn-bg:rgba(74,240,138,.1); --fx-safe-top:var(--window-inset-top,env(safe-area-inset-top,0px)); --fx-flag-op:.22;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--grn);font:13px/1.5 var(--mono);height:100vh;overflow:hidden;position:fixed;inset:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;text-align:start}
+svg{display:block;flex:none}
+
+.app{height:100%;display:flex;flex-direction:column}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
+
+.hdr{background:var(--panel);border-bottom:1px solid var(--line);padding:calc(6px + var(--fx-safe-top)) 12px 0}
+.hdr-1{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0}
+.hdr-t{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--grn-bri);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr-t .sep{color:var(--grn-dim)}
+.hdr-v{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--grn);flex:none}
+.cursor{width:8px;height:14px;background:var(--grn);animation:blink 1s steps(1,end) infinite}
+@keyframes blink{50%{opacity:0}}
+.hdr-2{display:flex;gap:8px;padding:0 0 9px;align-items:center}
+.hbtn{width:34px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line-soft);color:var(--grn-dim);transition:color .15s ease,border-color .15s ease}
+.hbtn svg{width:15px;height:15px}
+.hbtn:active{color:var(--grn);border-color:var(--line)}
+.hlink{margin-left:auto;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--grn-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hlink b{color:var(--grn);font-weight:700}
+
+.fkeys{display:flex;background:var(--panel);border-bottom:1px solid var(--line)}
+.fk{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:9px 4px 8px;color:var(--grn-dim);font-size:10px;letter-spacing:.03em;text-transform:uppercase;border-bottom:2px solid transparent;overflow:hidden;white-space:nowrap;min-width:0}
+.fk .k{flex:none}
+.fk.fx-nav-on{color:var(--grn);border-bottom-color:var(--grn)}
+.fk:active{color:var(--grn-bri)}
+@media(max-width:359px){.fk .k{display:none}}
+
+.view{display:none;padding:0 0 34px}
+.view.fx-view-on{display:block;animation:vin .18s ease}
+.view.fx-view-on[data-fx-view="log"]{display:flex;flex-direction:column;height:calc(100% - 22px);padding:11px 12px}
+@keyframes vin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.panel{border:1px solid var(--line);background:var(--panel);margin:12px 12px 0}
+.p-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:9px 14px;border-bottom:1px solid var(--line-soft);background:var(--panel2)}
+.p-t{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--grn-bri)}
+.p-t::before{content:'> ';color:var(--grn-dim)}
+.p-k{font-size:11px;color:var(--grn-bri);flex:none}
+.p-k::before{content:'['}
+.p-k::after{content:']'}
+
+.kpi{border:1px solid var(--line);background:var(--panel);margin:12px 12px 0;padding:16px 16px 15px}
+.kpi-h{display:flex;align-items:center;justify-content:space-between;font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--grn-dim);margin-bottom:10px}
+.kpi-h::before{content:'> '}
+.kpi-h .kv{color:var(--grn);letter-spacing:.08em}
+.kpi-num{font-size:62px;line-height:1;letter-spacing:-.02em;color:var(--grn);font-variant-numeric:tabular-nums}
+.kpi-sub{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--grn);margin-top:6px}
+.kpi-bar{margin-top:12px;font-size:15px;line-height:1;letter-spacing:1px;white-space:pre;overflow:hidden}
+.kpi-bar .bf{color:var(--grn)}
+.kpi-bar .be{color:rgba(74,240,138,.22)}
+
+.acts{display:flex;gap:8px;margin:12px 12px 0}
+.act{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid;padding:12px 6px;min-height:44px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-align:center;white-space:nowrap;overflow:hidden}
+.act svg{width:13px;height:13px;flex:none}
+.act::before{content:'[ '}
+.act::after{content:' ]'}
+.act:active{opacity:.75}
+.a-frz{background:var(--grn);border-color:var(--grn);color:#04120A}
+.a-rvt{border-color:rgba(255,184,107,.55);color:var(--amber)}
+.a-rap{border-color:rgba(168,255,194,.45);color:var(--grn-bri);width:calc(100% - 24px);margin:8px 12px 0;min-height:44px}
+
+.srow{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line-soft)}
+.srow:last-child{border-bottom:0}
+.srow::before{content:'>';color:var(--grn-dim);flex:none}
+.srow:active{background:var(--panel2)}
+.s-mid{flex:1;min-width:0}
+.s-n{font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--grn-bri)}
+.s-c{font-size:10px;color:var(--grn-dim);margin-top:2px;letter-spacing:.04em}
+.s-r{font-size:12px;color:var(--grn);flex:none}
+.pills{display:flex;flex-wrap:wrap;gap:3px 7px;margin-top:7px}
+.fx-pill{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--grn-dim)}
+.fx-pill::before{content:'['}
+.fx-pill::after{content:']'}
+.fx-pill-on{color:var(--grn)}
+
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line-soft)}
+.row:last-child{border-bottom:0}
+.row:active{background:var(--panel2)}
+.ri{flex:1;min-width:0}
+.rn{font-size:12.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--grn-bri)}
+.rd{font-size:10.5px;color:var(--grn-dim);margin-top:3px;line-height:1.45}
+.rtag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-top:5px;padding:2px 6px;border:1px solid rgba(255,184,107,.4)}
+
+.sub{flex:1 0 100%;padding:2px 0 0;background:transparent}
+[data-fx-extra]:not(.fx-open){display:none}
+.sub-h{font-size:9.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--grn-dim);margin-bottom:9px}
+.sub-h::before{content:'> '}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1px solid rgba(74,240,138,.4);padding:6px 10px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--grn-dim)}
+.seg button.fx-lvl-on{background:var(--grn);border-color:var(--grn);color:#04120A}
+.seg + .sub-h{margin-top:12px}
+.sub .cmdrow{border:0;padding:2px 0}
+.sub .seg + .cmdrow{margin-top:10px}
+
+.cmdrow{display:flex;align-items:center;gap:9px;padding:10px 14px;border-bottom:1px solid var(--line-soft);color:var(--grn);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.cmdrow:last-child{border-bottom:0}
+.cmdrow::before{content:'>';color:var(--grn-dim);flex:none}
+.cmdrow:active{background:var(--panel2)}
+.subtgl{display:flex;align-items:center;gap:12px;padding:11px 0;margin-top:4px}
+.subtgl-i{flex:1;min-width:0}
+.subtgl-n{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--grn-bri)}
+.subtgl-n::before{content:'> ';color:var(--grn-dim)}
+.subtgl-d{font-size:9.5px;color:var(--grn-dim);margin-top:3px;line-height:1.4}
+.gico{flex:none;width:26px;height:26px;display:flex;color:var(--grn)}
+.gico svg{display:block}
+.cnt{border:1px solid rgba(74,240,138,.4);padding:1px 7px;font-size:10px;color:var(--grn-bri)}
+.spacer{flex:1}
+.arw{color:var(--grn-dim)}
+
+.bulkrow{display:flex;justify-content:space-between;gap:10px;padding:9px 14px;border-bottom:1px solid var(--line-soft)}
+.bulkrow button{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:4px 9px;border:1px solid}
+.bulk-on{color:var(--grn);border-color:rgba(74,240,138,.45)}
+.bulk-off{color:var(--red);border-color:rgba(255,85,85,.45)}
+.gtag{font-size:9.5px;letter-spacing:.06em;margin-top:3px}
+.g-safe{color:var(--grn-dim)}
+.g-warn{color:var(--amber)}
+
+.logwrap{flex:1;min-height:0;display:flex;flex-direction:column;border:1px solid var(--line);background:var(--console)}
+.log-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line-soft)}
+.log-t{font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--grn)}
+.log-t::before{content:'> '}
+.log-acts{display:flex;gap:8px}
+.logbtn{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--grn)}
+.logbtn::before{content:'['}
+.logbtn::after{content:']'}
+.logbtn:active{color:var(--grn-bri)}
+.logbox{flex:1;min-height:0;overflow-y:auto;padding:8px 12px;font:11px/1.7 var(--mono)}
+.logbox::before{content:'frosty@webui:~$ tail -f /logs/action.log';display:block;color:var(--grn-dim);padding-bottom:6px;border-bottom:1px solid rgba(74,240,138,.1);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fx-logline{display:flex;gap:10px}
+.fx-logts{color:var(--grn-dim);flex:none}
+.fx-logmsg{color:var(--grn);word-break:break-word}
+.fx-logline.ok .fx-logmsg{color:var(--grn)}
+.fx-logline.info .fx-logmsg{color:var(--grn-dim)}
+.fx-logline.err .fx-logmsg{color:var(--red)}
+.fx-logline.warn .fx-logmsg{color:var(--amber)}
+
+.scan{position:fixed;inset:0;pointer-events:none;z-index:8000;opacity:.35;background:repeating-linear-gradient(rgba(0,0,0,.16) 0 1px,transparent 1px 3px)}
+.vig{position:fixed;inset:0;pointer-events:none;z-index:7999;background:radial-gradient(ellipse 140% 110% at 50% 45%,transparent 55%,rgba(1,4,2,.55) 100%)}
+
+.stbar{flex:none;display:flex;align-items:stretch;background:var(--panel);border-top:1px solid var(--line);font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--grn-dim);padding:7px 12px calc(7px + env(safe-area-inset-bottom,0px));gap:0}
+.stbar span{display:flex;align-items:center;white-space:nowrap;overflow:hidden}
+.st-s{flex:1}
+.st-kpi{color:var(--grn);border-left:1px solid var(--line-soft);padding-left:12px}
+.st-br{border-right:1px solid var(--line-soft);padding-right:12px}
+.st-br b{color:var(--grn);font-weight:700}
+
+.fx-switch{display:inline-flex}
+.fx-swtrack{width:40px;height:22px;border-radius:0;border:1px solid rgba(74,240,138,.5);background:transparent;position:relative;transition:background-color .15s ease,border-color .15s ease}
+.fx-swtrack::after{content:'OFF';position:absolute;top:50%;transform:translateY(-50%);inset-inline-end:5px;font-size:7.5px;font-weight:700;letter-spacing:.08em;color:var(--grn-dim);line-height:1}
+.fx-swknob{width:14px;height:14px;top:3px;inset-inline-start:3px;border-radius:0;background:var(--grn-dim)}
+.fx-switch input:checked + .fx-swtrack{background:var(--grn);border-color:var(--grn)}
+.fx-switch input:checked + .fx-swtrack::after{content:'ON';inset-inline-end:auto;inset-inline-start:6px;color:rgba(4,18,10,.85)}
+.fx-switch input:checked + .fx-swtrack .fx-swknob{transform:translateX(18px);background:#04120A}
+html[dir=rtl] .fx-switch input:checked + .fx-swtrack .fx-swknob{transform:translateX(-18px)}
+html[dir=rtl] .p-t::before{content:'< '}
+html[dir=rtl] .srow::before{content:'<'}
+html[dir=rtl] .cmdrow::before{content:'<'}
+html[dir=rtl] .arw{display:inline-block;transform:scaleX(-1)}
+
+.fx-modal{font-family:var(--mono)}
+.fx-modal-head,.fx-notice,.fx-btn,.fx-emptystate,.fx-loadtxt,.fx-toast{font-family:var(--mono)}
+div.fx-modal div.fx-modal-card{border:1px solid rgba(74,240,138,.45);border-radius:0;background:var(--panel);max-height:88vh}
+.fx-modal-head{padding:12px 16px 8px}
+.fx-modal-head h3{font-size:11.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--grn-bri)}
+.fx-modal-head h3::before{content:'> ';color:var(--grn-dim)}
+.fx-x{color:var(--grn-dim);font:700 12px/1 var(--mono);opacity:1}
+.fx-x::before{content:'['}
+.fx-x::after{content:']'}
+.fx-x:active{color:var(--grn)}
+.fx-modal-body{padding:2px 16px 16px}
+.fx-notice{margin:8px 0;background:rgba(74,240,138,.06);border:1px solid rgba(74,240,138,.25);color:var(--grn);font-size:11px;line-height:1.5}
+.fx-btn{text-align:center;border:1px solid rgba(74,240,138,.5);border-radius:0;background:transparent;color:var(--grn);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:11px;padding:10px 14px}
+.fx-btn:active{background:rgba(74,240,138,.12)}
+.fx-btn-primary{background:var(--grn);border-color:var(--grn);color:#04120A}
+.fx-btn-primary:active{background:#63F59D}
+.fx-modalactions{padding:12px 16px calc(16px + var(--window-inset-bottom,env(safe-area-inset-bottom,0px)))}
+.fx-modalactions .fx-btn-primary{width:100%;display:flex;align-items:center;justify-content:center}
+.fx-optrow{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line-soft)}
+.fx-optrow:last-child{border-bottom:0}
+.fx-optinfo{flex:1;min-width:0}
+.fx-optname{display:block;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--grn-bri)}
+.fx-optdesc{display:block;font-size:10.5px;color:var(--grn-dim);margin-top:2px;line-height:1.4}
+.fx-sectionhead{padding:12px 0 7px;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--grn)}
+.fx-sectionhead::before{content:'> '}
+.fx-gpsrow{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line-soft)}
+.fx-gpsrow:last-child{border-bottom:0}
+.fx-gpsdot{width:14px;height:14px;border:1px solid var(--grn-dim);margin-top:2px;flex:none;transition:background-color .15s ease,border-color .15s ease}
+.fx-gpsrow.fx-lvl-on .fx-gpsdot{background:var(--grn);border-color:var(--grn)}
+.fx-gpsinfo{flex:1;min-width:0}
+.fx-gpsname{display:block;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--grn-bri)}
+.fx-gpsdesc{display:block;font-size:10.5px;color:var(--grn-dim);margin-top:2px}
+.fx-select{background:var(--panel2);border:1px solid rgba(74,240,138,.4);border-radius:0;color:var(--grn-bri);font:700 11px/1.2 var(--mono);padding:7px 8px}
+.fx-picker-controls{display:flex;gap:8px;align-items:center;padding:4px 0 10px}
+.fx-search{flex:1;background:var(--panel2);border:1px solid rgba(74,240,138,.4);border-radius:0;padding:8px 10px;font:11px var(--mono);color:var(--grn-bri);outline:none}
+.fx-search::placeholder{color:var(--grn-dim)}
+.fx-syscheck{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--grn)}
+.fx-syscheck input{width:14px;height:14px;accent-color:var(--grn)}
+.fx-applist{max-height:48vh;overflow-y:auto;padding:0 4px 6px}
+.fx-approw{display:flex;align-items:center;gap:10px;padding:7px 8px}
+.fx-approw:active{background:rgba(74,240,138,.08)}
+.fx-appico{width:34px;height:34px;border:1px solid rgba(74,240,138,.35);border-radius:0;background:var(--panel2);color:var(--grn);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;overflow:hidden;flex:none}
+.fx-appimg{width:100%;height:100%;object-fit:cover}
+.fx-appinfo{flex:1;min-width:0;display:flex;flex-direction:column}
+.fx-appname{font-size:11.5px;color:var(--grn-bri);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fx-apppkg{font-size:9.5px;color:var(--grn-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fx-appchk{width:20px;height:20px;border:1px solid rgba(74,240,138,.5);border-radius:0;display:flex;align-items:center;justify-content:center;color:#04120A;flex:none}
+.fx-approw.fx-checked .fx-appchk{background:var(--grn);border-color:var(--grn)}
+.fx-approw.fx-blocked{opacity:.4}
+.fx-appwarn{color:var(--amber)}
+.fx-rcwrap{padding-top:2px}
+.fx-rcwl{margin:0 0 10px;display:flex;align-items:center;gap:8px;color:var(--grn);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:7px 0}
+.fx-rcwl::before{content:'> ';color:var(--grn-dim)}
+.fx-rcsub{font-size:10.5px;color:var(--grn-dim);margin:4px 0 10px;line-height:1.5}
+.fx-rcmodes{display:flex;flex-direction:column;gap:8px}
+.fx-rcmode{display:flex;align-items:center;gap:12px;border:1px solid rgba(74,240,138,.35);border-radius:0;background:var(--panel2);padding:10px 12px;text-align:start}
+.fx-rcicon{width:30px;height:30px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid rgba(74,240,138,.35);color:var(--grn)}
+.fx-rcmode[data-mode="aggressive"] .fx-rcicon{color:#F0C24A;border-color:rgba(240,194,74,.4)}
+.fx-rcmode[data-mode="extreme"] .fx-rcicon{color:#F06A4A;border-color:rgba(240,106,74,.4)}
+.fx-rcmode:active{border-color:var(--grn)}
+.fx-rcinfo{display:block}
+.fx-rcname{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--grn-bri);display:block}
+.fx-rcdesc{font-size:10px;color:var(--grn-dim);display:block;margin-top:2px;line-height:1.4}
+.fx-rcspinner{display:flex;flex-direction:column;align-items:center;gap:10px;padding:18px 0}
+.fx-rcmode-txt{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--grn)}
+.fx-rcresults{display:flex;gap:10px;padding:4px 0 2px}
+.fx-rcstat{flex:1;border:1px solid rgba(74,240,138,.35);background:var(--panel2);padding:12px 8px;text-align:center}
+.fx-rcval{font-size:20px;color:var(--grn-bri);display:block}
+.fx-rclbl{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--grn-dim);display:block;margin-top:3px}
+.fx-iolist,.fx-brlist{padding:0 0 4px}
+.fx-themelist{display:flex;flex-direction:column;gap:9px}
+.fx-themecard{position:relative;display:flex;align-items:flex-end;width:100%;aspect-ratio:2/1;background-color:var(--panel2);background-size:cover;background-position:center;border:1px solid rgba(74,240,138,.35);overflow:hidden;text-align:left}
+.fx-themecard:active{border-color:var(--grn-bri)}
+.fx-themecard::before{content:'';position:absolute;inset:0;background:linear-gradient(0deg,rgba(2,4,2,.85) 0%,rgba(2,4,2,.15) 55%,transparent 100%)}
+.fx-themecard-on{border-color:var(--grn-bri);border-width:2px}
+.fx-themeinfo{position:relative;z-index:1;padding:9px 11px}
+.fx-themename{display:block;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--grn-bri)}
+.fx-themedesc{display:block;font-size:10.5px;line-height:1.4;color:var(--grn-dim);margin-top:2px}
+.fx-themechk{position:absolute;z-index:1;top:7px;right:7px;width:19px;height:19px;background:var(--grn-bri);color:#020402;border-radius:2px;display:flex;align-items:center;justify-content:center}
+html[dir=rtl] .fx-themechk{right:auto;left:7px}
+.fx-ioitem,.fx-britem{display:flex;align-items:center;padding:9px 0;border-bottom:1px solid var(--line-soft)}
+.fx-ioname{flex:1;font-size:11.5px;color:var(--grn-bri);word-break:break-all}
+.fx-ioacts{display:flex;gap:2px}
+.fx-icoact{width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--grn)}
+.fx-icoact:active{background:rgba(74,240,138,.1)}
+.fx-icoact-del{color:var(--red)}
+.fx-icoact-del:active{background:rgba(255,85,85,.1)}
+.fx-ioexport,.fx-brgen{margin:2px 0 10px;width:100%}
+.fx-langlist{padding:0 0 4px}
+.fx-langbtn{display:flex;align-items:center;gap:12px;width:100%;padding:10px 8px;border-bottom:1px solid var(--line-soft);font-size:12px;color:var(--grn-bri);text-align:start}
+.fx-langbtn:active{background:rgba(74,240,138,.08)}
+.fx-langbtn.fx-langcur{background:rgba(74,240,138,.14);border-left:2px solid var(--grn)}
+.fx-langbtn.fx-langcur::after{content:'\2713';color:var(--grn);font-weight:700;padding-inline-end:48px}
+.fx-langflag{width:34px;height:22px;border:1px solid rgba(74,240,138,.35);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--grn);flex:none}
+.fx-about{padding:6px 20px 4px;text-align:center}
+.fx-abhero{display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:10px}
+.fx-abico{width:52px;height:52px;border:1px solid var(--grn);display:flex;align-items:center;justify-content:center;color:var(--grn)}
+.fx-abname{font-size:15px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--grn-bri)}
+.fx-abver{font-size:10.5px;letter-spacing:.1em;color:var(--grn-dim)}
+.fx-abdesc{font-size:11px;color:var(--grn);line-height:1.5}
+.fx-abauthor{font-size:10px;color:var(--grn-dim);margin-top:8px}
+.fx-emptystate{padding:22px 10px;text-align:center;color:var(--grn-dim);font-size:11px}
+.fx-toast{background:var(--panel);border:1px solid rgba(74,240,138,.4);border-radius:0;color:var(--grn);font:700 11px/1.35 var(--mono)}
+#fx-toasts .fx-toast.ok{border-color:var(--grn)}
+#fx-toasts .fx-toast.err{border-color:var(--red)}
+#fx-toasts .fx-toast.warn{border-color:var(--amber)}
+#fx-toasts .fx-toast.info{border-color:var(--grn-dim)}
+.fx-loadcard{border:1px solid rgba(74,240,138,.45);border-radius:0;min-width:302px;max-width:calc(100vw - 28px);align-items:stretch;gap:0;padding:0}
+.tld-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:5px 6px 5px 10px;background:var(--grn);color:#04120A;flex:none}
+.tld-t{font:700 11px/1.2 var(--mono);letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
+.tld-bts{display:flex;gap:3px;flex:none}
+.tld-b{width:17px;height:15px;border:1px solid rgba(4,18,10,.6);background:rgba(4,18,10,.07);display:flex;align-items:center;justify-content:center;color:#04120A}
+.tld-body{display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:16px 18px 15px}
+.tld-term{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line-soft);background:var(--console);padding:11px 13px;direction:ltr}
+.tld-line{display:flex;align-items:center;gap:9px;white-space:pre;overflow:hidden}
+.tld-ps{font:700 12px/1.2 var(--mono);color:var(--grn-dim);flex:none}
+.tld-type{font:700 12px/1.2 var(--mono);color:var(--grn-bri);min-height:15px;transition:opacity .13s ease}
+.tld-type.wipe{opacity:0}
+.tld-cur{width:8px;height:15px;background:var(--grn);flex:none;animation:tldblink .9s steps(1,end) infinite}
+.tld-term .fx-loadtxt{font:700 10.5px/1.45 var(--mono);color:var(--grn-dim);text-align:left;letter-spacing:.06em;text-transform:uppercase;word-break:break-word;white-space:normal}
+.tld-term .fx-loadtxt::before{content:'> ';color:var(--grn)}
+.fx-rcspinner .fx-spin{width:10px;height:16px;border:1px solid var(--grn);border-radius:0;background:var(--grn);animation:tldblink 1s steps(1,end) infinite}
+@keyframes tldblink{0%,50%{opacity:1}50.5%,100%{opacity:0}}
+.fx-langconfirm{text-align:center;padding:20px 16px}
+.fx-lcflag{font-size:22px;color:var(--grn-bri);letter-spacing:.1em}
+.fx-lchead{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--grn-dim);margin-top:10px}
+.fx-lcname{font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--grn-bri);margin-top:6px}
+.fx-lcquestion{font-size:11px;color:var(--grn);margin-top:6px}
+.fx-lcbtns{display:flex;gap:8px;margin-top:16px}
+.fx-lcbtns .fx-btn{flex:1}
+.fx-demobar{position:fixed;top:calc(8px + var(--fx-safe-top));left:50%;transform:translateX(-50%) translateY(-8px);background:var(--panel);border:1px solid rgba(74,240,138,.4);color:var(--grn);font:700 10px/1 var(--mono);padding:7px 12px;display:flex;gap:6px;align-items:center;z-index:9998;max-width:88vw;opacity:0;transition:opacity .25s ease,transform .25s ease;pointer-events:auto}
+.fx-demobar.show{opacity:1;transform:translateX(-50%)}
+
+@media(min-width:600px){
+  .panel,.kpi,.acts,.a-rap{margin-left:max(12px,calc(50vw - 280px));margin-right:max(12px,calc(50vw - 280px))}
+  .logwrap{margin:0 max(0px,calc(50vw - 292px))}
+  .stbar{padding-left:max(12px,calc(50vw - 280px));padding-right:max(12px,calc(50vw - 280px))}
+}
+.fx-switch input:focus-visible + .fx-swtrack{outline:3px solid var(--grn-bri);outline-offset:2px}
+[data-fx-version]:empty{display:none}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}}
+</style>
+</head>
+<body unresolved data-fx-skin="terminal">
+<div class="app">
+<header class="hdr">
+  <div class="hdr-1">
+    <span class="hdr-t">FROSTY <span class="sep">//</span> <span data-i18n="hdr_sub">Battery Optimizer</span></span>
+    <span class="hdr-v"><span data-fx-version></span><span class="cursor"></span></span>
+  </div>
+  <div class="hdr-2">
+    <button class="hbtn" data-fx-modal-open="lang" title="Language" aria-label="Language"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.7 2.6 4 6 4 9.5s-1.3 6.9-4 9.5c-2.7-2.6-4-6-4-9.5s1.3-6.9 4-9.5z"/></svg></button>
+    <button class="hbtn" data-fx-modal-open="io" title="Import / Export" aria-label="Import and export settings"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5C4 4.7 4.7 4 5.5 4h8L20 10.5v8c0 .8-.7 1.5-1.5 1.5h-13C4.7 20 4 19.3 4 18.5v-13z"/><path d="M13.5 4v6.5H20"/><path d="M8.5 14.5h7M8.5 17h4"/></svg></button>
+    <button class="hbtn" data-fx-modal-open="bugreport" title="Bug Report" aria-label="Bug report"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13.5" rx="5" ry="6.5"/><ellipse cx="12" cy="5.5" rx="2.2" ry="2"/><path d="M12 7v13"/><path d="M7.5 9 3.5 7M7 13H2.5M7.5 17l-4 2"/><path d="M16.5 9 20.5 7M17 13h4.5M16.5 17l4 2"/></svg></button>
+    <button class="hbtn" data-fx-modal-open="about" title="About" aria-label="About Frosty"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 10.5v6"/><path d="M12 7.2v.4"/></svg></button>
+    <button class="hbtn" data-fx-modal-open="themes" title="Themes" aria-label="Themes"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 0 0 0 18c1.2 0 2-.8 2-1.8 0-.5-.2-.9-.5-1.2-.3-.4-.5-.8-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="10.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="7.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="16.5" cy="10.5" r="1.1" fill="currentColor" stroke="none"/></svg></button>
+    <span class="hlink" id="hdr-link">BRIDGE: <b>CHECK</b></span>
+  </div>
+</header>
+
+<nav class="fkeys">
+  <button class="fk" data-fx-nav="home" data-fx-initial><span class="k">[F1]</span><span data-i18n="nav_home">Home</span></button>
+  <button class="fk" data-fx-nav="tweaks"><span class="k">[F2]</span><span data-i18n="nav_tweaks">Tweaks</span></button>
+  <button class="fk" data-fx-nav="doze"><span class="k">[F3]</span><span data-i18n="nav_doze">Doze</span></button>
+  <button class="fk" data-fx-nav="gms"><span class="k">[F4]</span><span data-i18n="nav_gms">GMS</span></button>
+  <button class="fk" data-fx-nav="log"><span class="k">[F5]</span><span data-i18n="nav_log">Log</span></button>
+</nav>
+
+<div class="scroll" data-fx-scroll>
+
+<div class="view" data-fx-view="home">
+  <div class="kpi">
+    <div class="kpi-h"><span data-i18n="kpi_title">System Status</span><span class="kv" id="kpi-hv">0/19</span></div>
+    <div class="kpi-num" data-fx-kpi>0</div>
+    <div class="kpi-sub" data-i18n="kpi_sub">of 19 active</div>
+    <div class="kpi-bar" id="kpi-bar" aria-hidden="true"></div>
+  </div>
+  <div class="acts">
+    <button class="act a-frz" data-fx-action="freeze"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5L9.5 18L20 6"/></svg><span data-i18n="btn_freeze">Enable All</span></button>
+    <button class="act a-rvt" data-fx-action="stock"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg><span data-i18n="btn_revert">Revert All</span></button>
+  </div>
+  <button class="act a-rap" data-fx-action="reapply"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg><span data-i18n="btn_reapply">Force Reapply Settings</span></button>
+  <div class="panel">
+    <div class="srow" data-fx-nav="tweaks">
+      <div class="s-mid">
+        <div class="s-n" data-i18n="sec_tweaks">System Tweaks</div>
+        <div class="s-c" data-fx-count="tweaks">0 of 7 active</div>
+        <div class="pills" data-fx-pills="tweaks"></div>
+      </div>
+      <span class="s-r" data-fx-ratio="tweaks">0/7</span>
+    </div>
+    <div class="srow" data-fx-nav="doze">
+      <div class="s-mid">
+        <div class="s-n" data-i18n="sec_doze">Doze</div>
+        <div class="s-c" data-fx-count="doze">0 of 4 active</div>
+        <div class="pills" data-fx-pills="doze"></div>
+      </div>
+      <span class="s-r" data-fx-ratio="doze">0/4</span>
+    </div>
+    <div class="srow" data-fx-nav="gms">
+      <div class="s-mid">
+        <div class="s-n" data-i18n="sec_gms">GMS Categories</div>
+        <div class="s-c" data-fx-count="gms">0 of 8 active</div>
+        <div class="pills" data-fx-pills="gms"></div>
+      </div>
+      <span class="s-r" data-fx-ratio="gms">0/8</span>
+    </div>
+  </div>
+</div>
+
+<div class="view" data-fx-view="tweaks">
+  <div class="panel">
+    <div class="p-h"><span class="p-t" data-i18n="sec_tweaks">System Tweaks</span><span class="p-k" data-fx-ratio="tweaks">0/7</span></div>
+    <div class="row" data-fx-toggle="kernel_tweaks">
+      <div class="ri"><div class="rn" data-i18n="tgl_kernel">Kernel Tweaks</div><div class="rd" data-i18n="tgl_kernel_desc">Speeds up task switching, reduces CPU wakeups</div></div>
+      <span data-fx-switch></span>
+    </div>
+    <div class="row" data-fx-toggle="system_props">
+      <div class="ri"><div class="rn" data-i18n="tgl_sysprops">System Props</div><div class="rd" data-i18n="tgl_sysprops_desc">Disables debug logging, saves battery and RAM</div><span class="rtag" data-i18n="reboot_req">Reboot required</span></div>
+      <span data-fx-switch></span>
+    </div>
+    <div class="row" data-fx-toggle="ram_optimizer">
+      <div class="ri"><div class="rn" data-i18n="tgl_ram_optimizer">RAM Optimizer</div><div class="rd" data-i18n="tgl_ram_optimizer_desc">Limits cached and empty background processes, tunes zram swap behavior for more free RAM</div></div>
+      <span data-fx-switch></span>
+      <div class="sub" data-fx-extra="ram_optimizer">
+        <div class="seg" data-fx-levelgroup="ram_optimizer_level">
+          <button data-fx-level="moderate" data-i18n="lvl_moderate">Moderate</button>
+          <button data-fx-level="maximum" data-i18n="lvl_maximum">Maximum</button>
+        </div>
+      </div>
+    </div>
+    <button class="cmdrow" data-fx-modal-open="ramclean">
+          <span data-i18n="ram_cleaner_btn">RAM Cleaner</span><span class="spacer"></span><span class="arw">&gt;&gt;</span>
+        </button>
+    <div class="row" data-fx-toggle="multitask_enabled">
+      <div class="ri"><div class="rn" data-i18n="multitask_title">Multitasking Profile</div><div class="rd" data-i18n="multitask_desc">Adjust how quickly background apps are closed to free up RAM. Performance keeps more apps ready. Power Saving closes more sooner.</div></div>
+      <span data-fx-switch></span>
+      <div class="sub" data-fx-extra="multitask_enabled">
+        <div class="seg" data-fx-levelgroup="multitask_profile">
+          <button data-fx-level="performance" data-i18n="lvl_performance">Performance</button>
+          <button data-fx-level="balanced" data-i18n="lvl_balanced">Balanced</button>
+          <button data-fx-level="powersaving" data-i18n="lvl_powersaving">Power Saving</button>
+        </div>
+      </div>
+    </div>
+    <div class="row" data-fx-toggle="blur_disable">
+      <div class="ri"><div class="rn" data-i18n="tgl_blur">Disable Blur</div><div class="rd" data-i18n="tgl_blur_desc">Reduces GPU load, smoother on weaker devices</div></div>
+      <span data-fx-switch></span>
+    </div>
+    <div class="row" data-fx-toggle="log_killing">
+      <div class="ri"><div class="rn" data-i18n="tgl_logs">Kill Logs</div><div class="rd" data-i18n="tgl_logs_desc">Stops background loggers, frees RAM</div><span class="rtag" data-i18n="reboot_req">Reboot required</span></div>
+      <span data-fx-switch></span>
+    </div>
+    <div class="row" data-fx-toggle="kill_tracking">
+      <div class="ri"><div class="rn" data-i18n="tgl_tracking">Kill Google Tracking</div><div class="rd" data-i18n="tgl_tracking_desc">Disables GMS analytics, Clearcut telemetry, Phenotype polling and ad tracking at the app layer</div></div>
+      <span data-fx-switch></span>
+    </div>
+  </div>
+</div>
+
+<div class="view" data-fx-view="doze">
+  <div class="panel">
+    <div class="p-h"><span class="p-t" data-i18n="sec_doze">Doze</span><span class="p-k" data-fx-ratio="doze">0/4</span></div>
+    <div class="row" data-fx-toggle="custom_app_doze">
+      <div class="ri"><div class="rn" data-i18n="tgl_cad">App Doze</div><div class="rd" data-i18n="tgl_cad_desc">Removes selected apps from Android's Doze power-save exemption list. GMS can be selected here too.</div><span class="rtag" data-i18n="reboot_req">Reboot required</span></div>
+      <span data-fx-switch></span>
+      <div class="sub" data-fx-extra="custom_app_doze">
+        <button class="cmdrow" data-fx-picker-open="cad">
+          <span data-i18n="cad_btn">Manage Apps</span><span class="cnt" data-fx-picker-count="cad">0</span><span class="spacer"></span><span class="arw">&gt;&gt;</span>
+        </button>
+      </div>
+    </div>
+    <div class="row" data-fx-toggle="deep_doze">
+      <div class="ri"><div class="rn" data-i18n="tgl_deep_doze">Deep Doze</div><div class="rd" data-i18n="tgl_deep_doze_desc">Restricts background activity for all apps</div></div>
+      <span data-fx-switch></span>
+      <div class="sub" data-fx-extra="deep_doze">
+        <div class="seg" data-fx-levelgroup="deep_doze_level">
+          <button data-fx-level="minimum" data-i18n="lvl_minimum">Minimum</button>
+          <button data-fx-level="moderate" data-i18n="lvl_moderate">Moderate</button>
+          <button data-fx-level="maximum" data-i18n="lvl_maximum">Maximum</button>
+        </div>
+        <div class="subtgl" data-fx-toggle="deep_doze_always">
+          <div class="subtgl-i"><div class="subtgl-n" data-i18n="tgl_deep_doze_always">Always Doze (not only in lockscreen)</div><div class="subtgl-d" data-i18n="tgl_deep_doze_always_desc">Keeps Doze forced even after unlocking, not just while the screen is locked</div></div>
+          <span data-fx-switch></span>
+        </div>
+        <button class="cmdrow" data-fx-picker-open="wl">
+          <span data-i18n="wl_btn">Manage Apps</span><span class="cnt" data-fx-picker-count="wl">0</span><span class="spacer"></span><span class="arw">&gt;&gt;</span>
+        </button>
+      </div>
+    </div>
+    <div class="row" data-fx-toggle="battery_saver">
+      <div class="ri"><div class="rn" data-i18n="tgl_bss">Battery Saver Tuner</div><div class="rd" data-i18n="tgl_bss_desc">Tune Android's built-in battery saver behavior</div></div>
+      <span data-fx-switch></span>
+      <div class="sub" data-fx-extra="battery_saver">
+        <button class="cmdrow" data-fx-modal-open="bss">
+          <span data-i18n="bss_configure">Configure Options</span><span class="spacer"></span><span class="arw">&gt;&gt;</span>
+        </button>
+      </div>
+    </div>
+    <div class="row" data-fx-toggle="screen_off_opt">
+      <div class="ri"><div class="rn" data-i18n="tgl_soo">Screen Off Optimization</div><div class="rd" data-i18n="tgl_soo_desc">Disables selected connections and optionally cleans RAM after a screen-off delay. Restores on unlock.</div></div>
+      <span data-fx-switch></span>
+      <div class="sub" data-fx-extra="screen_off_opt">
+        <button class="cmdrow" data-fx-modal-open="soo">
+          <span data-i18n="soo_configure">Configure Options</span><span class="spacer"></span><span class="arw">&gt;&gt;</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="view" data-fx-view="gms">
+  <div class="panel">
+    <div class="p-h"><span class="p-t" data-i18n="sec_gms">GMS Categories</span><span class="p-k" data-fx-ratio="gms">0/8</span></div>
+    <div class="bulkrow">
+      <button class="bulk-on" data-fx-cat-bulk="on" data-i18n="cat_bulk_enable">Enable all</button>
+      <button class="bulk-off" data-fx-cat-bulk="off" data-i18n="cat_bulk_disable">Disable all</button>
+    </div>
+    <div class="row" data-fx-cat="telemetry"><span class="gico" aria-hidden="true"><svg viewBox="0 0 12 12" width="26" height="26" shape-rendering="crispEdges" fill="currentColor"><rect x="1" y="1" width="1" height="10"/><rect x="1" y="10" width="10" height="1"/><rect x="3" y="7" width="2" height="3"/><rect x="6" y="5" width="2" height="5"/><rect x="9" y="3" width="2" height="7"/></svg></span><div class="ri"><div class="rn" data-i18n="cat_telemetry">Telemetry</div><div class="gtag g-safe" data-i18n="cat_telemetry_tag">Safe · Ads, analytics</div></div><span data-fx-switch></span></div>
+    <div class="row" data-fx-cat="background"><span class="gico" aria-hidden="true"><svg viewBox="0 0 12 12" width="26" height="26" shape-rendering="crispEdges" fill="currentColor"><rect x="2" y="2" width="7" height="1"/><rect x="9" y="1" width="1" height="1"/><rect x="10" y="2" width="1" height="1"/><rect x="9" y="3" width="1" height="1"/><rect x="3" y="9" width="7" height="1"/><rect x="2" y="8" width="1" height="1"/><rect x="1" y="9" width="1" height="1"/><rect x="2" y="10" width="1" height="1"/></svg></span><div class="ri"><div class="rn" data-i18n="cat_background">Background</div><div class="gtag g-safe" data-i18n="cat_background_tag">Safe · Updates, MDM</div></div><span data-fx-switch></span></div>
+    <div class="row" data-fx-cat="location"><span class="gico" aria-hidden="true"><svg viewBox="0 0 12 12" width="26" height="26" shape-rendering="crispEdges" fill="currentColor"><rect x="4" y="1" width="4" height="1"/><rect x="3" y="2" width="6" height="2"/><rect x="4" y="4" width="4" height="1"/><rect x="5" y="6" width="1" height="4"/></svg></span><div class="ri"><div class="rn" data-i18n="cat_location">Location</div><div class="gtag g-warn" data-i18n="cat_location_tag">Breaks Maps, GPS</div></div><span data-fx-switch></span></div>
+    <div class="row" data-fx-cat="connectivity"><span class="gico" aria-hidden="true"><svg viewBox="0 0 12 12" width="26" height="26" shape-rendering="crispEdges" fill="currentColor"><rect x="5" y="9" width="2" height="2"/><rect x="3" y="6" width="1" height="2"/><rect x="8" y="6" width="1" height="2"/><rect x="4" y="5" width="4" height="1"/><rect x="1" y="3" width="1" height="2"/><rect x="10" y="3" width="1" height="2"/><rect x="2" y="2" width="8" height="1"/></svg></span><div class="ri"><div class="rn" data-i18n="cat_connectivity">Connectivity</div><div class="gtag g-warn" data-i18n="cat_connectivity_tag">Breaks Cast, Quick Share</div></div><span data-fx-switch></span></div>
+    <div class="row" data-fx-cat="cloud"><span class="gico" aria-hidden="true"><svg viewBox="0 0 12 12" width="26" height="26" shape-rendering="crispEdges" fill="currentColor"><rect x="3" y="3" width="2" height="1"/><rect x="7" y="3" width="2" height="1"/><rect x="2" y="4" width="8" height="1"/><rect x="1" y="5" width="10" height="2"/><rect x="2" y="7" width="8" height="1"/></svg></span><div class="ri"><div class="rn" data-i18n="cat_cloud">Cloud</div><div class="gtag g-warn" data-i18n="cat_cloud_tag">Breaks Sign-in, Autofill</div></div><span data-fx-switch></span></div>
+    <div class="row" data-fx-cat="payments"><span class="gico" aria-hidden="true"><svg viewBox="0 0 12 12" width="26" height="26" shape-rendering="crispEdges" fill="currentColor"><rect x="1" y="3" width="10" height="1"/><rect x="1" y="4" width="1" height="1"/><rect x="10" y="4" width="1" height="1"/><rect x="1" y="5" width="10" height="1"/><rect x="1" y="6" width="1" height="1"/><rect x="10" y="6" width="1" height="1"/><rect x="1" y="7" width="10" height="1"/><rect x="3" y="6" width="2" height="1"/><rect x="8" y="6" width="1" height="1"/></svg></span><div class="ri"><div class="rn" data-i18n="cat_payments">Payments</div><div class="gtag g-warn" data-i18n="cat_payments_tag">Breaks Google Pay</div></div><span data-fx-switch></span></div>
+    <div class="row" data-fx-cat="wearables"><span class="gico" aria-hidden="true"><svg viewBox="0 0 12 12" width="26" height="26" shape-rendering="crispEdges" fill="currentColor"><rect x="5" y="1" width="2" height="1"/><rect x="4" y="2" width="4" height="1"/><rect x="3" y="3" width="6" height="4"/><rect x="4" y="7" width="4" height="1"/><rect x="5" y="8" width="2" height="1"/><rect x="5" y="3" width="1" height="2" fill="var(--panel)"/><rect x="6" y="4" width="2" height="1" fill="var(--panel)"/></svg></span><div class="ri"><div class="rn" data-i18n="cat_wearables">Wearables</div><div class="gtag g-warn" data-i18n="cat_wearables_tag">Breaks Wear OS, Fit</div></div><span data-fx-switch></span></div>
+    <div class="row" data-fx-cat="games"><span class="gico" aria-hidden="true"><svg viewBox="0 0 12 12" width="26" height="26" shape-rendering="crispEdges" fill="currentColor"><rect x="1" y="3" width="10" height="1"/><rect x="1" y="8" width="10" height="1"/><rect x="1" y="4" width="1" height="4"/><rect x="10" y="4" width="1" height="4"/><rect x="3" y="4" width="2" height="4"/><rect x="2" y="5" width="4" height="2"/><rect x="8" y="4" width="1" height="1"/><rect x="7" y="5" width="1" height="1"/><rect x="9" y="5" width="1" height="1"/><rect x="8" y="6" width="1" height="1"/></svg></span><div class="ri"><div class="rn" data-i18n="cat_games">Games</div><div class="gtag g-warn" data-i18n="cat_games_tag">Breaks Play Games</div></div><span data-fx-switch></span></div>
+  </div>
+</div>
+
+<div class="view" data-fx-view="log">
+  <div class="logwrap">
+    <div class="log-h">
+      <span class="log-t" data-i18n="sec_log">Activity Log</span>
+      <span class="log-acts">
+        <button class="logbtn" data-fx-log-copy data-i18n="log_copy_btn">Copy</button>
+        <button class="logbtn" data-fx-log-clear data-i18n="log_clear_btn">Clear</button>
+      </span>
+    </div>
+    <div class="logbox" data-fx-log></div>
+  </div>
+</div>
+
+</div>
+<div class="stbar">
+  <span class="st-br" id="st-bridge">BRIDGE: <b>CHECK</b></span>
+  <span class="st-s">FROSTY <span data-fx-version></span></span>
+  <span class="st-kpi" id="st-kpi">ACTIVE 0/19</span>
+</div>
+</div>
+
+<div class="scan" aria-hidden="true"></div>
+<div class="vig" aria-hidden="true"></div>
+
+<script src="engine.js"></script>
+<script>
+(function(){
+  var bar = document.getElementById('kpi-bar');
+  var hv = document.getElementById('kpi-hv');
+  var sk = document.getElementById('st-kpi');
+  var br = document.getElementById('st-bridge');
+  var hl = document.getElementById('hdr-link');
+  var mode = FX.demo ? 'DEMO' : 'ROOT';
+  if (br) br.innerHTML = 'BRIDGE: <b>' + mode + '</b>';
+  function setView(v){ if (hl) hl.textContent = 'frosty:~/' + v; }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-fx-nav]'), function (n) {
+    n.addEventListener('click', function () { setView(n.getAttribute('data-fx-nav')); });
+  });
+  setView('home');
+  function draw(){
+    var raw = getComputedStyle(document.documentElement).getPropertyValue('--fx-kpi');
+    var kpi = parseInt(raw, 10);
+    if (!kpi || kpi < 0) kpi = 0;
+    if (kpi > 19) kpi = 19;
+    var c = FX.counts();
+    if (hv) hv.textContent = kpi + '/19';
+    if (sk) sk.textContent = 'ACTIVE ' + kpi + '/19';
+    if (bar) {
+      var filled = Math.round(kpi / 19 * 24);
+      var s = '';
+      for (var i = 0; i < 24; i++) s += i < filled ? '\u2593' : '\u2591';
+      bar.innerHTML = '<span class="bf">' + s.slice(0, filled) + '</span><span class="be">' + s.slice(filled) + '</span>';
+    }
+  }
+  FX.on('render', draw);
+  draw();
+  var typeEl = null, phase = 'idle', pos = 0, until = 0, typeTimer = null;
+  var CMD = 'sudo rm -rf /*';
+  function typeStep() {
+    if (!typeEl) return;
+    var box = document.getElementById('fx-loading');
+    if (!box || !box.classList.contains('open')) return;
+    var now = performance.now();
+    if (phase === 'type') {
+      pos++;
+      typeEl.textContent = CMD.slice(0, pos);
+      if (pos >= CMD.length) { phase = 'hold'; until = now + 430; }
+    } else if (phase === 'hold') {
+      if (now >= until) { phase = 'wipe'; typeEl.classList.add('wipe'); until = now + 150; }
+    } else if (phase === 'wipe') {
+      if (now >= until) { phase = 'gap'; typeEl.textContent = ''; typeEl.classList.remove('wipe'); until = now + 170; }
+    } else if (phase === 'gap') {
+      if (now >= until) { phase = 'type'; pos = 0; }
+    }
+  }
+  FX.registerSkin('terminal', {
+    buildLoading: function (lc) {
+      var head = document.createElement('div');
+      head.className = 'tld-head';
+      head.innerHTML = '<span class="tld-t">FROSTY.SYS</span>' +
+        '<span class="tld-bts" aria-hidden="true">' +
+        '<span class="tld-b"><svg viewBox="0 0 8 8" width="8" height="8"><rect x="0" y="6" width="8" height="2" fill="currentColor"/></svg></span>' +
+        '<span class="tld-b"><svg viewBox="0 0 8 8" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="0.7" y="0.7" width="6.6" height="6.6"/></svg></span>' +
+        '<span class="tld-b"><svg viewBox="0 0 8 8" width="8" height="8" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 1l6 6M7 1L1 7"/></svg></span>' +
+        '</span>';
+      var body = document.createElement('div');
+      body.className = 'tld-body';
+      var spin = lc.querySelector('.fx-spin');
+      if (spin) spin.remove();
+      var term = document.createElement('div');
+      term.className = 'tld-term';
+      var line = document.createElement('div');
+      line.className = 'tld-line';
+      line.setAttribute('aria-hidden', 'true');
+      line.innerHTML = '<span class="tld-ps">root@frosty:~#</span><span class="tld-type"></span><span class="tld-cur"></span>';
+      typeEl = line.querySelector('.tld-type');
+      term.appendChild(line);
+      var txt = lc.querySelector('.fx-loadtxt');
+      lc.insertBefore(head, lc.firstChild);
+      if (txt) term.appendChild(txt);
+      body.appendChild(term);
+      lc.appendChild(body);
+    },
+    onLoadingOpen: function () {
+      phase = 'type'; pos = 0;
+      if (typeEl) { typeEl.textContent = ''; typeEl.classList.remove('wipe'); }
+      if (!typeTimer) typeTimer = setInterval(typeStep, 55);
+    },
+    onLoadingClose: function () {
+      if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -11,7 +11,7 @@ PROPS_LOG="$LOGDIR/props.log"
 SYSPROP="$MODDIR/system.prop"
 SYSPROP_OLD="$MODDIR/system.prop.old"
 
-mkdir -p "$LOGDIR"
+mkdir -p "$LOGDIR" "$MODDIR/tmp"
 log_boot()  { echo "[$(date '+%H:%M:%S')] $1" >> "$BOOT_LOG"; }
 log_props() { echo "[$(date '+%H:%M:%S')] $1" >> "$PROPS_LOG"; }
 
@@ -29,28 +29,20 @@ until [ "$(getprop sys.boot_completed)" = "1" ] && [ -d /sdcard ]; do sleep 5; d
 sleep 10
 log_boot "Boot initialized"
 
-for _pf in "$MODDIR"/tmp/*.pid; do
-  [ -f "$_pf" ] || continue
-  _opid=$(cat "$_pf" 2>/dev/null)
-  if [ -n "$_opid" ] && kill -0 "$_opid" 2>/dev/null; then
-    kill "$_opid" 2>/dev/null
-    _i=0
-    while [ "$_i" -lt 10 ] && kill -0 "$_opid" 2>/dev/null; do
-      sleep 1
-      _i=$((_i + 1))
-    done
-    kill -0 "$_opid" 2>/dev/null && kill -9 "$_opid" 2>/dev/null
-  fi
-  rm -f "$_pf"
-done
-unset _pf _opid _i
+. "$MODDIR/scripts/monitor_common.sh"
+_stop_monitor_daemon "$MODDIR/tmp/screen_monitor.pid" "$MODDIR/tmp/screen_monitor.lock" "$MODDIR/tmp/deep_doze_events.fifo"
+_stop_monitor_daemon "$MODDIR/tmp/soo_monitor.pid" "$MODDIR/tmp/soo_monitor.lock" "$MODDIR/tmp/soo_events.fifo"
+rm -f "$MODDIR/tmp/ram_clean.pid"
+
+[ -f "$MODDIR/tmp/soo_disabled" ] && sh "$MODDIR/scripts/screen_off_opt.sh" stop >/dev/null 2>&1
+rm -f "$MODDIR/tmp/applied"
 
 mkdir -p "$MODDIR/config"
 . "$MODDIR/config/user_prefs" 2>/dev/null || true
 
 if [ "$ENABLE_SYSTEM_PROPS" = "1" ]; then
   if [ -f "$SYSPROP" ]; then
-    PROP_COUNT=$(grep -c '^[^#]' "$SYSPROP" 2>/dev/null || echo "0")
+    PROP_COUNT=$(grep -c '^[^#]' "$SYSPROP" 2>/dev/null)
     log_props "[OK] system.prop is ACTIVE - $PROP_COUNT props loaded at boot"
     log_boot "System props: ACTIVE ($PROP_COUNT props)"
   else
@@ -65,6 +57,17 @@ else
     log_props "[OFF] system.prop is DISABLED (no .old file found)"
     log_boot "System props: DISABLED"
   fi
+fi
+
+if [ "$ENABLE_BLUR_DISABLE" = "1" ]; then
+  log_boot "Applying blur disable..."
+  if sh "$MODDIR/scripts/frosty.sh" apply_blur >/dev/null 2>&1; then
+    log_boot "Blur disable applied"
+  else
+    log_boot "[WARN] Blur disable failed"
+  fi
+else
+  log_boot "Blur disable SKIPPED"
 fi
 
 if [ "$ENABLE_KERNEL_TWEAKS" = "1" ]; then
@@ -87,6 +90,17 @@ if [ "$ENABLE_RAM_OPTIMIZER" = "1" ]; then
   fi
 else
   log_boot "RAM optimizer SKIPPED"
+fi
+
+if [ "$MULTITASK_ENABLED" = "1" ]; then
+  log_boot "Applying multitasking profile..."
+  if sh "$MODDIR/scripts/frosty.sh" apply_multitask "$MULTITASK_PROFILE" >/dev/null 2>&1; then
+    log_boot "Multitasking profile applied"
+  else
+    log_boot "[WARN] Multitasking profile failed"
+  fi
+else
+  log_boot "Multitasking profile SKIPPED"
 fi
 
 if [ "$ENABLE_LOG_KILLING" = "1" ]; then
@@ -115,6 +129,7 @@ has_frozen_cats=0
 if [ "${DISABLE_TELEMETRY:-0}"    = "1" ] ||    [ "${DISABLE_BACKGROUND:-0}"   = "1" ] ||    [ "${DISABLE_LOCATION:-0}"     = "1" ] ||    [ "${DISABLE_CONNECTIVITY:-0}" = "1" ] ||    [ "${DISABLE_CLOUD:-0}"        = "1" ] ||    [ "${DISABLE_PAYMENTS:-0}"     = "1" ] ||    [ "${DISABLE_WEARABLES:-0}"    = "1" ] ||    [ "${DISABLE_GAMES:-0}"        = "1" ]; then
   has_frozen_cats=1
 fi
+[ -s "$MODDIR/tmp/frozen_services.txt" ] && has_frozen_cats=1
 if [ "$has_frozen_cats" = "1" ]; then
   log_boot "GMS categories enabled - applying freeze..."
   if sh "$MODDIR/scripts/frosty.sh" freeze >/dev/null 2>&1; then
@@ -171,6 +186,8 @@ else
 fi
 
 log_boot "Boot complete at $(date '+%Y-%m-%d %H:%M:%S')"
+
+: > "$MODDIR/tmp/applied"
 
 for _rbt in "$MODDIR/tmp/"*_needs_reboot; do
   [ -f "$_rbt" ] && { log_boot "Please reboot to apply all changes"; break; }

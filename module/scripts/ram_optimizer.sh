@@ -8,6 +8,12 @@ _lmk_kernel_type() {
   fi
 }
 
+_zram_swapoff_is_safe() {
+  awk -v f="$1/mm_stat" 'BEGIN { ok = 0; if ((getline l < f) > 0) { split(l, a, " "); used = a[1] / 1024; ok = 1 } }
+    /^MemAvailable:/ { avail = $2 }
+    END { exit !(ok && avail > 0 && used < avail / 2) }' /proc/meminfo
+}
+
 apply_ram_optimizer() {
   echo "Frosty v${MODVER:-?} - RAM (apply) - $(date '+%Y-%m-%d %H:%M:%S')" > "$RAM_LOG"
   log_ram "Applying RAM optimizer..."
@@ -126,7 +132,7 @@ apply_ram_optimizer() {
     if [ "$_cur" = "$_best" ]; then
       printf '%s\n' "$_streams" > "$_z/max_comp_streams" 2>/dev/null
       log_ram "[OK] ZRAM: algo=$_best streams=$_streams"
-    elif [ -b "$_dev" ] && timeout 15 swapoff "$_dev" 2>/dev/null; then
+    elif [ -b "$_dev" ] && _zram_swapoff_is_safe "$_z" && timeout 15 swapoff "$_dev" 2>/dev/null; then
       local _ds; _ds=$(cat "$_z/disksize" 2>/dev/null)
       printf '1\n' > "$_z/reset" 2>/dev/null
       printf '%s\n' "$_best" > "$_z/comp_algorithm" 2>/dev/null
@@ -134,7 +140,16 @@ apply_ram_optimizer() {
       printf '%s\n' "${_ds:-0}" > "$_z/disksize" 2>/dev/null
       mkswap "$_dev" >/dev/null 2>&1
       swapon -p 32767 "$_dev" 2>/dev/null || swapon "$_dev" 2>/dev/null
-      log_ram "[OK] ZRAM: algo $_cur→$_best streams=$_streams"
+      if grep -q 'zram0' /proc/swaps 2>/dev/null; then
+        log_ram "[OK] ZRAM: algo $_cur→$_best streams=$_streams"
+      else
+        printf '1\n' > "$_z/reset" 2>/dev/null
+        printf '%s\n' "$_cur" > "$_z/comp_algorithm" 2>/dev/null
+        printf '%s\n' "${_ds:-0}" > "$_z/disksize" 2>/dev/null
+        mkswap "$_dev" >/dev/null 2>&1
+        swapon -p 32767 "$_dev" 2>/dev/null || swapon "$_dev" 2>/dev/null
+        log_ram "[FAIL] ZRAM: $_best rejected, restored $_cur"
+      fi
     else
       printf '%s\n' "$_streams" > "$_z/max_comp_streams" 2>/dev/null
       log_ram "[OK] ZRAM: algo=$_cur (active, skipped) streams=$_streams"
@@ -169,7 +184,9 @@ apply_ram_optimizer() {
   local _lmk_kernel
   _lmk_kernel=$(_lmk_kernel_type)
 
-  if [ "$_lmk_kernel" != "classic_lmk" ]; then
+  if [ "$_lmk_kernel" != "classic_lmk" ] && ! command -v resetprop >/dev/null 2>&1; then
+    log_ram "[SKIP] LMKD tuning needs resetprop; ro.lmk.* cannot be changed at runtime on this root solution"
+  elif [ "$_lmk_kernel" != "classic_lmk" ]; then
     mkdir -p "$MODDIR/backup"
     for _lp in ro.lmk.low ro.lmk.medium ro.lmk.critical ro.lmk.use_psi \
                ro.lmk.psi_partial_stall_ms ro.lmk.psi_complete_stall_ms \
@@ -178,11 +195,10 @@ apply_ram_optimizer() {
       printf '%s=%s\n' "$_lp" "$(getprop "$_lp" 2>/dev/null)" >> "$LMKD_BACKUP"
     done
 
-    if ! command -v resetprop >/dev/null 2>&1; then
-      log_ram "[WARN] resetprop unavailable - LMKD ro.lmk.* properties need a reboot to take effect on this root solution"
-    fi
+    local _lmk_lvl="${RAM_OPT_LEVEL:-moderate}"
+    [ "${total_kb:-0}" -le 4194304 ] && _lmk_lvl="moderate"
 
-    if [ "${RAM_OPT_LEVEL:-moderate}" = "maximum" ]; then
+    if [ "$_lmk_lvl" = "maximum" ]; then
       _set_prop ro.lmk.low 900
       _set_prop ro.lmk.medium 600
     else
@@ -193,7 +209,7 @@ apply_ram_optimizer() {
 
     if [ "$_lmk_kernel" = "psi_lmkd" ]; then
       _set_prop ro.lmk.use_psi true
-      if [ "${RAM_OPT_LEVEL:-moderate}" = "maximum" ]; then
+      if [ "$_lmk_lvl" = "maximum" ]; then
         _set_prop ro.lmk.psi_partial_stall_ms 70
         _set_prop ro.lmk.psi_complete_stall_ms 500
         _set_prop ro.lmk.thrashing_limit 60
@@ -221,7 +237,7 @@ apply_ram_optimizer() {
       fi
     fi
 
-    log_ram "[OK] LMKD ($_lmk_kernel) tuned for $RAM_OPT_LEVEL"
+    log_ram "[OK] LMKD ($_lmk_kernel) tuned for $_lmk_lvl"
     kcount=$((kcount + 1))
   fi
 
@@ -245,18 +261,6 @@ apply_ram_optimizer() {
   [ "$_vr" -gt 0 ] && log_ram "[OK] Vendor reclaim disabled ($_vr nodes)"
 
   echo '{"status":"ok"}'
-}
-
-_revert_multitask_keys() {
-  local _mtkeyfile="$MODDIR/tmp/multitask_keys.txt"
-  [ -f "$_mtkeyfile" ] || return 1
-  while IFS= read -r _mtkey; do
-    [ -z "$_mtkey" ] && continue
-    _devcfg_restore activity_manager "$_mtkey"
-  done < "$_mtkeyfile"
-  rm -f "$_mtkeyfile"
-  cmd activity memory-factor set 1 >/dev/null 2>&1
-  return 0
 }
 
 revert_ram_optimizer() {
@@ -338,58 +342,10 @@ revert_ram_optimizer() {
   _devcfg_restore activity_manager_native_boot use_freezer
   _devcfg_restore alarm_manager save_battery_on_idle
 
-  if _revert_multitask_keys; then
-    log_ram "[OK] Multitasking profile reverted"
-  fi
-
   log_ram "[OK] RAM optimizer reverted"
   if [ "$_zram_partial" = "1" ]; then
     echo "{\"status\":\"partial\",\"message\":\"ZRAM busy, algorithm not restored - retry later or reboot\"}"
   else
     echo "{\"status\":\"ok\"}"
   fi
-}
-
-apply_multitasking() {
-  local _tier="$1" _mult _keyfile="$MODDIR/tmp/multitask_keys.txt"
-  case "$_tier" in
-    performance) _mult=125 ;;
-    balanced)    _mult=100 ;;
-    powersaving) _mult=75  ;;
-    *) echo '{"status":"error","message":"invalid tier"}'; return 1 ;;
-  esac
-
-  mkdir -p "$MODDIR/tmp"
-  : > "$_keyfile"
-  local _tmp="$MODDIR/tmp/_am_settings.tmp"
-  dumpsys activity settings 2>/dev/null | grep -iE 'cached' > "$_tmp"
-
-  local _count=0 _key _val _new
-  while IFS= read -r _line; do
-    _key=$(printf '%s' "$_line" | cut -d= -f1)
-    _val=$(printf '%s' "$_line" | cut -d= -f2 | grep -oE '^[0-9]+')
-    [ -z "$_val" ] && continue
-    _new=$(( _val * _mult / 100 ))
-    _devcfg_backup activity_manager "$_key"
-    if device_config put activity_manager "$_key" "$_new" >/dev/null 2>&1; then
-      echo "$_key" >> "$_keyfile"
-      _count=$((_count + 1))
-    fi
-  done < "$_tmp"
-  rm -f "$_tmp"
-
-  case "$_tier" in
-    performance) cmd activity memory-factor set 0 2>/dev/null ;;
-    balanced)    cmd activity memory-factor set 1 2>/dev/null ;;
-    powersaving) cmd activity memory-factor set 2 2>/dev/null ;;
-  esac
-
-  log_ram "[OK] Multitasking profile: $_tier ($_count keys)"
-  echo "{\"status\":\"ok\",\"applied\":$_count}"
-}
-
-revert_multitasking() {
-  _revert_multitask_keys
-  log_ram "[OK] Multitasking profile reverted"
-  echo '{"status":"ok"}'
 }

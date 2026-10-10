@@ -15,7 +15,6 @@ com.android.packageinstaller
 # Fixes push notifications arriving after unlock instead of instantly
 com.google.android.gms
 com.google.android.gsf
-com.google.firebase
 
 # Hardware & Connectivity
 com.android.bluetooth

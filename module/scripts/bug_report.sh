@@ -54,7 +54,7 @@ _battery_health() {
 
 _dump_list_or_none() {
   local _content
-  _content=$(grep -v '^#\|^$' "$1" 2>/dev/null)
+  _content=$(grep -vE '^#|^$' "$1" 2>/dev/null)
   if [ -n "$_content" ]; then
     printf '%s\n' "$_content"
   else

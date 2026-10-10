@@ -1,6 +1,140 @@
 # Changelog
 ## I am not responsible for any unofficial or tampered versions of my module distributed outside this repository.
 
+## [4.5] - 2026-10-10
+### App Doze
+- Fixed a bug when the last `<wl>` entry in an XML overlay was on the patch list, the closing tag right after it got deleted along with it, corrupting the file.
+- Fixed multi-tag XML overlay lines (e.g. `<wl n="a"/><wl n="b"/>` on one line) risking an unrelated app's whitelist entry getting stripped alongside the targeted one: now skipped with a log warning instead.
+- User-ID lookup now falls back to user 0 if `pm list users` and `/data/user` both come up empty, matching the GMS freeze path.
+- Fixed adding a package to the App Doze list not taking effect until the next reboot or manual reapply: only removing one did. Adding now applies immediately when App Doze is on, same as removing already did.
+- Overlays are now rebuilt after a system update.
+- Fixed app scan leaving temp files behind when interrupted.
+- Packages Frosty never touches are now skipped in the boot un-whitelist and overlay steps.
+### Battery Saver
+- Fixed revert restoring a stale `low_power` snapshot that could flip your own Battery Saver.
+- Fixed an empty GPS mode writing a blank `location_mode`.
+- Reworded the Max refresh rate description.
+- Turning off Max refresh rate now restores the previous rate. Battery saver constants are backed up and restored.
+### Deep Doze
+- Migrated Deep Doze constants tuning to `DeviceConfig` under the `device_idle` namespace for better compatibility with newer Android versions.
+- Fixed a severe regression: `RUN_ANY_IN_BACKGROUND=ignore` on Maximum was killing backgrounded apps within seconds.
+- Fixed a second regression from the same change: forcing idle immediately on every lock (instead of only after 5 min for Moderate/Maximum).
+- Deep idle no longer stays forced after unlocking on Moderate/Maximum. Now calls `dumpsys deviceidle unforce` as soon as unlock is detected.
+- Fixed sensors disabling mid-call on Maximum when locking the screen with the power button: only affected apps not using the native dialer. Sensor state is now call-aware.
+- Fixed wakelock-tag protection (alarm/notification/push) only matching case-varied first letters, missing fully-uppercase tags.
+- Fixed the motion sensor staying disabled indefinitely if the monitor daemon was killed (OOM/SIGKILL) instead of stopped normally.
+- Added "Always Doze (not only in lockscreen)": keeps deep idle forced continuously instead of releasing it on every unlock.
+- Adding or removing an app from the Deep Doze whitelist now takes effect immediately instead of waiting for the next reapply or reboot: same whitelist fix as app doze. 
+- Moderate and Maximum now restrict apps after 5 min locked and restore them on unlock. Minimum stays persistent.
+- Maximum sensor restriction now uses `dumpsys sensorservice restrict` for better compatibility.
+- Fixed deep idle staying forced after an early unlock.
+- Restore now resets `WAKE_LOCK` to default instead of allow.
+- `device_idle_constants`, `app_standby_enabled` and `adaptive_battery_management_enabled` are now backed up and restored.
+- Event feed restart counter now resets after a successful read.
+- Fixed Deep Doze and Screen Off never activating on devices with no lock screen.
+- Restore now returns apps to their previous standby bucket and no longer resets Restricted battery settings.
+- Minimum no longer forces deep idle when applied.
+- Fixed the whitelist file being recreated without the default Google entries.
+### GMS Services
+- Fixed `freeze_services()` always reporting "Re-enabled: 0" in the summary regardless of actual keep-category results.
+- Boot-time freeze now cancels pending JobScheduler jobs for newly-disabled packages, matching the per-category WebUI path.
+- Removed the dead `com.google.firebase` entries.
+- Freeze now re-enables components of categories that were turned off, and checks installed packages once.
+- Fixed Background restore and App Doze fighting over the same receiver.
+### RAM Optimizer
+- Fixed the Multitasking Profile compounding on every apply and writing invalid flag names.
+- Revert now resets the memory factor instead of forcing MODERATE.
+- ZRAM swap is now verified after an algorithm change, with the previous algorithm restored on failure.
+- LMKD tuning is now skipped without `resetprop` instead of reporting success.
+- ZRAM is no longer retuned when swapping it off would not fit in free RAM.
+- LMKD Maximum now falls back to Moderate on 4 GB RAM or less.
+### Kernel Tweaks
+- Fixed tweaks added to `kernel_tweaks.txt` after the backup file already existed silently skipping backup, breaking revert for that entry.
+- Fixed the `sched_features` log line implying a full-list replacement when it's actually a single-flag toggle.
+- Removed the `kernel.panic` and `panic_on_oops` writes.
+- Fixed printk not being backed up, and shared CPU governors are now backed up once per policy.
+### Kill Tracking
+- Fixed the misspelled `bug_report_in_power_menu` key.
+- All changed settings are now backed up and restored on revert.
+- Removed the GMS background-data block that stopped push on mobile data. Upgrades clear it.
+- The old background-data cleanup now runs once instead of on every apply.
+### Log Killing
+- Seven settings (`netstats_*`, `wifi_scan_*`, `battery_stats_constants`, dropbox tags) that reset to Android's framework default on revert now round-trip to their actual pre-Frosty value instead.
+- Fixed Log Killing killing the monitors' own logcat feed.
+- Fixed dropbox settings racing with the next steps. The console log level is left alone while Kernel Tweaks is on.
+- The event feed is skipped when logcat is stubbed.
+### Import/Export
+- Fixed importing a non-Frosty or corrupt JSON file silently resetting all settings to defaults instead of failing with an error.
+- Whitelist/patches/RAM-whitelist writes during restore are now atomic (temp file + move, matching the main prefs write).
+- Import and share are now confined to the Frosty backup folder.
+- Imported package lists are now validated.
+- Fixed the backup list breaking on names with spaces or backslashes.
+- Import now keeps the selected theme.
+- Rename no longer overwrites an existing backup.
+- Empty lists now import, and oversized delay values are clamped.
+### Screen Off Optimization
+- Fixed `_media_active()` Bluetooth guard only checking for `STATE_PLAYING`: Now it also checks `dumpsys audio` for a `state:started` AudioTrack,  this fixes Bluetooth getting disabled mid-playback with some apps that don't register a proper MediaSession.
+- Fixed `_call_active()` staying stuck "true" indefinitely after a call ends.
+- `_call_active()` is now shared with Deep Doze via `monitor_common.sh` instead of duplicated.
+- Added a "Disable NFC" option: there's no reliable way to detect a tap is about to happen, so it disables purely on the timer.
+- Fixed a failed restore forgetting the disabled connection: it now retries.
+- Pending restores now run at boot before other features apply.
+- RAM clean is now cancelled on unlock.
+- "Disable sensors" now uses sensor restriction and is call-aware.
+- Option texts now say "locked" instead of "screen off".
+- Fixed Bluetooth being turned off during a call after music paused: a call now keeps it on, same as Wi-Fi and mobile data.
+- Per-connection guards are now one function instead of being passed around.
+- Panel LPM now restores to its previous value.
+### Install
+- Dirty-flash upgrades now migrate the legacy GMS-Doze key to App Doze's `ENABLE_CUSTOM_APP_DOZE`, matching what Import already did.
+- Hot installs now stop monitors from the previous install and keep pending restores.
+- Upgrades now add missing preference keys.
+- Updates now keep Frosty's backups and manifests.
+- A reset install now reverts the previous install first.
+- Fixed Multitasking Profile resetting to Balanced when updating from an older version.
+- Fixed the old GMS Doze flag being re-applied on every update.
+### Uninstall
+- Fixed the uninstall runner's app cleanup loop missing the `RUN_ANY_IN_BACKGROUND` appop reset that the live revert function already had.
+- Deduplicated two different user-ID lookups in the runner into one, using the more robust fallback.
+- Fixed the uninstall runner's Wi-Fi/Bluetooth/data restore using a bare `svc` call instead of the absolute `/system/bin/svc` path: the live script already had this fix, the runner's own separate copy didn't.
+- Now restores Deep Doze settings and Kill Tracking values from backup.
+- Multitasking revert now resets the memory factor.
+- Now restores Kill Logs settings from their backup and standby buckets from the manifest.
+### Boot
+- Fixed the boot log's system.prop count showing as "0\n0" on an empty file.
+- Blur Disable's full property set (including OEM-specific ones) now reapplies at boot instead of only on manual WebUI toggle.
+- Leaked logcat-feed processes from a prior hot-install session are now swept alongside the stale PID cleanup.
+- Same `0\n0` count fix applied to the System Props apply log.
+- Blur properties now match between early boot and the late-boot reapply.
+- Scripts now return real exit codes, so failures show as `[WARN]` in the boot log.
+- Monitor cleanup now checks that a process belongs to Frosty before killing it.
+- App Doze overlays from an older system build are now removed at boot after a system update.
+### Cleanup
+- Removed unused `get_fg_pkg` and `share_backup`.
+### WebUI
+- Added a Theme Engine: redesigned with clean aesthetic in mind, pick a skin from the Themes card icon, choice is remembered. Skins: Stock (old default), Terminal (CRT phosphor), Comic (pop-art), Retro (Win95), Handheld (Game Boy).
+- Added an "Always Doze (not only in lockscreen)" toggle to the Deep Doze card.
+- Fixed RAM Cleaner failing and never reporting completion.
+- Fixed Force Reapply running with nothing enabled.
+- Fixed picker counts staying stale after removing an app.
+- Fixed the system-app tooltip never showing.
+- Added a warning when saved settings are not applied yet.
+- Fixed headers drawing under the status bar in Comic, Retro, Terminal and Handheld.
+- Fixed the stock switch knob in RTL languages.
+- Added `color-mix()` fallbacks for older WebViews.
+- Accessibility: labelled switches and icon buttons, dialog roles, announced toasts, keyboard-selectable app rows, focus rings, reduced-motion support, pinch zoom allowed, page language follows the selected language.
+- RAM Cleaner button is now always shown, in every theme.
+- Fixed clipped labels on small screens.
+- Import now reverts features it switched off.
+- Revert All no longer leaves preferences off when a revert fails.
+- Category toggles now report failures.
+- Enable All now clears the not-applied warning.
+- Unknown saved values now fall back to the defaults.
+- Hung commands now time out after 10 minutes.
+### Docs
+- README updated: Minimum tier, sensors, flex-idle and a disabled-module FAQ.
+- Fixed the stale GMS Doze text in the App Doze notice and the issue template.
+
 ## [4.4] - 2026-09-03
 #### It's advised to clean install if you're facing notification delay issues.
 ### GMS Services

@@ -21,6 +21,7 @@ ENABLE_SCREEN_OFF_OPT=0
 SOO_KILL_WIFI=0
 SOO_KILL_BT=0
 SOO_KILL_DATA=0
+SOO_KILL_NFC=0
 SOO_KILL_LOCATION=0
 SOO_KILL_SENSORS=0
 SOO_KILL_PANEL_LPM=0
@@ -55,14 +56,9 @@ _bt_is_on() {
   [ "$(settings get global bluetooth_on 2>/dev/null)" = "1" ] || \
   dumpsys bluetooth_manager 2>/dev/null | grep -qm1 "^enabled: true"
 }
-_media_active()   { dumpsys media_session 2>/dev/null | grep -qm1 "state=PlaybackState {state=3"; }
-_call_active() {
-  local _mode
-  _mode=$(dumpsys audio 2>/dev/null | grep -m1 "mMode=" | sed 's/.*mMode=//;s/[, ].*//')
-  case "$_mode" in
-    MODE_IN_CALL|MODE_IN_COMMUNICATION|MODE_RINGTONE) return 0 ;;
-  esac
-  return 1
+_media_active() {
+  dumpsys media_session 2>/dev/null | grep -qEm1 "state=PlaybackState \{state=(3|4|5|6|8|9|10)" && return 0
+  dumpsys audio 2>/dev/null | grep -qm1 "state:started"
 }
 _data_is_on() {
   local _v
@@ -73,6 +69,14 @@ _data_is_on() {
   fi
   [ "$(settings get global mobile_data 2>/dev/null)" = "1" ]
 }
+_nfc_is_on() {
+  local _v
+  _v=$(settings get secure nfc_on 2>/dev/null)
+  [ "$_v" = "1" ] && return 0
+  _v=$(settings get global nfc_on 2>/dev/null)
+  [ "$_v" = "1" ] && return 0
+  dumpsys nfc 2>/dev/null | grep -qiEm1 "mState: on|mstate=on"
+}
 _location_mode()  {
   local m
   m=$(settings get secure location_mode 2>/dev/null)
@@ -80,20 +84,29 @@ _location_mode()  {
 }
 _is_tethering() {
   [ "$(settings get global tether_on 2>/dev/null)" = "1" ] && return 0
-  dumpsys connectivity 2>/dev/null | grep -qim1 "TetheredState\|tethering.*true" && return 0
+  dumpsys connectivity 2>/dev/null | grep -qiEm1 "TetheredState|tethering.*true" && return 0
   return 1
 }
-_data_guard() { _call_active || _is_tethering; }
+_guard_reason() {
+  case "$1" in
+    wifi|data) _call_active && { echo "a call"; return 0; }
+               _is_tethering && { echo "tethering"; return 0; } ;;
+    bt)        _call_active && { echo "a call"; return 0; }
+               _media_active && { echo "media playback"; return 0; } ;;
+  esac
+  return 1
+}
 
 _disable_sensors() {
-  settings put global sensors_off 1 >/dev/null 2>&1
+  _call_active && return 1
+  _sensors_restrict
   echo "sensors" >> "$DISABLED_FILE"
-  log_soo "[OK] Sensors disabled"
+  log_soo "[OK] Sensor access restricted"
 }
 
 _restore_sensors() {
-  settings put global sensors_off 0 >/dev/null 2>&1
-  log_soo "[OK] Sensors restored"
+  _sensors_enable
+  log_soo "[OK] Sensor access restored"
 }
 
 _svc_toggle() {
@@ -114,27 +127,26 @@ _svc_toggle() {
 }
 
 _soo_manage_conn() {
-  local _tag="$1" _svcname="$2" _pref="$3" _is_on_fn="$4" _guard_fn="$5" _guard_label="$6" _label="$7"
+  local _tag="$1" _svcname="$2" _pref="$3" _is_on_fn="$4" _label="$5" _why
 
   [ "$_pref" != "1" ] && { echo settled; return; }
 
   if grep -q "^${_tag}$" "$DISABLED_FILE" 2>/dev/null; then
-    if "$_guard_fn"; then
-      _svc_toggle "$_svcname" enable "$_label"
-      grep -v "^${_tag}$" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
-      mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null
-      log_soo "[OK] $_label restored - $_guard_label became active"
-      echo pending
-    else
-      echo settled
-    fi
+    _why=$(_guard_reason "$_tag")
+    [ -z "$_why" ] && { echo settled; return; }
+    _svc_toggle "$_svcname" enable "$_label"
+    grep -v "^${_tag}$" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
+    mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null
+    log_soo "[OK] $_label restored - $_why active"
+    echo pending
     return
   fi
 
-  if ! "$_is_on_fn"; then echo settled; return; fi
+  "$_is_on_fn" || { echo settled; return; }
 
-  if "$_guard_fn"; then
-    log_soo "[SKIP] $_label - $_guard_label active, will re-check"
+  _why=$(_guard_reason "$_tag")
+  if [ -n "$_why" ]; then
+    log_soo "[SKIP] $_label - $_why active, will re-check"
     echo pending
   else
     _svc_toggle "$_svcname" disable "$_label" && echo "$_tag" >> "$DISABLED_FILE"
@@ -142,12 +154,27 @@ _soo_manage_conn() {
   fi
 }
 
-_step_connections() {
-  local wifi_r bt_r data_r
+_panel_lpm_on() {
+  local _prev
+  _prev=$(settings get global display_panel_lpm 2>/dev/null)
+  case "$_prev" in 0|1) ;; *) _prev=0 ;; esac
+  settings put global display_panel_lpm 1 >/dev/null 2>&1
+  echo "panel_lpm:$_prev" >> "$DISABLED_FILE"
+}
 
-  wifi_r=$(_soo_manage_conn wifi wifi "$SOO_KILL_WIFI" _wifi_is_on _data_guard "a call" "Wi-Fi")
-  bt_r=$(_soo_manage_conn bt bluetooth "$SOO_KILL_BT" _bt_is_on _media_active "media playback" "Bluetooth")
-  data_r=$(_soo_manage_conn data data "$SOO_KILL_DATA" _data_is_on _data_guard "a call" "Mobile data")
+_panel_lpm_restore() {
+  local _prev
+  _prev=$(printf '%s\n' "$1" | grep -m1 '^panel_lpm' | cut -d: -f2)
+  settings put global display_panel_lpm "${_prev:-0}" >/dev/null 2>&1
+}
+
+_step_connections() {
+  local wifi_r bt_r data_r nfc_r
+
+  wifi_r=$(_soo_manage_conn wifi wifi "$SOO_KILL_WIFI" _wifi_is_on "Wi-Fi")
+  bt_r=$(_soo_manage_conn bt bluetooth "$SOO_KILL_BT" _bt_is_on "Bluetooth")
+  data_r=$(_soo_manage_conn data data "$SOO_KILL_DATA" _data_is_on "Mobile data")
+  nfc_r=$(_soo_manage_conn nfc nfc "$SOO_KILL_NFC" _nfc_is_on "NFC")
 
   if [ "$SOO_KILL_LOCATION" = "1" ] && ! grep -q "^location:" "$DISABLED_FILE" 2>/dev/null; then
     local _mode
@@ -159,17 +186,22 @@ _step_connections() {
     fi
   fi
 
-  if [ "$SOO_KILL_SENSORS" = "1" ] && ! grep -q "^sensors$" "$DISABLED_FILE" 2>/dev/null; then
-    _disable_sensors
+  if [ "$SOO_KILL_SENSORS" = "1" ]; then
+    if ! grep -q "^sensors$" "$DISABLED_FILE" 2>/dev/null; then
+      _disable_sensors
+    elif _call_active; then
+      _restore_sensors
+      grep -v "^sensors$" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
+      mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null
+    fi
   fi
 
-  if [ "$SOO_KILL_PANEL_LPM" = "1" ] && ! grep -q "^panel_lpm$" "$DISABLED_FILE" 2>/dev/null; then
-    settings put global display_panel_lpm 1 >/dev/null 2>&1
-    echo "panel_lpm" >> "$DISABLED_FILE"
+  if [ "$SOO_KILL_PANEL_LPM" = "1" ] && ! grep -q "^panel_lpm" "$DISABLED_FILE" 2>/dev/null; then
+    _panel_lpm_on
     log_soo "[OK] Panel LPM enabled"
   fi
 
-  case "$wifi_r$bt_r$data_r" in
+  case "$wifi_r$bt_r$data_r$nfc_r" in
     *pending*) echo pending ;;
     *) echo settled ;;
   esac
@@ -177,7 +209,7 @@ _step_connections() {
 
 _restore_connections() {
   [ -f "$DISABLED_FILE" ] || return
-  local _what
+  local _what _fail="${DISABLED_FILE}.fail"
   _what=$(cat "$DISABLED_FILE")
   [ -z "$_what" ] && { rm -f "$DISABLED_FILE"; return; }
 
@@ -185,14 +217,18 @@ _restore_connections() {
   _list=$(echo "$_what" | sed 's/^location:.*/location/' | tr '\n' ',' | sed 's/,$//;s/,/, /g')
   log_soo "Restoring: $_list"
 
+  : > "$_fail"
   {
-    echo "$_what" | grep -q "^wifi$" && _svc_toggle wifi enable "Wi-Fi"
+    echo "$_what" | grep -q "^wifi$" && { _svc_toggle wifi enable "Wi-Fi" || echo wifi >> "$_fail"; }
   } &
   {
-    echo "$_what" | grep -q "^bt$" && _svc_toggle bluetooth enable "Bluetooth"
+    echo "$_what" | grep -q "^bt$" && { _svc_toggle bluetooth enable "Bluetooth" || echo bt >> "$_fail"; }
   } &
   {
-    echo "$_what" | grep -q "^data$" && _svc_toggle data enable "Mobile data"
+    echo "$_what" | grep -q "^data$" && { _svc_toggle data enable "Mobile data" || echo data >> "$_fail"; }
+  } &
+  {
+    echo "$_what" | grep -q "^nfc$" && { _svc_toggle nfc enable "NFC" || echo nfc >> "$_fail"; }
   } &
   {
     local _loc
@@ -206,18 +242,22 @@ _restore_connections() {
     echo "$_what" | grep -q "^sensors$" && _restore_sensors
   } &
   {
-    echo "$_what" | grep -q "^panel_lpm$" && \
-      settings put global display_panel_lpm 0 2>/dev/null && log_soo "[OK] Panel LPM disabled"
+    echo "$_what" | grep -q "^panel_lpm" && \
+      _panel_lpm_restore "$_what" && log_soo "[OK] Panel LPM disabled"
   } &
   wait
-  rm -f "$DISABLED_FILE"
+
+  if [ -s "$_fail" ]; then
+    mv -f "$_fail" "$DISABLED_FILE"
+  else
+    rm -f "$DISABLED_FILE" "$_fail"
+  fi
 }
 
 _rearm_display_restrictions() {
   [ "$SOO_KILL_SENSORS" = "1" ] && ! grep -q "^sensors$" "$DISABLED_FILE" 2>/dev/null && _disable_sensors
-  if [ "$SOO_KILL_PANEL_LPM" = "1" ] && ! grep -q "^panel_lpm$" "$DISABLED_FILE" 2>/dev/null; then
-    settings put global display_panel_lpm 1 >/dev/null 2>&1
-    echo "panel_lpm" >> "$DISABLED_FILE"
+  if [ "$SOO_KILL_PANEL_LPM" = "1" ] && ! grep -q "^panel_lpm" "$DISABLED_FILE" 2>/dev/null; then
+    _panel_lpm_on
     log_soo "[OK] Panel LPM re-armed (still locked)"
   fi
 }
@@ -248,9 +288,9 @@ _monitor_loop() {
         grep -v "^sensors$" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
         mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null
       fi
-      if grep -q "^panel_lpm$" "$DISABLED_FILE" 2>/dev/null; then
-        settings put global display_panel_lpm 0 >/dev/null 2>&1
-        grep -v "^panel_lpm$" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
+      if grep -q "^panel_lpm" "$DISABLED_FILE" 2>/dev/null; then
+        _panel_lpm_restore "$(cat "$DISABLED_FILE")"
+        grep -v "^panel_lpm" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
         mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null
         log_soo "[OK] Panel LPM disabled"
       fi
@@ -262,13 +302,15 @@ _monitor_loop() {
     fi
 
     if ! _is_locked; then
-      if [ "$was_locked" = "1" ]; then
-        if [ "$SOO_RESTORE_ON_UNLOCK" = "1" ] && [ -f "$DISABLED_FILE" ]; then
-          log_soo "Unlocked - restoring"
-          _restore_connections
-        fi
-        was_locked=0; conn_started=0; conn_settled=0; cache_done=0; locked_since=0
+      if [ "$cache_done" = "1" ] && [ -f "$MODDIR/tmp/ram_clean.pid" ]; then
+        kill "$(cat "$MODDIR/tmp/ram_clean.pid" 2>/dev/null)" 2>/dev/null
+        rm -f "$MODDIR/tmp/ram_clean.pid"
       fi
+      if [ "$SOO_RESTORE_ON_UNLOCK" = "1" ] && [ -s "$DISABLED_FILE" ]; then
+        log_soo "Unlocked - restoring"
+        _restore_connections
+      fi
+      was_locked=0; conn_started=0; conn_settled=0; cache_done=0; locked_since=0
       _wait_event "$_idle_wait"
       if [ "$event_fd" != "1" ]; then
         [ "$_idle_wait" -lt 60 ] && _idle_wait=$((_idle_wait + 15))
@@ -290,7 +332,7 @@ _monitor_loop() {
     fi
 
     local elapsed=$(( now - locked_since ))
-    local _any_conn_feature="$(( SOO_KILL_WIFI + SOO_KILL_BT + SOO_KILL_DATA + SOO_KILL_LOCATION + SOO_KILL_SENSORS + SOO_KILL_PANEL_LPM ))"
+    local _any_conn_feature="$(( SOO_KILL_WIFI + SOO_KILL_BT + SOO_KILL_DATA + SOO_KILL_NFC + SOO_KILL_LOCATION + SOO_KILL_SENSORS + SOO_KILL_PANEL_LPM ))"
 
     if [ "$_any_conn_feature" -gt 0 ] && [ "$elapsed" -ge "$(( SOO_CONN_DELAY * 60 ))" ]; then
       if [ "$conn_started" = "0" ]; then
@@ -318,7 +360,7 @@ _monitor_loop() {
     if [ "$all_done" = "1" ]; then
       _wait_event 5
     elif [ "$conn_started" = "1" ] && [ "$conn_settled" = "0" ]; then
-      _wait_event 20
+      _wait_event 60
     else
       _wait_event 3
     fi
@@ -338,7 +380,7 @@ start() {
   _monitor_loop &
   echo "$!" > "$PID_FILE"
   log_soo "[OK] PID=$(cat "$PID_FILE")"
-  log_soo "wifi=$SOO_KILL_WIFI bt=$SOO_KILL_BT data=$SOO_KILL_DATA location=$SOO_KILL_LOCATION sensors=$SOO_KILL_SENSORS panel_lpm=$SOO_KILL_PANEL_LPM conn_delay=${SOO_CONN_DELAY}m"
+  log_soo "wifi=$SOO_KILL_WIFI bt=$SOO_KILL_BT data=$SOO_KILL_DATA nfc=$SOO_KILL_NFC location=$SOO_KILL_LOCATION sensors=$SOO_KILL_SENSORS panel_lpm=$SOO_KILL_PANEL_LPM conn_delay=${SOO_CONN_DELAY}m"
   log_soo "ram_clean_mode=$SOO_RAM_CLEAN_MODE clean_delay=${SOO_RAM_CLEAN_DELAY}m"
   log_soo "restore_on_unlock=$SOO_RESTORE_ON_UNLOCK"
 }
@@ -349,6 +391,7 @@ stop() {
   _stop_monitor_daemon "$PID_FILE" "$MONITOR_LOCKDIR" "$EVENT_PIPE"
   [ "$_was_running" = "1" ] && log_soo "[OK] Stopped"
   [ -f "$DISABLED_FILE" ] && { log_soo "Restoring on stop..."; _restore_connections; }
+  return 0
 }
 
 case "$1" in
@@ -356,4 +399,4 @@ case "$1" in
   stop)  stop  ;;
   *) echo "Usage: $0 {start|stop}"; exit 1 ;;
 esac
-exit 0
+exit $?

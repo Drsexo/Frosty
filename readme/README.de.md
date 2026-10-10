@@ -34,14 +34,14 @@ Frosty optimiert die Akkulaufzeit, indem es GMS-Dienste einfriert, systemweite D
 
 - **GMS Einfrieren**: Deaktiviere GMS-Dienste in 8 Kategorien.
 - **App-Doze**: Entferne jede beliebige App aus der Doze-Ausnahmeliste von Android. GMS ist hier ebenfalls auswählbar und ersetzt den alten dedizierten GMS-Doze-Schalter.
-- **Deep Doze**: Aggressive Hintergrundbeschränkungen für alle Apps (Moderat / Maximum).
-- **Screen-Off-Optimierung**: Deaktiviert ausgewählte Verbindungen (WLAN, Bluetooth, Daten, Standort) und führt optional die RAM-Bereinigung nach einer konfigurierbaren Bildschirm-Aus-Verzögerung aus. Stellt beim Entsperren wieder her.
+- **Deep Doze**: Hintergrundbeschränkungen für alle Apps, während das Gerät gesperrt ist (Minimum / Moderat / Maximum)
+- **Screen-Off-Optimierung**: Deaktiviert ausgewählte Verbindungen (WLAN, Bluetooth, Daten, NFC, Standort, Sensoren, Panel-Stromsparmodus) und führt optional die RAM-Bereinigung aus, nachdem das Gerät für eine konfigurierbare Zeit gesperrt war. Stellt beim Entsperren wieder her
 - **Google-Tracking deaktivieren**: Deaktiviert GMS-Analysen, Clearcut-Telemetrie, Phenotype-Polling und Ad-Tracking.
 - **Kernel-Tweaks**: Optimierungen für Scheduler, VM, Netzwerk und Debugging.
-- **RAM-Optimierer**: ZRAM-Auto-Tuning, LMK/LMKD/PSI-Schwellen, OEM-Reclaim-Deaktivierung, VM-Speicher-Parameter (Moderat / Maximum), konfigurierbarer RAM-Bereiniger, Multitasking-Profil (Leistung / Ausgeglichen / Energiesparen)
+- **RAM-Optimierer**: ZRAM-Auto-Tuning, LMK/LMKD/PSI-Schwellen, OEM-Reclaim-Deaktivierung, VM-Speicher-Parameter (Moderat / Maximum), konfigurierbarer RAM-Bereiniger.
 - **System-Props**: Deaktiviere Debug-Eigenschaften, um RAM und Akku zu sparen.
 - **Logs beenden**: Stoppt akkubelastende Log- und Debugging-Prozesse.
-- **Energiespar-Tuner**: Passe an, was der integrierte Android-Energiesparmodus macht, wenn er aktiv ist, einschließlich einer Option, die maximale Bildwiederholrate beizubehalten, während er aktiv ist.
+- **Energiespar-Tuner**: Passe an, was der integrierte Android-Energiesparmodus macht, wenn er aktiv ist.
 
 ## Installation
 
@@ -90,15 +90,19 @@ Frosty optimiert die Akkulaufzeit, indem es GMS-Dienste einfriert, systemweite D
 
 ## Deep-Doze-Stufen
 
-Beide Stufen schreiben Doze-Konstanten neu, erzwingen IDLE, während das Gerät gesperrt ist, führen nach 5 Min. Sperrzeit einen Wakelock-Killer aus und aktivieren JobScheduler flex-idle auf Android 13+. Einschränkungen folgen dem Sperrzustand, nicht dem Bildschirmzustand: Uhrzeit prüfen oder auf die Ambient-Anzeige schauen setzt nichts zurück, nur das Entsperren. **Maximum** verwendet zusätzlich den `restricted` Standby-Bucket (Moderat verwendet `rare`), verweigert `WAKE_LOCK`, deaktiviert den Bewegungssensor im gesperrten Zustand und beendet Wakelocks sofort beim Anwenden.
+Alle Stufen schreiben Doze-Konstanten neu und aktivieren JobScheduler flex-idle auf Android 14+, wo das System dies unterstützt. **Minimum** ist die sanfteste Stufe: kürzere Doze-Timeouts und der `frequent` Standby-Bucket, ohne Wakelock-Killer, ohne `WAKE_LOCK`-Verweigerung und ohne Sensorrestriktion. **Moderat** und **Maximum** erzwingen IDLE, während das Gerät gesperrt ist, und führen nach 5 Min. Sperrzeit einen Wakelock-Killer aus; nach diesen 5 Minuten wechseln Apps in den `rare`-Bucket (Moderat) bzw. den `restricted`-Bucket (Maximum), und Entsperren stellt sie zurück. Einschränkungen folgen dem Sperrzustand, nicht dem Bildschirmzustand: Uhrzeit prüfen oder auf die Ambient-Anzeige schauen setzt nichts zurück, nur das Entsperren. **Maximum** verweigert zusätzlich `WAKE_LOCK` für eingeschränkte Apps, blockiert Sensorzugriff (inkl. Lift-to-Wake) für jede App außer der Standard-Telefon-App im gesperrten Zustand (während Anrufen und beim Entsperren wiederhergestellt) und beendet Wakelocks sofort beim Anwenden.
 
 ## RAM-Optimierer
 
-Stellt ZRAM-Kompression, LMK-/LMKD-/PSI-Schwellen, OEM-Reclaim-Nodes und VM-Speicher-Parameter automatisch ein. **Maximum** skaliert LMK-Gewichte um ~60-70% nach oben und verwendet proaktivere LMKD/PSI-Schwellen. Das Multitasking-Profil (Leistung / Ausgeglichen / Energiesparen) steuert separat, wie viele Hintergrund-Apps der ActivityManager für sofortiges Fortsetzen bereithält.
+Stellt ZRAM-Kompression, LMK-/LMKD-/PSI-Schwellen, OEM-Reclaim-Nodes und VM-Speicher-Parameter automatisch ein. **Maximum** skaliert LMK-Gewichte um ~50-70% nach oben und verwendet proaktivere LMKD/PSI-Schwellen. Das Multitasking-Profil (Leistung / Ausgeglichen / Energiesparen) steuert separat, wie viele Hintergrund-Apps der ActivityManager für sofortiges Fortsetzen bereithält.
 ## FAQ
 
 **F: Warum sind meine Benachrichtigungen verzögert?**  
-A: App-Doze und Deep Doze schränken die Hintergrundaktivität ein. Füge deine Messenger-Apps in der WebUI zur Deep-Doze-Whitelist hinzu. GMS/Firebase selbst ist standardmäßig whitelistet, sodass die Push-Zuststellung intakt bleibt, aber Drittanbieter-Messenger-Apps müssen weiterhin in der WebUI zur Deep-Doze-Whitelist hinzugefügt werden.
+A: App-Doze und Deep Doze schränken die Hintergrundaktivität ein. Füge deine Messenger-Apps in der WebUI zur Deep-Doze-Whitelist hinzu.
+
+
+**F: Was passiert, wenn ich das Modul im Manager deaktiviere, anstatt die Funktionen auszuschalten?**  
+A: Frosty stoppt beim nächsten Neustart, aber die bereits geschriebenen Einstellungen (Doze-Konstanten, Standby-Buckets, App Ops, Systemeinstellungen) bleiben aktiv und die Monitore laufen weiter, bis du neu startest. Schalte die Funktionen zuerst in der WebUI aus, dann deaktiviere das Modul. Das Entfernen des Moduls führt Frostys Deinstallations-Rücksetzung beim nächsten Neustart aus.
 
 **F: Wo ist GMS-Doze geblieben?**  
 A: Es ist jetzt Teil von App-Doze. Öffne die App-Doze-Auswahl und wähle GMS – gleicher Effekt, einheitliche Oberfläche.
@@ -116,7 +120,7 @@ A: Nein. Standardmäßig ist alles ausgeschaltet. Aktiviere nur das, was du brau
 - **Azyrn** [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** [GMS Component Disable Script](https://t.me/MoZoiDStack/137)
 - **s1m** [SaverTuner](https://codeberg.org/s1m/savertuner)
-- [xizt158](https://github.com/xizt159) für viele hochwertige Beiträge
+- [xizt159](https://github.com/xizt159) für viele hochwertige Beiträge
 
 ## Lizenz
 

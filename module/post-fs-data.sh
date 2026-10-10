@@ -7,11 +7,20 @@ MODDIR="${0%/*}"
 [ -f "$MODDIR/config/user_prefs" ] && . "$MODDIR/config/user_prefs"
 
 _DIXML="/data/system/deviceidle.xml"
+_BLOCKED=" android com.android.systemui com.android.phone com.android.settings com.android.shell com.android.bluetooth com.android.nfc "
 
 _OVERLAYS="$MODDIR/config/doze_xml_overlays.txt"
+_STAMP="$MODDIR/backup/overlays.build"
+_FP=$(getprop ro.build.fingerprint 2>/dev/null)
+_stale=0
+[ -n "$_FP" ] && [ -f "$_STAMP" ] && [ "$(cat "$_STAMP" 2>/dev/null)" != "$_FP" ] && _stale=1
 if [ -f "$_OVERLAYS" ]; then
   while IFS= read -r _src; do
     case "$_src" in '#'*|'') continue ;; esac
+    if [ "$_stale" = "1" ]; then
+      rm -f "$_src"
+      continue
+    fi
     [ -f "$_src" ] || continue
     [ -s "$_src" ] || continue
     grep -q '</' "$_src" 2>/dev/null || continue
@@ -39,7 +48,11 @@ if [ -f "$_DIXML" ] && grep -q '<un-wl ' "$_DIXML" 2>/dev/null; then
 fi
 
 if [ "$ENABLE_CUSTOM_APP_DOZE" = "1" ] && [ -f "$_CAD_PATCHES" ] && [ -f "$_DIXML" ]; then
-  _cad_pkgs=$(sed 's/#.*//;s/[[:space:]]//g' "$_CAD_PATCHES" 2>/dev/null | grep -v '^$')
+  _keep=""
+  for _pkg in $(sed 's/#.*//;s/[[:space:]]//g' "$_CAD_PATCHES" 2>/dev/null | grep -v '^$'); do
+    case "$_BLOCKED" in *" $_pkg "*) ;; *) _keep="$_keep $_pkg" ;; esac
+  done
+  _cad_pkgs="$_keep"
   if [ -n "$_cad_pkgs" ]; then
     _tmp="${_DIXML}.cad.tmp"
     cp -af "$_DIXML" "$_tmp" 2>/dev/null
@@ -66,7 +79,7 @@ if [ "$ENABLE_CUSTOM_APP_DOZE" = "1" ] && [ -f "$_CAD_PATCHES" ] && [ -f "$_DIXM
   fi
 fi
 
-unset _DIXML _CAD_PATCHES _cad_pkgs _pkg _tmp
+unset _DIXML _CAD_PATCHES _cad_pkgs _pkg _tmp _keep _BLOCKED _STAMP _FP _stale
 
 _set_prop() {
   if command -v resetprop >/dev/null 2>&1; then
@@ -79,12 +92,21 @@ _set_prop() {
   setprop "$1" "$2" 2>/dev/null
 }
 
+LOGDIR="$MODDIR/logs"
+POSTFS_LOG="$LOGDIR/postfs.log"
+mkdir -p "$LOGDIR"
+log_postfs() { echo "[$(date '+%H:%M:%S')] $1" >> "$POSTFS_LOG"; }
+
 if [ "$ENABLE_BLUR_DISABLE" = "1" ]; then
-  _set_prop disableBlurs true
+  _set_prop disableBlurs 1
   _set_prop enable_blurs_on_windows 0
-  _set_prop ro.launcher.blur.appLaunch 0
-  _set_prop ro.sf.blurs_are_expensive 0
-  _set_prop ro.surface_flinger.supports_background_blur 0
+  if command -v resetprop >/dev/null 2>&1; then
+    _set_prop ro.launcher.blur.appLaunch 0
+    _set_prop ro.sf.blurs_are_expensive 1
+    _set_prop ro.surface_flinger.supports_background_blur 0
+  else
+    log_postfs "[WARN] Blur Disable: resetprop unavailable, ro.* blur props not applied (KSU/APatch limitation)"
+  fi
 fi
 
 INITDIR="$MODDIR/system/etc/init"
@@ -93,8 +115,12 @@ BINDIR="$MODDIR/system/bin"
 if [ "$ENABLE_LOG_KILLING" = "1" ]; then
   _set_prop tombstoned.max_tombstone_count 0
   _set_prop tombstoned.max_anr_count 0
-  _set_prop ro.lmk.debug false
-  _set_prop ro.lmk.log_stats false
+  if command -v resetprop >/dev/null 2>&1; then
+    _set_prop ro.lmk.debug false
+    _set_prop ro.lmk.log_stats false
+  else
+    log_postfs "[WARN] Log Killing: resetprop unavailable, ro.lmk.debug/ro.lmk.log_stats not applied (KSU/APatch limitation)"
+  fi
   _set_prop dalvik.vm.dex2oat-minidebuginfo false
   _set_prop dalvik.vm.minidebuginfo false
   _set_prop sys.wifitracing.started 0
@@ -114,6 +140,7 @@ if [ "$ENABLE_LOG_KILLING" = "1" ]; then
             logpersist.cat logpersist.start logpersist.stop \
             lpdump lpdumpd notify_traceur.sh tcpdump traced \
             traced_perf traced_probes tracepath tracepath6 traceroute6; do
+    [ -e "/system/bin/$bin" ] || continue
     printf '#!/system/bin/sh\nexit 0\n' > "$BINDIR/$bin"
     chmod 755 "$BINDIR/$bin"
   done

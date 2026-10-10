@@ -123,7 +123,7 @@ mkdir -p "$MODPATH/config"
 mkdir -p "$MODPATH/logs"
 
 # GMS check
-if ! pm list packages 2>/dev/null | grep -q "com.google.android.gms"; then
+if ! pm list packages 2>/dev/null | grep -qx 'package:com.google.android.gms'; then
   ui_print ""
   ui_print "  ⚠️  Google Play Services not found!"
   ui_print "  GMS freezing and doze features will not work."
@@ -478,6 +478,44 @@ s() {
 }
 
 
+stop_old_monitors() {
+  local _old="/data/adb/modules/$MODID"
+  [ -d "$_old/tmp" ] || return 0
+  . "$MODPATH/scripts/monitor_common.sh"
+  [ -f "$_old/scripts/screen_off_opt.sh" ] && sh "$_old/scripts/screen_off_opt.sh" stop >/dev/null 2>&1
+  _stop_monitor_daemon "$_old/tmp/screen_monitor.pid" "$_old/tmp/screen_monitor.lock" "$_old/tmp/deep_doze_events.fifo"
+  dumpsys deviceidle unforce >/dev/null 2>&1
+  _sensors_enable
+}
+
+carry_old_state() {
+  local _old="/data/adb/modules/$MODID" _f
+  mkdir -p "$MODPATH/backup" "$MODPATH/tmp"
+  [ -d "$_old/backup" ] && cp -a "$_old/backup/." "$MODPATH/backup/" 2>/dev/null
+  for _f in soo_disabled frozen_services.txt mt_keys.txt deep_doze_restricted.txt deep_doze_lockcycle; do
+    [ -f "$_old/tmp/$_f" ] && cp -f "$_old/tmp/$_f" "$MODPATH/tmp/"
+  done
+}
+
+revert_old_install() {
+  local _old="/data/adb/modules/$MODID/scripts" _c
+  [ -f "$_old/frosty.sh" ] || return 0
+  for _c in stock revert_kernel revert_ram revert_multitask revert_logs revert_tracking revert_bss; do
+    sh "$_old/frosty.sh" "$_c" >/dev/null 2>&1
+  done
+  sh "$_old/app_doze.sh" revert >/dev/null 2>&1
+  sh "$_old/deep_doze.sh" stock >/dev/null 2>&1
+}
+
+backfill_prefs() {
+  local _defaults="$1" _line _key
+  while IFS= read -r _line; do
+    _key="${_line%%=*}"
+    [ -n "$_key" ] || continue
+    grep -q "^${_key}=" "$MODPATH/config/user_prefs" 2>/dev/null || echo "$_line" >> "$MODPATH/config/user_prefs"
+  done < "$_defaults"
+}
+
 # Existing config detection
 EXISTING_PREFS="/data/adb/modules/$MODID/config/user_prefs"
 EXISTING_WHITELIST="/data/adb/modules/$MODID/config/doze_whitelist.txt"
@@ -505,12 +543,28 @@ if [ -f "$EXISTING_PREFS" ]; then
   fi
 fi
 
+stop_old_monitors
+
 # Save Configuration
 print_section "$(s save_title)"
 mkdir -p "$MODPATH/config"
 
 if [ "$USE_EXISTING" -eq 1 ]; then
+  carry_old_state
+  cp -f "$MODPATH/config/user_prefs" "$MODPATH/config/user_prefs.defaults"
   cp -f "$EXISTING_PREFS" "$MODPATH/config/user_prefs"
+  if grep -q '^RAM_MULTITASK_PROFILE=' "$MODPATH/config/user_prefs" 2>/dev/null && \
+     ! grep -q '^MULTITASK_PROFILE=' "$MODPATH/config/user_prefs" 2>/dev/null; then
+    sed -i 's/^RAM_MULTITASK_PROFILE=/MULTITASK_PROFILE=/' "$MODPATH/config/user_prefs"
+  fi
+  backfill_prefs "$MODPATH/config/user_prefs.defaults"
+  rm -f "$MODPATH/config/user_prefs.defaults"
+  _legacy_gms_doze=0
+  if grep -q '^ENABLE_GMS_DOZE=1' "$MODPATH/config/user_prefs" 2>/dev/null; then
+    _legacy_gms_doze=1
+    sed -i 's/^ENABLE_CUSTOM_APP_DOZE=.*/ENABLE_CUSTOM_APP_DOZE=1/' "$MODPATH/config/user_prefs"
+  fi
+  sed -i '/^ENABLE_GMS_DOZE=/d' "$MODPATH/config/user_prefs"
   ui_print ""
   ui_print "$(s save_kept)"
   if [ -f "$EXISTING_WHITELIST" ]; then
@@ -519,6 +573,10 @@ if [ "$USE_EXISTING" -eq 1 ]; then
   fi
   if [ -f "$EXISTING_PATCHES" ]; then
     cp -f "$EXISTING_PATCHES" "$MODPATH/config/doze_patches.txt"
+  fi
+  if [ "$_legacy_gms_doze" -eq 1 ]; then
+    grep -qFx "com.google.android.gms" "$MODPATH/config/doze_patches.txt" 2>/dev/null || \
+      echo "com.google.android.gms" >> "$MODPATH/config/doze_patches.txt"
   fi
   if [ -f "$EXISTING_RAM_WL" ]; then
     cp -f "$EXISTING_RAM_WL" "$MODPATH/config/ram_clean_whitelist.txt"
@@ -532,6 +590,7 @@ if [ "$USE_EXISTING" -eq 1 ]; then
     [ -f "$SYSPROP" ] && mv "$SYSPROP" "$SYSPROP_OLD"
   fi
 else
+  revert_old_install
   ui_print ""
   ui_print "$(s save_default)"
   SYSPROP="$MODPATH/system.prop"

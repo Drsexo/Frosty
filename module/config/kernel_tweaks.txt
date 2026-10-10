@@ -18,8 +18,6 @@
 /sys/kernel/debug/sched_features|NO_TTWU_QUEUE
 
 # PANIC
-/proc/sys/kernel/panic|0
-/proc/sys/kernel/panic_on_oops|0
 /proc/sys/vm/panic_on_oom|0
 
 # TIMER & PRINTK

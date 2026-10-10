@@ -14,6 +14,7 @@ USER_PREFS="$MODDIR/config/user_prefs"
 PATCHES_FILE="$MODDIR/config/doze_patches.txt"
 OVERLAYS_FILE="$MODDIR/config/doze_xml_overlays.txt"
 BACKUP_DIR="$MODDIR/backup/overlays"
+BUILD_STAMP="$MODDIR/backup/overlays.build"
 
 GMS_PKG="com.google.android.gms"
 GMS_ADMIN1="$GMS_PKG/$GMS_PKG.auth.managed.admin.DeviceAdminReceiver"
@@ -43,7 +44,9 @@ _is_blocked() {
 
 _load_packages() {
   [ ! -f "$PATCHES_FILE" ] && return
-  sed 's/###.*//;s/#.*//;s/[[:space:]]//g' "$PATCHES_FILE" | grep -v '^$' | sort -u
+  sed 's/###.*//;s/#.*//;s/[[:space:]]//g' "$PATCHES_FILE" | grep -v '^$' | sort -u | while IFS= read -r _p; do
+    _is_blocked "$_p" || echo "$_p"
+  done
 }
 
 _load_grep() {
@@ -63,7 +66,11 @@ _load_grep() {
 }
 
 _get_user_ids() {
-  pm list users 2>/dev/null | grep -oE 'UserInfo\{[0-9]+' | grep -oE '[0-9]+' || ls /data/user 2>/dev/null
+  local _ids
+  _ids=$(pm list users 2>/dev/null | grep -oE 'UserInfo\{[0-9]+' | grep -oE '[0-9]+')
+  [ -z "$_ids" ] && _ids=$(ls /data/user 2>/dev/null)
+  [ -z "$_ids" ] && _ids="0"
+  echo "$_ids"
 }
 
 _migrate_stale_lists() {
@@ -108,12 +115,15 @@ _xml_has_any_pkg() {
 }
 
 _build_strip_ranges() {
-  local _src="$1" _grep="$2" _line _buf="" _start=0 _lineno=0
+  local _src="$1" _grep="$2" _line _buf="" _start=0 _lineno=0 _tagcount
   while IFS= read -r _line || [ -n "$_line" ]; do
     _lineno=$((_lineno + 1))
-    if printf '%s\n' "$_line" | grep -q '^[[:space:]]*<[^/]'; then
+    if printf '%s\n' "$_line" | grep -qE '^[[:space:]]*</?[a-z][a-zA-Z0-9_]*'; then
       if [ -n "$_buf" ] && _unit_matches "$_buf" "$_grep"; then
-        if [ "$_start" -eq $((_lineno - 1)) ]; then
+        _tagcount=$(printf '%s' "$_buf" | grep -oE '<[a-zA-Z/]' | wc -l)
+        if [ "$_tagcount" -gt 1 ]; then
+          log_app "[WARN] Skipped removal (multiple tags on one line): $_src:$_start"
+        elif [ "$_start" -eq $((_lineno - 1)) ]; then
           echo "${_start}d"
         else
           echo "${_start},$((_lineno - 1))d"
@@ -126,12 +136,29 @@ _build_strip_ranges() {
     fi
   done < "$_src"
   if [ -n "$_buf" ] && _unit_matches "$_buf" "$_grep"; then
-    if [ "$_start" -eq "$_lineno" ]; then
+    _tagcount=$(printf '%s' "$_buf" | grep -oE '<[a-zA-Z/]' | wc -l)
+    if [ "$_tagcount" -gt 1 ]; then
+      log_app "[WARN] Skipped removal (multiple tags on one line): $_src:$_start"
+    elif [ "$_start" -eq "$_lineno" ]; then
       echo "${_start}d"
     else
       echo "${_start},${_lineno}d"
     fi
   fi
+}
+
+_overlays_stale() {
+  local _build
+  _build=$(getprop ro.build.fingerprint 2>/dev/null)
+  [ -n "$_build" ] || return 1
+  mkdir -p "$(dirname "$BUILD_STAMP")"
+  if [ ! -f "$BUILD_STAMP" ]; then
+    printf '%s\n' "$_build" > "$BUILD_STAMP"
+    return 1
+  fi
+  [ "$(cat "$BUILD_STAMP" 2>/dev/null)" = "$_build" ] && return 1
+  printf '%s\n' "$_build" > "$BUILD_STAMP"
+  return 0
 }
 
 _backup_original() {
@@ -153,6 +180,14 @@ _apply_xml_overlays() {
 
   if [ "$ENABLE_CUSTOM_APP_DOZE" != "1" ] || [ -z "$grep_pat" ]; then
     _remove_overlays
+    return 0
+  fi
+
+  if _overlays_stale; then
+    log_app "[INFO] System build changed - dropping overlays built from the old build"
+    _remove_overlays
+    rm -rf "$BACKUP_DIR"
+    : > "$_reboot_file"
     return 0
   fi
 
@@ -247,6 +282,9 @@ scan() {
   local _tmp_xmls="$MODDIR/tmp/scan_xmls.tmp"
   local _tmp_hits="$MODDIR/tmp/scan_hits.tmp"
 
+  trap "rm -f '$_tmp_inst' '$_tmp_cand' '$_tmp_xmls' '$_tmp_hits'" EXIT
+  trap 'exit 1' TERM INT HUP
+
   pm list packages 2>/dev/null | cut -d: -f2 | sort > "$_tmp_inst"
   if [ ! -s "$_tmp_inst" ]; then
     rm -f "$_tmp_inst" "$_tmp_cand" "$_tmp_xmls" "$_tmp_hits"
@@ -286,6 +324,53 @@ scan() {
   rm -f "$_tmp_inst" "$_tmp_cand" "$_tmp_xmls" "$_tmp_hits"
 }
 
+_apply_pkg() {
+  local pkg="$1"
+  _is_blocked "$pkg" && return 0
+
+  local tiers=""
+
+  dumpsys deviceidle whitelist -"$pkg" >/dev/null 2>&1
+  tiers="${tiers} user-wl"
+
+  local sys_out
+  sys_out=$(cmd deviceidle sys-whitelist -"$pkg" 2>&1)
+  case "$sys_out" in *[Uu]nknown*|*[Ee]rror*) ;; *) tiers="${tiers} sys-wl" ;; esac
+
+  cmd deviceidle except-idle-whitelist -"$pkg" >/dev/null 2>&1
+  tiers="${tiers} except-idle-wl"
+
+  if [ -f /data/system/deviceidle.xml ] && \
+     grep -qF "<wl n=\"$pkg\"" /data/system/deviceidle.xml 2>/dev/null; then
+    local _esc_pkg
+    _esc_pkg=$(printf '%s' "$pkg" | sed 's/[][\.*^$\/]/\\&/g')
+    sed -i "/<wl n=\"$_esc_pkg\"/d" /data/system/deviceidle.xml
+    restorecon /data/system/deviceidle.xml 2>/dev/null
+    tiers="${tiers} xml-wl"
+  fi
+
+  cmd appops set "$pkg" IGNORE_BATTERY_OPTIMIZATIONS ignore 2>/dev/null && \
+    tiers="${tiers} appops"
+
+  local admin_count=0
+  for _uid in $(_get_user_ids); do
+    cmd jobscheduler cancel --user "$_uid" "$pkg" >/dev/null 2>&1
+    am set-inactive --user "$_uid" "$pkg" true 2>/dev/null
+
+    if [ "$pkg" = "$GMS_PKG" ]; then
+      for _admin in "$GMS_ADMIN1" "$GMS_ADMIN2"; do
+        pm disable --user "$_uid" "$_admin" >/dev/null 2>&1 && \
+          admin_count=$((admin_count + 1))
+      done
+    fi
+  done
+  tiers="${tiers} jobs inactive"
+  [ "$admin_count" -gt 0 ] && tiers="${tiers} gms-admin"
+  [ "$pkg" = "$GMS_PKG" ] && { am start-service -n "$GMS_PKG/.checkin.CheckinService" >/dev/null 2>&1 || true; }
+
+  log_app "[OK] $pkg - applied to:$tiers"
+}
+
 apply() {
   echo "Frosty v${MODVER:-?} - App Doze (APPLY) - $(date '+%Y-%m-%d %H:%M:%S')" > "$APP_DOZE_LOG"
   [ "$ENABLE_CUSTOM_APP_DOZE" != "1" ] && { log_app "[SKIP] App Doze disabled"; return 0; }
@@ -313,48 +398,7 @@ apply() {
       skip=$((skip + 1))
       continue
     fi
-
-    local tiers=""
-
-    dumpsys deviceidle whitelist -"$pkg" >/dev/null 2>&1
-    tiers="${tiers} user-wl"
-
-    local sys_out
-    sys_out=$(cmd deviceidle sys-whitelist -"$pkg" 2>&1)
-    case "$sys_out" in *[Uu]nknown*|*[Ee]rror*) ;; *) tiers="${tiers} sys-wl" ;; esac
-
-    cmd deviceidle except-idle-whitelist -"$pkg" >/dev/null 2>&1
-    tiers="${tiers} except-idle-wl"
-
-    if [ -f /data/system/deviceidle.xml ] && \
-       grep -qF "<wl n=\"$pkg\"" /data/system/deviceidle.xml 2>/dev/null; then
-      local _esc_pkg
-      _esc_pkg=$(printf '%s' "$pkg" | sed 's/[][\.*^$\/]/\\&/g')
-      sed -i "/<wl n=\"$_esc_pkg\"/d" /data/system/deviceidle.xml
-      restorecon /data/system/deviceidle.xml 2>/dev/null
-      tiers="${tiers} xml-wl"
-    fi
-
-    cmd appops set "$pkg" IGNORE_BATTERY_OPTIMIZATIONS ignore 2>/dev/null && \
-      tiers="${tiers} appops"
-
-    local admin_count=0
-    for _uid in $(_get_user_ids); do
-      cmd jobscheduler cancel --user "$_uid" "$pkg" >/dev/null 2>&1
-      am set-inactive --user "$_uid" "$pkg" true 2>/dev/null
-
-      if [ "$pkg" = "$GMS_PKG" ]; then
-        for _admin in "$GMS_ADMIN1" "$GMS_ADMIN2"; do
-          pm disable --user "$_uid" "$_admin" >/dev/null 2>&1 && \
-            admin_count=$((admin_count + 1))
-        done
-      fi
-    done
-    tiers="${tiers} jobs inactive"
-    [ "$admin_count" -gt 0 ] && tiers="${tiers} gms-admin"
-    [ "$pkg" = "$GMS_PKG" ] && { am start-service -n "$GMS_PKG/.checkin.CheckinService" >/dev/null 2>&1 || true; }
-
-    log_app "[OK] $pkg - applied to:$tiers"
+    _apply_pkg "$pkg"
     count=$((count + 1))
   done
 
@@ -376,6 +420,7 @@ _restore_pkg() {
 
     if [ "$pkg" = "$GMS_PKG" ]; then
       for _admin in "$GMS_ADMIN1" "$GMS_ADMIN2"; do
+        [ "$_admin" = "$GMS_ADMIN2" ] && [ "${DISABLE_BACKGROUND:-0}" = "1" ] && continue
         pm enable --user "$_uid" "$_admin" >/dev/null 2>&1
       done
     fi
@@ -422,9 +467,14 @@ EOF
   printf '{"status":"ok","packages":[%s]}\n' "$out"
 }
 
+_valid_pkg() {
+  case "$1" in ''|*[!A-Za-z0-9_.]*|[!A-Za-z]*) return 1 ;; esac
+  return 0
+}
+
 add_pkg() {
   local pkg="$1"
-  [ -z "$pkg" ] && { echo '{"status":"error"}'; return; }
+  _valid_pkg "$pkg" || { echo '{"status":"error"}'; return; }
   mkdir -p "$MODDIR/config"
   if [ ! -f "$PATCHES_FILE" ]; then
     { echo "# Frosty - App Doze"
@@ -434,6 +484,10 @@ add_pkg() {
     } > "$PATCHES_FILE"
   fi
   grep -qFx "$pkg" "$PATCHES_FILE" 2>/dev/null || echo "$pkg" >> "$PATCHES_FILE"
+  if [ "$ENABLE_CUSTOM_APP_DOZE" = "1" ]; then
+    _apply_pkg "$pkg"
+    log_app "[OK] Added to list and applied: $pkg"
+  fi
   echo '{"status":"ok"}'
 }
 
@@ -460,4 +514,4 @@ case "$1" in
   remove)  remove_pkg "$2" ;;
   *) echo "Usage: $0 {apply|revert|scan|list|add|remove}"; exit 1 ;;
 esac
-exit 0
+exit $?

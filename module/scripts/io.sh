@@ -1,6 +1,22 @@
+BACKUP_DIR="/storage/emulated/0/Frosty"
+
+_confine_to_backup_dir() {
+  local _f="$1"
+  case "$_f" in
+    */../*|../*|*/..) return 1 ;;
+  esac
+  if command -v realpath >/dev/null 2>&1; then
+    _f=$(realpath "$_f" 2>/dev/null) || return 1
+  fi
+  case "$_f" in
+    "$BACKUP_DIR"/*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 backup_settings() {
-  local dir="/storage/emulated/0/Frosty"
-  mkdir -p "$dir" 2>/dev/null || { echo "ERROR: Cannot write to /storage/emulated/0/Frosty"; return 1; }
+  local dir="$BACKUP_DIR"
+  mkdir -p "$dir" 2>/dev/null || { echo "ERROR: Cannot write to $dir"; return 1; }
   local ts=$(date '+%Y%m%d_%H%M%S')
   local out="$dir/frosty_$ts.json"
 
@@ -15,17 +31,20 @@ backup_settings() {
   cat > "$out" << ENDJSON
 {
   "version": "${MODVER:-unknown}",
+  "schema": 2,
   "exported": "$ts",
   "prefs": {
     "ENABLE_KERNEL_TWEAKS": ${ENABLE_KERNEL_TWEAKS:-0},
     "ENABLE_RAM_OPTIMIZER": ${ENABLE_RAM_OPTIMIZER:-0},
-    "RAM_MULTITASK_PROFILE": "${RAM_MULTITASK_PROFILE:-balanced}",
+    "MULTITASK_ENABLED": ${MULTITASK_ENABLED:-0},
+    "MULTITASK_PROFILE": "${MULTITASK_PROFILE:-balanced}",
     "ENABLE_SYSTEM_PROPS": ${ENABLE_SYSTEM_PROPS:-0},
     "ENABLE_BLUR_DISABLE": ${ENABLE_BLUR_DISABLE:-0},
     "ENABLE_LOG_KILLING": ${ENABLE_LOG_KILLING:-0},
     "ENABLE_KILL_TRACKING": ${ENABLE_KILL_TRACKING:-0},
     "ENABLE_DEEP_DOZE": ${ENABLE_DEEP_DOZE:-0},
-    "DEEP_DOZE_LEVEL": "${DEEP_DOZE_LEVEL:-moderate}",
+    "DEEP_DOZE_LEVEL": "${DEEP_DOZE_LEVEL:-minimum}",
+    "DEEP_DOZE_ALWAYS": ${DEEP_DOZE_ALWAYS:-0},
     "RAM_OPT_LEVEL": "${RAM_OPT_LEVEL:-moderate}",
     "ENABLE_BATTERY_SAVER": ${ENABLE_BATTERY_SAVER:-0},
     "BSS_SOUNDTRIGGER_DISABLED": ${BSS_SOUNDTRIGGER_DISABLED:-0},
@@ -50,6 +69,7 @@ backup_settings() {
     "SOO_KILL_WIFI": ${SOO_KILL_WIFI:-0},
     "SOO_KILL_BT": ${SOO_KILL_BT:-0},
     "SOO_KILL_DATA": ${SOO_KILL_DATA:-0},
+    "SOO_KILL_NFC": ${SOO_KILL_NFC:-0},
     "SOO_KILL_LOCATION": ${SOO_KILL_LOCATION:-0},
     "SOO_CONN_DELAY": ${SOO_CONN_DELAY:-5},
     "SOO_RESTORE_ON_UNLOCK": ${SOO_RESTORE_ON_UNLOCK:-1},
@@ -75,18 +95,46 @@ _valid_enum() {
   return 1
 }
 
+_pkg_lines() {
+  base64 -d 2>/dev/null | grep -E '^[[:space:]]*(#.*)?$|^[[:space:]]*[A-Za-z][A-Za-z0-9_.]*[[:space:]]*$' | grep -v '^[[:space:]#]*$'
+}
+
+restore_lists() {
+  local file="$1" _pair _key _dst _data _clean
+  for _pair in whitelist_b64:doze_whitelist.txt patches_b64:doze_patches.txt ram_wl_b64:ram_clean_whitelist.txt; do
+    _key="${_pair%%:*}"
+    _dst="$MODDIR/config/${_pair#*:}"
+    grep -q "\"$_key\"" "$file" || continue
+    _data=$(grep "\"$_key\"" "$file" | sed 's/.*: *"//;s/".*//')
+    if [ -z "$_data" ]; then
+      : > "$_dst"
+      continue
+    fi
+    _clean=$(printf '%s' "$_data" | _pkg_lines)
+    [ -n "$_clean" ] || continue
+    printf '%s\n' "$_clean" > "${_dst}.tmp" && mv -f "${_dst}.tmp" "$_dst"
+  done
+}
+
 restore_settings() {
   local file="$1"
   [ ! -f "$file" ] && { echo "ERROR: File not found"; return 1; }
+  _confine_to_backup_dir "$file" || { echo "ERROR: File must be inside $BACKUP_DIR"; return 1; }
+  { grep -q '"version"' "$file" && grep -q '"prefs"' "$file"; } || { echo "ERROR: Not a Frosty backup file"; return 1; }
 
   pi()  { grep "\"$1\":" "$file" | grep -o '[0-9]*' | head -1; }
   ps_() { grep "\"$1\":" "$file" | sed 's/.*: *"//;s/".*//' | head -1; }
 
+  local schema; schema=$(pi schema); [ -z "$schema" ] && schema=1
+  [ "$schema" -le 2 ] || { echo "ERROR: Backup schema $schema is newer than this module supports"; return 1; }
+
   local ram_opt=$(pi ENABLE_RAM_OPTIMIZER);         [ -z "$ram_opt" ] && ram_opt=0
   local ram_lvl=$(ps_ RAM_OPT_LEVEL)
   _valid_enum "$ram_lvl" moderate maximum || ram_lvl="moderate"
-  local ram_mt=$(ps_ RAM_MULTITASK_PROFILE)
-  _valid_enum "$ram_mt" performance balanced powersaving || ram_mt="balanced"
+  local mt_ena=$(pi MULTITASK_ENABLED);             [ -z "$mt_ena" ] && mt_ena=0
+  local mt_prof=$(ps_ MULTITASK_PROFILE)
+  [ -z "$mt_prof" ] && mt_prof=$(ps_ RAM_MULTITASK_PROFILE)
+  _valid_enum "$mt_prof" performance balanced powersaving || mt_prof="balanced"
   local ker_twe=$(pi ENABLE_KERNEL_TWEAKS);         [ -z "$ker_twe" ] && ker_twe=0
   local sys_pro=$(pi ENABLE_SYSTEM_PROPS);          [ -z "$sys_pro" ] && sys_pro=0
   local blu_dis=$(pi ENABLE_BLUR_DISABLE);          [ -z "$blu_dis" ] && blu_dis=0
@@ -94,7 +142,8 @@ restore_settings() {
   local kil_tra=$(pi ENABLE_KILL_TRACKING);         [ -z "$kil_tra" ] && kil_tra=0
   local dep_doz=$(pi ENABLE_DEEP_DOZE);             [ -z "$dep_doz" ] && dep_doz=0
   local dep_lvl=$(ps_ DEEP_DOZE_LEVEL)
-  _valid_enum "$dep_lvl" minimum moderate maximum || dep_lvl="moderate"
+  _valid_enum "$dep_lvl" minimum moderate maximum || dep_lvl="minimum"
+  local dep_alw=$(pi DEEP_DOZE_ALWAYS);              [ -z "$dep_alw" ] && dep_alw=0
   local bss_ena=$(pi ENABLE_BATTERY_SAVER);         [ -z "$bss_ena" ] && bss_ena=0
   local bss_snd=$(pi BSS_SOUNDTRIGGER_DISABLED);    [ -z "$bss_snd" ] && bss_snd=0
   local bss_fbu=$(pi BSS_FULLBACKUP_DEFERRED);      [ -z "$bss_fbu" ] && bss_fbu=0
@@ -118,6 +167,7 @@ restore_settings() {
   local soo_wifi=$(pi SOO_KILL_WIFI);               [ -z "$soo_wifi" ] && soo_wifi=0
   local soo_bt=$(pi SOO_KILL_BT);                   [ -z "$soo_bt" ]   && soo_bt=0
   local soo_data=$(pi SOO_KILL_DATA);               [ -z "$soo_data" ] && soo_data=0
+  local soo_nfc=$(pi SOO_KILL_NFC);                 [ -z "$soo_nfc" ]  && soo_nfc=0
   local soo_loc=$(pi SOO_KILL_LOCATION);            [ -z "$soo_loc" ]  && soo_loc=0
   local soo_cdel=$(pi SOO_CONN_DELAY);              [ -z "$soo_cdel" ] && soo_cdel=5
   local soo_rest=$(pi SOO_RESTORE_ON_UNLOCK);       [ -z "$soo_rest" ] && soo_rest=1
@@ -128,6 +178,8 @@ restore_settings() {
   _valid_enum "$soo_rcm" off safe aggressive extreme || soo_rcm="off"
   local soo_rcd; soo_rcd=$(pi SOO_RAM_CLEAN_DELAY)
   [ -z "$soo_rcd" ] && { soo_rcd=$(pi SOO_CACHE_DELAY); [ -z "$soo_rcd" ] && soo_rcd=5; }
+  [ "${#soo_cdel}" -gt 3 ] && soo_cdel=120
+  [ "${#soo_rcd}" -gt 3 ] && soo_rcd=120
   local soo_sensors=$(pi SOO_KILL_SENSORS);          [ -z "$soo_sensors" ] && soo_sensors=0
   local soo_panel_lpm=$(pi SOO_KILL_PANEL_LPM);      [ -z "$soo_panel_lpm" ] && soo_panel_lpm=0
 
@@ -139,7 +191,8 @@ restore_settings() {
   cat > "$MODDIR/config/user_prefs.tmp" << ENDPREFS
 ENABLE_RAM_OPTIMIZER=$ram_opt
 RAM_OPT_LEVEL=$ram_lvl
-RAM_MULTITASK_PROFILE=$ram_mt
+MULTITASK_ENABLED=$mt_ena
+MULTITASK_PROFILE=$mt_prof
 ENABLE_KERNEL_TWEAKS=$ker_twe
 ENABLE_SYSTEM_PROPS=$sys_pro
 ENABLE_BLUR_DISABLE=$blu_dis
@@ -147,6 +200,7 @@ ENABLE_LOG_KILLING=$log_kil
 ENABLE_KILL_TRACKING=$kil_tra
 ENABLE_DEEP_DOZE=$dep_doz
 DEEP_DOZE_LEVEL=$dep_lvl
+DEEP_DOZE_ALWAYS=$dep_alw
 ENABLE_BATTERY_SAVER=$bss_ena
 BSS_SOUNDTRIGGER_DISABLED=$bss_snd
 BSS_FULLBACKUP_DEFERRED=$bss_fbu
@@ -170,6 +224,7 @@ ENABLE_SCREEN_OFF_OPT=$soo_ena
 SOO_KILL_WIFI=$soo_wifi
 SOO_KILL_BT=$soo_bt
 SOO_KILL_DATA=$soo_data
+SOO_KILL_NFC=$soo_nfc
 SOO_KILL_LOCATION=$soo_loc
 SOO_CONN_DELAY=$soo_cdel
 SOO_RESTORE_ON_UNLOCK=$soo_rest
@@ -178,26 +233,10 @@ SOO_RAM_CLEAN_DELAY=$soo_rcd
 SOO_KILL_SENSORS=$soo_sensors
 SOO_KILL_PANEL_LPM=$soo_panel_lpm
 ENDPREFS
+  grep '^WEBUI_THEME=' "$MODDIR/config/user_prefs" >> "$MODDIR/config/user_prefs.tmp" 2>/dev/null
   mv -f "$MODDIR/config/user_prefs.tmp" "$MODDIR/config/user_prefs"
-
-  local b64_data=$(grep '"whitelist_b64"' "$file" | sed 's/.*: *"//;s/".*//')
-  if [ -n "$b64_data" ]; then
-    local _wl_c
-    _wl_c=$(printf '%s' "$b64_data" | base64 -d 2>/dev/null | grep -v '^[[:space:]#]*$')
-    [ -n "$_wl_c" ] && printf '%s\n' "$_wl_c" > "$MODDIR/config/doze_whitelist.txt"
-  fi
-  local patches_data=$(grep '"patches_b64"' "$file" | sed 's/.*: *"//;s/".*//')
-  if [ -n "$patches_data" ]; then
-    local _patches_c
-    _patches_c=$(printf '%s' "$patches_data" | base64 -d 2>/dev/null | grep -v '^[[:space:]#]*$')
-    [ -n "$_patches_c" ] && printf '%s\n' "$_patches_c" > "$MODDIR/config/doze_patches.txt"
-  fi
-  local ram_wl_data=$(grep '"ram_wl_b64"' "$file" | sed 's/.*: *"//;s/".*//')
-  if [ -n "$ram_wl_data" ]; then
-    local _wl
-    _wl=$(printf '%s' "$ram_wl_data" | base64 -d 2>/dev/null | grep -v '^[[:space:]#]*$')
-    [ -n "$_wl" ] && printf '%s\n' "$_wl" > "$RAM_WL_FILE"
-  fi
+  restore_lists "$file"
+  rm -f "$MODDIR/tmp/applied"
 
   if [ "$legacy_gms_doze" = "1" ]; then
     mkdir -p "$MODDIR/config"
@@ -209,25 +248,16 @@ ENDPREFS
 }
 
 list_backups() {
-  local dir="/storage/emulated/0/Frosty"
-  [ ! -d "$dir" ] && { echo "[]"; return; }
-  local files=$(ls -t "$dir"/frosty_*.json 2>/dev/null)
-  [ -z "$files" ] && { echo "[]"; return; }
+  [ -d "$BACKUP_DIR" ] || { echo "[]"; return; }
   printf '['
-  local first=1
-  for f in $files; do
-    [ "$first" -eq 1 ] && first=0 || printf ','
-    local _name
-    _name=$(basename "$f" | sed 's/\\/\\\\/g; s/"/\\"/g')
-    printf '{"name":"%s","path":"%s"}' "$_name" "$f"
-  done
+  ls -t "$BACKUP_DIR"/frosty_*.json 2>/dev/null | {
+    local _first=1 _f _n _p
+    while IFS= read -r _f; do
+      [ "$_first" -eq 1 ] && _first=0 || printf ','
+      _n=$(basename "$_f" | sed 's/\\/\\\\/g; s/"/\\"/g')
+      _p=$(printf '%s' "$_f" | sed 's/\\/\\\\/g; s/"/\\"/g')
+      printf '{"name":"%s","path":"%s"}' "$_n" "$_p"
+    done
+  }
   printf ']\n'
-}
-
-share_backup() {
-  local file="$1"
-  [ ! -f "$file" ] && { echo "ERROR: not found"; return 1; }
-  local pub="/data/local/tmp/$(basename "$file")"
-  cp -f "$file" "$pub" && chmod 644 "$pub"
-  echo "$pub"
 }

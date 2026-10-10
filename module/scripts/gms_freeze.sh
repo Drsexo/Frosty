@@ -6,6 +6,17 @@ _all_user_ids() {
   echo "$_ids"
 }
 
+_cancel_jobs_for_pkgs() {
+  local _tmp="$1" _uids="$2"
+  sort -u "$_tmp" 2>/dev/null | while IFS= read -r _pkg; do
+    [ -z "$_pkg" ] && continue
+    for _uid in $_uids; do
+      cmd jobscheduler cancel --user "$_uid" "$_pkg" >/dev/null 2>&1
+    done
+  done
+  rm -f "$_tmp"
+}
+
 should_disable_category() {
 case "$1" in
     keep)         return 1 ;;
@@ -22,17 +33,46 @@ case "$1" in
 }
 
 
+_load_disabled_pkgs() {
+  _DISABLED_PKGS=$(pm list packages --user 0 -d 2>/dev/null)
+}
+
+_pkg_is_disabled() {
+  case "
+$_DISABLED_PKGS
+" in *"
+package:$1
+"*) return 0 ;; esac
+  return 1
+}
+
+_owned_by_app_doze() {
+  [ "${ENABLE_CUSTOM_APP_DOZE:-0}" = "1" ] || return 1
+  case "$1" in
+    com.google.android.gms/com.google.android.gms.mdm.receivers.MdmDeviceAdminReceiver) ;;
+    *) return 1 ;;
+  esac
+  grep -qFx "com.google.android.gms" "$MODDIR/config/doze_patches.txt" 2>/dev/null
+}
+
 freeze_services() {
   echo "Frosty v${MODVER:-?} - Services (FREEZE) - $(date '+%Y-%m-%d %H:%M:%S')" > "$SERVICES_LOG"
   [ ! -f "$GMS_LIST" ] && { echo "ERROR: Service list not found"; return 1; }
 
   local _frozen_file="$MODDIR/tmp/frozen_services.txt"
+  _load_disabled_pkgs
   local _prev_frozen=""
   [ -f "$_frozen_file" ] && _prev_frozen=$(cat "$_frozen_file" 2>/dev/null)
   > "$_frozen_file" 2>/dev/null || true
 
+  mkdir -p "$MODDIR/tmp"
+  local _jobs_tmp="$MODDIR/tmp/frosty_jobs_$$"
+  : > "$_jobs_tmp"
+  local _off_tmp="$MODDIR/tmp/frosty_off_$$"
+  : > "$_off_tmp"
+
   local _user_ids; _user_ids=$(_all_user_ids)
-  local current_category="" count_ok=0 count_fail=0
+  local current_category="" count_ok=0 count_fail=0 count_kept=0
   local _cap_f _cap_r
 
   while IFS='|' read -r service category || [ -n "$service" ]; do
@@ -51,7 +91,7 @@ freeze_services() {
 
     if should_disable_category "$category"; then
       local _svc_pkg; _svc_pkg=$(printf '%s' "$service" | cut -d/ -f1)
-      if pm list packages --user 0 -d 2>/dev/null | grep -Fx "package:$_svc_pkg" >/dev/null 2>&1; then
+      if _pkg_is_disabled "$_svc_pkg"; then
         if printf '%s\n' "$_prev_frozen" | grep -Fx "$service" >/dev/null 2>&1; then
           printf '%s\n' "$service" >> "$_frozen_file"
           log_service "[OK] $service (re-tracked)"
@@ -67,6 +107,7 @@ freeze_services() {
       done
       if [ "$_any_ok" = "1" ]; then
         printf '%s\n' "$service" >> "$_frozen_file"
+        printf '%s\n' "$_svc_pkg" >> "$_jobs_tmp"
         log_service "[OK] $service"
         count_ok=$((count_ok + 1))
       else
@@ -74,16 +115,39 @@ freeze_services() {
         count_fail=$((count_fail + 1))
       fi
     elif [ "$category" = "keep" ]; then
+      local _any_ok=0
       for _uid in $_user_ids; do
-        pm enable --user "$_uid" "$service" >/dev/null 2>&1
+        pm enable --user "$_uid" "$service" >/dev/null 2>&1 && _any_ok=1
       done
-      log_service "[OK] $service (notification-critical, kept enabled)"
+      if [ "$_any_ok" = "1" ]; then
+        log_service "[OK] $service (notification-critical, kept enabled)"
+        count_kept=$((count_kept + 1))
+      else
+        log_service "[FAIL] $service (notification-critical, kept enabled)"
+        count_fail=$((count_fail + 1))
+      fi
+    else
+      printf '%s\n' "$service" >> "$_off_tmp"
     fi
   done < "$GMS_LIST"
 
+  _cancel_jobs_for_pkgs "$_jobs_tmp" "$_user_ids"
+
+  if [ -n "$_prev_frozen" ] && [ -s "$_off_tmp" ]; then
+    local _stale
+    for _stale in $(printf '%s\n' "$_prev_frozen" | grep -Fxf "$_off_tmp"); do
+      for _uid in $_user_ids; do
+        pm enable --user "$_uid" "$_stale" >/dev/null 2>&1
+      done
+      log_service "[OK] $_stale (category no longer frozen, re-enabled)"
+      count_kept=$((count_kept + 1))
+    done
+  fi
+  rm -f "$_off_tmp"
+
   log_service ""
-  log_service "Summary: $count_ok disabled, $count_fail failed"
-  echo "  Disabled: $count_ok  Re-enabled: 0  Failed: $count_fail"
+  log_service "Summary: $count_ok disabled, $count_kept re-enabled, $count_fail failed"
+  echo "  Disabled: $count_ok  Re-enabled: $count_kept  Failed: $count_fail"
 }
 
 unfreeze_services() {
@@ -91,6 +155,7 @@ unfreeze_services() {
   [ ! -f "$GMS_LIST" ] && { echo "ERROR: Service list not found"; return 1; }
 
   local _frozen_file="$MODDIR/tmp/frozen_services.txt"
+  _load_disabled_pkgs
   local _user_ids; _user_ids=$(_all_user_ids)
   local current_category="" count_ok=0 count_fail=0
   local _cap_f _cap_r
@@ -127,7 +192,7 @@ unfreeze_services() {
         log_service "# ${_cap_f}${_cap_r}"
       fi
       local _svc_pkg; _svc_pkg=$(printf '%s' "$service" | cut -d/ -f1)
-      if pm list packages --user 0 -d 2>/dev/null | grep -Fx "package:$_svc_pkg" >/dev/null 2>&1; then
+      if _pkg_is_disabled "$_svc_pkg"; then
         log_service "[SKIP] $service (disabled by ROM, not re-enabling)"
         continue
       fi
@@ -155,6 +220,7 @@ freeze_category() {
   [ ! -f "$GMS_LIST" ] && { echo '{"status":"error","message":"gms_services.txt not found"}'; return; }
 
   local _frozen_file="$MODDIR/tmp/frozen_services.txt"
+  _load_disabled_pkgs
   mkdir -p "$MODDIR/tmp"
   local _jobs_tmp="$MODDIR/tmp/frosty_jobs_$$"
   : > "$_jobs_tmp"
@@ -166,7 +232,7 @@ freeze_category() {
     cat=$(echo "$cat" | tr -d " ")
     [ "$cat" = "$target" ] || continue
     local _svc_pkg; _svc_pkg=$(printf '%s' "$svc" | cut -d/ -f1)
-    if pm list packages --user 0 -d 2>/dev/null | grep -Fx "package:$_svc_pkg" >/dev/null 2>&1; then
+    if _pkg_is_disabled "$_svc_pkg"; then
       continue
     fi
     local _any_ok=0
@@ -182,13 +248,7 @@ freeze_category() {
     fi
   done < "$GMS_LIST"
 
-  sort -u "$_jobs_tmp" 2>/dev/null | while IFS= read -r _pkg; do
-    [ -z "$_pkg" ] && continue
-    for _uid in $_user_ids; do
-      cmd jobscheduler cancel --user "$_uid" "$_pkg" >/dev/null 2>&1
-    done
-  done
-  rm -f "$_jobs_tmp"
+  _cancel_jobs_for_pkgs "$_jobs_tmp" "$_user_ids"
 
   echo "{\"status\":\"ok\",\"disabled\":$count,\"failed\":$fail}"
 }
@@ -198,6 +258,7 @@ unfreeze_category() {
   [ ! -f "$GMS_LIST" ] && { echo '{"status":"error","message":"gms_services.txt not found"}'; return; }
 
   local _frozen_file="$MODDIR/tmp/frozen_services.txt"
+  _load_disabled_pkgs
   local _use_tracking=0
   [ -f "$_frozen_file" ] && _use_tracking=1
   local _user_ids; _user_ids=$(_all_user_ids)
@@ -207,12 +268,13 @@ unfreeze_category() {
     svc=$(echo "$svc" | tr -d " ")
     cat=$(echo "$cat" | tr -d " ")
     [ "$cat" = "$target" ] || continue
+    _owned_by_app_doze "$svc" && continue
     if [ "$_use_tracking" = "1" ] && ! grep -qFx "$svc" "$_frozen_file" 2>/dev/null; then
       continue
     fi
     if [ "$_use_tracking" != "1" ]; then
       local _svc_pkg; _svc_pkg=$(printf '%s' "$svc" | cut -d/ -f1)
-      if pm list packages --user 0 -d 2>/dev/null | grep -Fx "package:$_svc_pkg" >/dev/null 2>&1; then
+      if _pkg_is_disabled "$_svc_pkg"; then
         continue
       fi
     fi

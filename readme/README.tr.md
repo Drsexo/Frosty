@@ -34,14 +34,14 @@ Frosty, GMS hizmetlerini dondurarak, sistem genelinde Doze iyileştirmeleri uygu
 
 - **GMS Dondurma**: 8 kategori genelinde GMS hizmetlerini devre dışı bırakın.
 - **App Doze**: İstediğiniz herhangi bir uygulamayı Android'in Doze güç tasarrufu istisna listesinden çıkarın. Eski özel GMS Doze geçişinin yerini alarak GMS de buradan seçilebilir.
-- **Deep Doze**: Tüm uygulamalar için agresif arka plan kısıtlamaları (Orta / Maksimum).
-- **Ekran Kapalı Optimizasyonu**: Seçili bağlantıları (Wi-Fi, Bluetooth, mobil veri, konum) devre dışı bırakır ve yapılandırılabilir bir ekran kapalı gecikmesinden sonra isteğe bağlı olarak RAM temizleyiciyi çalıştırır, kilit açıldığında her şeyi geri yükler.
+- **Deep Doze**: Cihaz kilitliyken tüm uygulamalar için arka plan kısıtlamaları (Minimum / Orta / Maksimum)
+- **Ekran Kapalı Optimizasyonu**: Seçili bağlantıları (Wi-Fi, Bluetooth, veri, NFC, konum, sensörler, panel düşük güç modu) devre dışı bırakır ve cihaz yapılandırılabilir bir süre boyunca kilitli kaldıktan sonra isteğe bağlı olarak RAM temizleyiciyi çalıştırır, kilit açıldığında geri yükler
 - **Google İzlemeyi Devre Dışı Bırakma**: GMS analizlerini, Clearcut telemetrisini, Phenotype sorgulamalarını ve reklam izlemeyi devre dışı bırakır.
 - **Çekirdek (Kernel) Ayarları**: Zamanlayıcı (scheduler), VM, ağ ve hata ayıklama optimizasyonları.
-- **RAM İyileştirici**: ZRAM otomatik ayarı, LMK/LMKD/PSI eşikleri, OEM reclaim devre dışı bırakma, VM bellek parametreleri (Orta / Maksimum), yapılandırılabilir RAM Temizleyici, Çoklu görev profili (Performans / Dengeli / Güç Tasarrufu).
+- **RAM İyileştirici**: ZRAM otomatik ayarı, LMK/LMKD/PSI eşikleri, OEM reclaim devre dışı bırakma, VM bellek parametreleri (Orta / Maksimum), yapılandırılabilir RAM Temizleyici.
 - **Sistem Props**: RAM ve pilden tasarruf etmek için hata ayıklama (debug) özelliklerini devre dışı bırakın.
 - **Günlükleri Sonlandırma**: Pili tüketen günlük (log) ve hata ayıklama işlemlerini zorla durdurun.
-- **Pil Tasarrufu Ayarlayıcı**: Etkinken Android'in yerleşik pil tasarrufunun ne yapacağını özelleştirin, açıkken maksimum yenileme hızını koruma seçeneği de dahil.
+- **Pil Tasarrufu Ayarlayıcı**: Etkinken Android'in yerleşik pil tasarrufunun ne yapacağını özelleştirin.
 
 ## Kurulum
 
@@ -66,7 +66,7 @@ Root yöneticinizden WebUI'yi açın:
 - **Sistem İnce Ayarları**: Çekirdek ayarları, sistem Props, bulanıklığı devre dışı bırakma, günlükleri sonlandırma, izleme engelleme, RAM iyileştirici ve temizleyici.
 - **Doze**: Uygulama seçici ile App Doze, seviye seçici ve beyaz liste düzenleyicisi ile Deep Doze.
 - **Ekran Kapalı Optimizasyonu**: Bağlantı başına geçişler, gecikme zamanlayıcıları, kilit açıldığında geri yükleme.
-- **GMS Kategorileri**: Ayrı ayrı GMS hizmet gruplarını dondurun, veya henüz istediğiniz durumda olmayanları toplu işlemek için Tümünü etkinleştir / Tümünü devre dışı bırak kullanın.
+- **GMS Kategorileri**: Ayrı ayrı GMS hizmet gruplarını dondurun.
 - **Pil Tasarrufu Ayarlayıcı**: Pil tasarrufu davranışına ince ayar yapın.
 - **İçe / Dışa Aktar**: Tam yapılandırmanızı yedekleyin ve geri yükleyin.
 
@@ -90,7 +90,7 @@ Root yöneticinizden WebUI'yi açın:
 
 ## Deep Doze Seviyeleri
 
-Her iki seviye de Doze sabitlerini yeniden yazar, cihaz kilitliyken IDLE durumuna zorlar, 5 dakika kilitli kaldıktan sonra bir wakelock sonlandırıcı çalıştırır ve Android 13+ üzerinde JobScheduler flex-idle politikasını etkinleştirir. Kısıtlamalar ekran durumunu değil kilit durumunu izler: saati kontrol etmek veya ambient ekrana bakmak hiçbir şeyi sıfırlamaz, sadece kilidi açmak sıfırlar. **Maksimum** ayrıca `restricted` standby bucket'ını kullanır (Orta `rare` kullanır), `WAKE_LOCK`'u reddeder, kilitliyken hareket sensörünü devre dışı bırakır ve uygulama sırasında wakelock'ları anında sonlandırır.
+Her iki seviye de Doze sabitlerini yeniden yazar ve sistemin desteklediği Android 14+ üzerinde JobScheduler flex-idle politikasını etkinleştirir. **Minimum** en hafif seviyedir: daha kısa Doze zaman aşımları ve `frequent` standby bucket'ı, wakelock sonlandırıcı yok, `WAKE_LOCK` reddi yok ve sensör kısıtlaması yok. **Orta** ve **Maksimum** cihaz kilitliyken IDLE zorlar ve 5 dakika kilitli kaldıktan sonra bir wakelock sonlandırıcı çalıştırır; bu 5 dakikadan sonra uygulamalar `rare` bucket'ına (Orta) veya `restricted` bucket'ına (Maksimum) geçer ve kilidi açmak onları geri yükler. Kısıtlamalar ekran durumunu değil kilit durumunu izler: saati kontrol etmek veya ambient ekrana bakmak hiçbir şeyi sıfırlamaz, sadece kilidi açmak sıfırlar. **Maksimum** ayrıca kısıtlı uygulamalar için `WAKE_LOCK`'u reddeder, kilitliyken varsayılan telefon uygulaması hariç her uygulama için sensör erişimini (kaldır-uyandır dahil) engeller (aramalar sırasında ve kilit açıldığında geri yüklenir) ve uygulama sırasında wakelock'ları anında sonlandırır.
 
 ## RAM İyileştirici
 
@@ -98,7 +98,11 @@ ZRAM sıkıştırmasını, LMK / LMKD / PSI eşiklerini, OEM reclaim düğümler
 ## SSS
 
 **S: Bildirimlerim neden gecikiyor?**
-C: App Doze ve Deep Doze arka plan etkinliğini kısıtlar. Mesajlaşma uygulamalarınızı WebUI'deki Deep Doze beyaz listesine ekleyin. GMS/Firebase'in kendisi varsayılan olarak beyaz listededir, bu nedenle push teslimatı bozulmadan kalır, ancak üçüncü taraf mesajlaşma uygulamalarının yine de WebUI'deki Deep Doze beyaz listesine eklenmesi gerekir.
+C: App Doze ve Deep Doze arka plan etkinliğini kısıtlar. Mesajlaşma uygulamalarınızı WebUI'deki Deep Doze beyaz listesine ekleyin.
+
+
+**S: Özellikleri kapatmak yerine modülü yöneticide devre dışı bırakırsam ne olur?**  
+C: Frosty bir sonraki önyüklemede çalışmayı durdurur, ancak halihazırda yazdığı ayarlar (Doze sabitleri, standby bucket'ları, app ops, sistem ayarları) yerinde kalır ve monitörleri yeniden başlatana kadar çalışmaya devam eder. Önce WebUI'de özellikleri kapatın, sonra modülü devre dışı bırakın. Modülü kaldırmak Frosty'nin kaldırma geri almasını bir sonraki önyüklemede çalıştırır.
 
 **S: GMS Doze nereye gitti?**
 C: Artık App Doze'un bir parçası. App Doze seçiciyi açın ve GMS'i seçin; aynı etkiyi sağlayan birleşik bir arayüzdür.
@@ -116,7 +120,7 @@ C: Hayır. Varsayılan olarak her şey kapalıdır. Yalnızca ihtiyacınız olan
 - **Azyrn** [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** [GMS Bileşeni Devre Dışı Bırakma Betiği](https://t.me/MoZoiDStack/137)
 - **s1m** [SaverTuner](https://codeberg.org/s1m/savertuner)
-- [xizt158](https://github.com/xizt159) birçok kaliteli katkı için
+- [xizt159](https://github.com/xizt159) birçok kaliteli katkı için
 
 ## Lisans
 

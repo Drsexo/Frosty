@@ -19,12 +19,17 @@ case "$cmd" in
       revert_kernel) revert_kernel ;;
     esac ;;
 
-  apply_ram|revert_ram|apply_multitask|revert_multitask)
+  apply_ram|revert_ram)
     . "$SCRIPTS/ram_optimizer.sh"
     case "$cmd" in
-      apply_ram)       apply_ram_optimizer ;;
-      revert_ram)      revert_ram_optimizer ;;
-      apply_multitask) apply_multitasking "$1" ;;
+      apply_ram)  apply_ram_optimizer ;;
+      revert_ram) revert_ram_optimizer ;;
+    esac ;;
+
+  apply_multitask|revert_multitask)
+    . "$SCRIPTS/multitask.sh"
+    case "$cmd" in
+      apply_multitask)  apply_multitasking "$1" ;;
       revert_multitask) revert_multitasking ;;
     esac ;;
 
@@ -73,9 +78,6 @@ case "$cmd" in
       ram_clean_silent) ram_clean_silent "$1" ;;
     esac ;;
 
-  get_fg_pkg)
-    get_fg_pkg ;;
-
   list_wl|add_wl|remove_wl|list_ram_wl|add_ram_wl|remove_ram_wl|apply_soo|revert_soo)
     . "$SCRIPTS/prefs.sh"
     case "$cmd" in
@@ -89,13 +91,12 @@ case "$cmd" in
       revert_soo)    revert_soo ;;
     esac ;;
 
-  export|import|list_backups|share_backup)
+  export|import|list_backups)
     . "$SCRIPTS/io.sh"
     case "$cmd" in
       export)       backup_settings ;;
       import)       restore_settings "$1" ;;
       list_backups) list_backups ;;
-      share_backup) share_backup "$1" ;;
     esac ;;
 
   bug_report|list_bug_reports)
@@ -108,4 +109,4 @@ case "$cmd" in
   *)
     echo '{"status":"error","message":"unknown action"}'; exit 1 ;;
 esac
-exit 0
+exit $?

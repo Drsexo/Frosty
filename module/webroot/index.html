@@ -1,109 +1,42 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
+<script>
+(function () {
+  var VALID = ['comic', 'retro', 'terminal', 'handheld'];
+  function boot(v) {
+    v = (v || '').trim();
+    if (VALID.indexOf(v) !== -1) location.replace(v + '.html');
+  }
+  if (typeof ksu !== 'undefined' && typeof ksu.exec === 'function') {
+    var cb = 'fxBoot_' + Date.now();
+    window[cb] = function (errno, stdout) {
+      delete window[cb];
+      var m = /^WEBUI_THEME=(.*)$/m.exec(stdout || '');
+      boot(m && m[1]);
+    };
+    try {
+      ksu.exec('grep "^WEBUI_THEME=" /data/adb/modules/Frosty/config/user_prefs 2>/dev/null', '{}', cb);
+    } catch (e) { delete window[cb]; }
+  } else {
+    try {
+      var p = JSON.parse(localStorage.getItem('frosty_demo_prefs') || '{}');
+      boot(p.WEBUI_THEME);
+    } catch (e) {}
+  }
+})();
+</script>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
-  <meta name="theme-color" content="#0D0F11" id="theme-meta">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0C0C0C" id="theme-meta">
   <title>Frosty</title>
   <link rel="stylesheet" href="/internal/insets.css">
   <link rel="stylesheet" href="style.css">
 </head>
-<body unresolved style="overflow:hidden;position:fixed;inset:0;">
-<div id="toast-wrap"></div>
-<div class="loading-overlay" id="loading-overlay">
-  <div class="loading-box">
-    <div class="spinner"></div>
-    <div class="loading-txt" id="loading-txt" data-i18n="loading_default">Processing...</div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="wl-modal">
-  <div class="modal">
-    <div class="modal-head">
-      <h3><span data-i18n="wl_title">Deep Doze Whitelist</span></h3>
-      <button class="modal-x ripple" id="wl-close">&#x2715;</button>
-    </div>
-    <div class="modal-notice"><span><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></span><span data-i18n="wl_notice">Whitelisted apps bypass Deep Doze restrictions. Add messaging, banking, and alarm apps here.</span></div>
-    <div class="modal-controls">
-      <input type="text" class="modal-search" placeholder="Search apps..." data-i18n-ph="wl_search" id="wl-search">
-      <label class="sys-toggle"><input type="checkbox" id="wl-sys"><span data-i18n="wl_system">System</span></label>
-    </div>
-    <div class="modal-list" id="wl-list"></div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="ramwl-modal">
-  <div class="modal">
-    <div class="modal-head">
-      <h3><span data-i18n="ram_wl_title">RAM Cleaner Whitelist</span></h3>
-      <button class="modal-x ripple" id="ram-wl-close">&#x2715;</button>
-    </div>
-    <div class="modal-notice"><span><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></span><span data-i18n="ram_wl_notice">Whitelisted apps are never force-stopped by the RAM cleaner.</span></div>
-    <div class="modal-controls">
-      <input type="text" class="modal-search" placeholder="Search apps..." data-i18n-ph="wl_search" id="ram-wl-search">
-      <label class="sys-toggle"><input type="checkbox" id="ram-wl-sys"><span data-i18n="wl_system">System</span></label>
-    </div>
-    <div class="modal-list" id="ramwl-list"></div>
-  </div>
-</div>
-
-<div class="modal-overlay centered" id="about-modal">
-  <div class="modal about-modal">
-    <div class="about-hero">
-      <button class="about-close-btn ripple" id="about-close">&#x2715;</button>
-      <div class="about-hero-ico"><svg viewBox="0 0 24 24" width="38" height="38" fill="currentColor"><path d="M22 11h-4.17l3.24-3.24-1.41-1.42L15 11h-2V9l4.66-4.66-1.42-1.41L13 6.17V2h-2v4.17L7.76 2.93 6.34 4.34 11 9v2H9L4.34 6.34 2.93 7.76 6.17 11H2v2h4.17l-3.24 3.24 1.41 1.42L9 13h2v2l-4.66 4.66 1.42 1.41L11 17.83V22h2v-4.17l3.24 3.24 1.42-1.41L13 15v-2h2l4.66 4.66 1.41-1.42L17.83 13H22z"/></svg></div>
-      <div class="about-hero-name" id="about-name">Frosty</div>
-      <div class="about-hero-tag" id="about-version"></div>
-    </div>
-    <div class="about-body">
-      <div class="about-desc" id="about-desc"></div>
-      <div class="about-author" id="about-author"></div>
-      <a class="about-gh ripple" id="about-gh-btn">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.21 11.39.6.11.79-.26.79-.58v-2.23c-3.34.73-4.03-1.42-4.03-1.42-.55-1.39-1.33-1.76-1.33-1.76-1.09-.74.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49 1 .11-.78.42-1.3.76-1.6-2.67-.31-5.47-1.34-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23.96-.27 1.98-.4 3-.4s2.05.13 3.01.4c2.29-1.55 3.3-1.23 3.3-1.23.66 1.65.24 2.87.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.62-5.48 5.92.43.37.82 1.1.82 2.22v3.29c0 .32.19.69.8.58C20.57 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12z"/></svg>
-        <span data-i18n="about_github">View on GitHub</span>
-      </a>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay centered" id="io-modal">
-  <div class="modal io-modal">
-    <div class="modal-head"><h3 data-i18n="io_title">Import / Export</h3><button class="modal-x ripple" id="io-close">&#x2715;</button></div>
-    <div class="io-body">
-      <button class="io-action-btn ripple" id="io-export-btn">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M4 17h16v2H4v-2zm7-9.41V17h2V7.59l3.71 3.7 1.41-1.41L12 3.17 5.88 9.88l1.41 1.41L11 7.59z"/></svg>
-        <span data-i18n="io_export">Export Current Settings</span>
-      </button>
-      <div class="io-sep"><span data-i18n="io_backups">Saved backups</span></div>
-      <div class="io-list" id="io-list"><div class="io-empty" data-i18n="io_empty">No backups found</div></div>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay centered" id="bugreport-modal">
-  <div class="modal io-modal">
-    <div class="modal-head"><h3 data-i18n="bugreport_title">Bug Report</h3><button class="modal-x ripple" id="bugreport-close">&#x2715;</button></div>
-    <div class="io-body">
-      <div class="modal-notice"><span><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></span><span data-i18n="bugreport_notice">Collects device info, Frosty's config and logs, and a list of your other installed modules. No personal info (accounts, IMEI, phone number, Wi-Fi, location) is included. Attach this file when reporting a bug.</span></div>
-      <button class="io-action-btn ripple" id="bugreport-gen-btn">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-2 14H7v-2h10v2zm0-4H7v-2h10v2zm-3-5V3.5L18.5 8H14z"/></svg>
-        <span data-i18n="bugreport_generate">Generate Bug Report</span>
-      </button>
-      <div class="io-sep"><span data-i18n="bugreport_saved">Saved reports</span></div>
-      <div class="io-list" id="bugreport-list"><div class="io-empty" data-i18n="bugreport_empty">No bug reports found</div></div>
-    </div>
-  </div>
-</div>
-
-<div class="modal-overlay centered" id="lang-modal">
-  <div class="modal lang-modal">
-    <div class="modal-head"><h3 data-i18n="lang_title">Language</h3><button class="modal-x ripple" id="lang-close">&#x2715;</button></div>
-    <div class="lang-list" id="lang-list"></div>
-  </div>
-</div>
+<body data-fx-skin="stock" unresolved style="overflow:hidden;position:fixed;inset:0;">
 
 <div class="scroll-clip">
-<div id="app">
+<div id="app" data-fx-scroll>
 
   <header class="hdr">
     <div class="hdr-glow" aria-hidden="true"></div>
@@ -115,31 +48,39 @@
       </div>
     </div>
     <div class="hdr-right">
-      <button id="theme-toggle" class="hdr-icon-btn ripple">
+      <button id="theme-toggle" class="hdr-icon-btn ripple" aria-label="Toggle theme" data-i18n-aria="a11y_theme_toggle">
         <svg class="icon-dark" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         <svg class="icon-light" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       </button>
       <div class="hdr-menu" id="hdr-menu-wrap">
-        <button class="hdr-icon-btn ripple" id="hdr-dots-btn">
+        <button class="hdr-icon-btn ripple" id="hdr-dots-btn" aria-label="Menu" data-i18n-aria="a11y_menu" aria-haspopup="true" aria-expanded="false">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
         </button>
         <div class="hdr-dropdown" id="hdr-dropdown">
-          <button class="hdr-opt ripple" id="menu-lang">
+          <button class="hdr-opt ripple" data-fx-modal-open="lang">
             <span class="hdr-opt-ico hdr-opt-ico--lang">
               <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a7.987 7.987 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56a15.65 15.65 0 0 0 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>
               <span class="hdr-opt-ico-zh">&#x6587;</span>
             </span>
             <span data-i18n="menu_lang">Language</span>
           </button>
-          <button class="hdr-opt ripple" id="menu-io">
+          <button class="hdr-opt ripple" data-fx-modal-open="themes">
+            <span class="hdr-opt-ico">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" fill-rule="evenodd" aria-hidden="true">
+                <path d="M12 3a9 9 0 0 0 0 18c1.2 0 2-.8 2-1.8 0-.5-.2-.9-.5-1.2-.3-.4-.5-.8-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8zM6.35 10.5a1.15 1.15 0 1 0 2.3 0 1.15 1.15 0 1 0-2.3 0zM10.85 7.5a1.15 1.15 0 1 0 2.3 0 1.15 1.15 0 1 0-2.3 0zM15.35 10.5a1.15 1.15 0 1 0 2.3 0 1.15 1.15 0 1 0-2.3 0zM6.85 15.5a1.15 1.15 0 1 0 2.3 0 1.15 1.15 0 1 0-2.3 0z"/>
+              </svg>
+            </span>
+            <span data-i18n="menu_themes">Themes</span>
+          </button>
+          <button class="hdr-opt ripple" data-fx-modal-open="io">
             <span class="hdr-opt-ico"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm2 16H5V5h11.17L19 7.83V19zm-7-7a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm-5-5h8v4H7V7z"/></svg></span>
             <span data-i18n="menu_io">Import / Export</span>
           </button>
-          <button class="hdr-opt ripple" id="menu-bugreport">
+          <button class="hdr-opt ripple" data-fx-modal-open="bugreport">
             <span class="hdr-opt-ico"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="13.5" rx="5" ry="6.5"/><ellipse cx="12" cy="5.5" rx="2.2" ry="2"/><path d="M10 3.5 8.5 1.5M14 3.5 15.5 1.5"/><path d="M12 7v13"/><path d="M7.5 9 3.5 7M7 13H2.5M7.5 17l-4 2"/><path d="M16.5 9 20.5 7M17 13h4.5M16.5 17l4 2"/></svg></span>
             <span data-i18n="menu_bugreport">Bug Report</span>
           </button>
-          <button class="hdr-opt ripple" id="menu-about">
+          <button class="hdr-opt ripple" data-fx-modal-open="about">
             <span class="hdr-opt-ico"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></span>
             <span data-i18n="menu_about">About</span>
           </button>
@@ -148,8 +89,7 @@
     </div>
   </header>
 
-  <!-- PAGE: HOME -->
-  <div class="page page-active" id="page-home">
+  <div class="view" data-fx-view="home" data-fx-initial>
 
     <div class="kpi-ring-wrap" id="kpi-ring-wrap">
       <svg class="kpi-svg" viewBox="0 0 200 200" aria-hidden="true">
@@ -166,196 +106,199 @@
           transform="rotate(-90 100 100)"/>
       </svg>
       <div class="kpi-center">
-        <span class="kpi-num" id="kpi-num">0</span>
-        <span class="kpi-sub" data-i18n="kpi_sub">of 18 active</span>
+        <span class="kpi-num" data-fx-kpi>0</span>
+        <span class="kpi-sub" data-i18n="kpi_sub">of 19 active</span>
       </div>
     </div>
     <div class="actions">
-      <button class="act-btn freeze ripple" id="btn-freeze">
+      <button class="act-btn freeze ripple" data-fx-action="freeze">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5L19.5 7"/></svg>
         <span data-i18n="btn_freeze">Enable All</span>
       </button>
-      <button class="act-btn stock ripple" id="btn-stock">
+      <button class="act-btn stock ripple" data-fx-action="stock">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
         <span data-i18n="btn_revert">Revert All</span>
       </button>
-      <button class="act-btn reapply ripple" id="btn-reapply">
+      <button class="act-btn reapply ripple" data-fx-action="reapply">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         <span data-i18n="btn_reapply">Force Reapply Settings</span>
       </button>
     </div>
     <div class="status-list">
-      <div class="status-card ripple" id="status-tweaks" data-page="tweaks">
+      <div class="status-card ripple" data-fx-nav="tweaks">
         <div class="status-left">
           <div class="status-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg></div>
           <div class="status-info">
             <span class="status-name" data-i18n="sec_tweaks">System Tweaks</span>
-            <span class="status-count" id="status-count-tweaks">0 of 6 active</span>
-            <div class="status-pills" id="status-pills-tweaks"></div>
+            <span class="status-count" data-fx-count="tweaks">0 of 7 active</span>
+            <div class="status-pills" data-fx-pills="tweaks"></div>
           </div>
         </div>
         <div class="status-right">
-          <span class="status-ratio" id="status-ratio-tweaks">0/6</span>
+          <span class="status-ratio" data-fx-ratio="tweaks">0/7</span>
           <div class="status-chevron"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
         </div>
       </div>
-      <div class="status-card ripple" id="status-doze" data-page="doze">
+      <div class="status-card ripple" data-fx-nav="doze">
         <div class="status-left">
           <div class="status-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg></div>
           <div class="status-info">
             <span class="status-name" data-i18n="sec_doze">Doze</span>
-            <span class="status-count" id="status-count-doze">0 of 4 active</span>
-            <div class="status-pills" id="status-pills-doze"></div>
+            <span class="status-count" data-fx-count="doze">0 of 4 active</span>
+            <div class="status-pills" data-fx-pills="doze"></div>
           </div>
         </div>
         <div class="status-right">
-          <span class="status-ratio" id="status-ratio-doze">0/4</span>
+          <span class="status-ratio" data-fx-ratio="doze">0/4</span>
           <div class="status-chevron"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
         </div>
       </div>
-      <div class="status-card ripple" id="status-gms" data-page="gms">
+      <div class="status-card ripple" data-fx-nav="gms">
         <div class="status-left">
           <div class="status-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M22 11h-4.17l3.24-3.24-1.41-1.42L15 11h-2V9l4.66-4.66-1.42-1.41L13 6.17V2h-2v4.17L7.76 2.93 6.34 4.34 11 9v2H9L4.34 6.34 2.93 7.76 6.17 11H2v2h4.17l-3.24 3.24 1.41 1.42L9 13h2v2l-4.66 4.66 1.42 1.41L11 17.83V22h2v-4.17l3.24 3.24 1.42-1.41L13 15v-2h2l4.66 4.66 1.41-1.42L17.83 13H22z"/></svg></div>
           <div class="status-info">
             <span class="status-name" data-i18n="sec_gms">GMS Categories</span>
-            <span class="status-count" id="status-count-gms">0 of 8 active</span>
-            <div class="status-pills" id="status-pills-gms"></div>
+            <span class="status-count" data-fx-count="gms">0 of 8 active</span>
+            <div class="status-pills" data-fx-pills="gms"></div>
           </div>
         </div>
         <div class="status-right">
-          <span class="status-ratio" id="status-ratio-gms">0/8</span>
+          <span class="status-ratio" data-fx-ratio="gms">0/8</span>
           <div class="status-chevron"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- PAGE: TWEAKS -->
-  <div class="page" id="page-tweaks">
+  <div class="view" data-fx-view="tweaks">
     <section class="card">
       <h2 class="card-title" data-i18n="sec_tweaks">System Tweaks</h2>
-      <div class="tgl-row ripple" data-key="kernel_tweaks">
+      <div class="tgl-row ripple" data-fx-toggle="kernel_tweaks">
         <div class="tgl-info"><span class="tgl-name" data-i18n="tgl_kernel">Kernel Tweaks</span><span class="tgl-desc" data-i18n="tgl_kernel_desc">Speeds up task switching, reduces CPU wakeups</span></div>
-        <label class="tgl"><input type="checkbox" id="t-kernel"><span class="tgl-sl"></span></label>
+        <span data-fx-switch></span>
       </div>
-      <div class="tgl-row ripple" data-key="system_props">
+      <div class="tgl-row ripple" data-fx-toggle="system_props">
         <div class="tgl-info"><span class="tgl-name" data-i18n="tgl_sysprops">System Props</span><span class="tgl-desc" data-i18n="tgl_sysprops_desc">Disables debug logging, saves battery and RAM</span><span class="reboot-tag" data-i18n="reboot_req">&#x26A0; Reboot required</span></div>
-        <label class="tgl"><input type="checkbox" id="t-sysprops"><span class="tgl-sl"></span></label>
+        <span data-fx-switch></span>
       </div>
-      <div class="tgl-row ripple" data-key="ram_optimizer">
+      <div class="tgl-row ripple" data-fx-toggle="ram_optimizer">
         <div class="tgl-info"><span class="tgl-name" data-i18n="tgl_ram_optimizer">RAM Optimizer</span><span class="tgl-desc" data-i18n="tgl_ram_optimizer_desc">Limits cached and empty background processes, tunes zram swap behavior for more free RAM</span></div>
-        <label class="tgl"><input type="checkbox" id="t-ram-optimizer"><span class="tgl-sl"></span></label>
+        <span data-fx-switch></span>
       </div>
-      <div class="ram-opt-extras dd-extras" id="ram-opt-extras">
-        <div class="level-row">
-          <button class="lvl-btn ripple" data-level="moderate" id="ram-lvl-mod"><span class="lvl-ico"><svg viewBox="-0.5 0 32 32" width="16" height="15" fill="currentColor"><path d="M30.000,32.000 L23.000,32.000 C22.447,32.000 22.000,31.552 22.000,31.000 L22.000,1.000 C22.000,0.448 22.447,-0.000 23.000,-0.000 L30.000,-0.000 C30.553,-0.000 31.000,0.448 31.000,1.000 L31.000,31.000 C31.000,31.552 30.553,32.000 30.000,32.000 ZM29.000,2.000 L24.000,2.000 L24.000,30.000 L29.000,30.000 L29.000,2.000 ZM19.000,32.000 L12.000,32.000 C11.448,32.000 11.000,31.552 11.000,31.000 L11.000,17.000 C11.000,16.448 11.448,16.000 12.000,16.000 L19.000,16.000 C19.553,16.000 20.000,16.448 20.000,17.000 L20.000,31.000 C20.000,31.552 19.553,32.000 19.000,32.000 ZM18.000,18.000 L13.000,18.000 L13.000,30.000 L18.000,30.000 L18.000,18.000 ZM8.000,32.000 L1.000,32.000 C0.448,32.000 0.000,31.552 0.000,31.000 L0.000,11.000 C0.000,10.448 0.448,10.000 1.000,10.000 L8.000,10.000 C8.552,10.000 9.000,10.448 9.000,11.000 L9.000,31.000 C9.000,31.552 8.552,32.000 8.000,32.000 ZM7.000,12.000 L2.000,12.000 L2.000,30.000 L7.000,30.000 L7.000,12.000 Z"/></svg></span><span class="lvl-name" data-i18n="lvl_moderate">Moderate</span></button>
-          <button class="lvl-btn ripple" data-level="maximum" id="ram-lvl-max"><span class="lvl-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M3 13h2l3-7 3 11 3-8 2 4h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lvl-name" data-i18n="lvl_maximum">Maximum</span></button>
-        </div>
-        <div class="tgl-info multitask-info">
-          <span class="tgl-name" data-i18n="multitask_title">Multitasking Profile</span>
-          <span class="tgl-desc" data-i18n="multitask_desc">How aggressively background apps get closed to free RAM. Performance keeps more ready to resume instantly. Power Saving closes more of them sooner.</span>
-        </div>
-        <div class="level-row">
-          <button class="lvl-btn ripple" data-level="performance" id="multitask-lvl-performance"><span class="lvl-name" data-i18n="lvl_performance">Performance</span></button>
-          <button class="lvl-btn ripple" data-level="balanced" id="multitask-lvl-balanced"><span class="lvl-name" data-i18n="lvl_balanced">Balanced</span></button>
-          <button class="lvl-btn ripple" data-level="powersaving" id="multitask-lvl-powersaving"><span class="lvl-name" data-i18n="lvl_powersaving">Power Saving</span></button>
+      <div class="ram-opt-extras dd-extras" data-fx-extra="ram_optimizer">
+        <div class="level-row" data-fx-levelgroup="ram_optimizer_level">
+          <button class="lvl-btn ripple" data-fx-level="moderate"><span class="lvl-ico"><svg viewBox="-0.5 0 32 32" width="16" height="15" fill="currentColor"><path d="M30.000,32.000 L23.000,32.000 C22.447,32.000 22.000,31.552 22.000,31.000 L22.000,1.000 C22.000,0.448 22.447,-0.000 23.000,-0.000 L30.000,-0.000 C30.553,-0.000 31.000,0.448 31.000,1.000 L31.000,31.000 C31.000,31.552 30.553,32.000 30.000,32.000 ZM29.000,2.000 L24.000,2.000 L24.000,30.000 L29.000,30.000 L29.000,2.000 ZM19.000,32.000 L12.000,32.000 C11.448,32.000 11.000,31.552 11.000,31.000 L11.000,17.000 C11.000,16.448 11.448,16.000 12.000,16.000 L19.000,16.000 C19.553,16.000 20.000,16.448 20.000,17.000 L20.000,31.000 C20.000,31.552 19.553,32.000 19.000,32.000 ZM18.000,18.000 L13.000,18.000 L13.000,30.000 L18.000,30.000 L18.000,18.000 ZM8.000,32.000 L1.000,32.000 C0.448,32.000 0.000,31.552 0.000,31.000 L0.000,11.000 C0.000,10.448 0.448,10.000 1.000,10.000 L8.000,10.000 C8.552,10.000 9.000,10.448 9.000,11.000 L9.000,31.000 C9.000,31.552 8.552,32.000 8.000,32.000 ZM7.000,12.000 L2.000,12.000 L2.000,30.000 L7.000,30.000 L7.000,12.000 Z"/></svg></span><span class="lvl-name" data-i18n="lvl_moderate">Moderate</span></button>
+          <button class="lvl-btn ripple" data-fx-level="maximum"><span class="lvl-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M3 13h2l3-7 3 11 3-8 2 4h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="lvl-name" data-i18n="lvl_maximum">Maximum</span></button>
         </div>
       </div>
-      <div class="bss-extras always-on">
-        <button class="bss-cfg-btn ripple" id="ram-clean-open"><span><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="1" fill="currentColor" fill-opacity="0.18" stroke="currentColor"/><path d="M12 6V3m4 3V4M8 6V4m10 8h3m-3 4h2M18 8h2M12 18v3M8 18v2m8-2v2M6 12H3M6 8H4m2 8H4"/></svg></span><span data-i18n="ram_cleaner_btn">RAM Cleaner</span></button>
+    <div class="bss-extras always-on">
+          <button class="bss-cfg-btn ripple" data-fx-modal-open="ramclean"><span><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="1" fill="currentColor" fill-opacity="0.18" stroke="currentColor"/><path d="M12 6V3m4 3V4M8 6V4m10 8h3m-3 4h2M18 8h2M12 18v3M8 18v2m8-2v2M6 12H3M6 8H4m2 8H4"/></svg></span><span data-i18n="ram_cleaner_btn">RAM Cleaner</span></button>
+        </div>
+      <div class="divider"></div>
+      <div class="tgl-row ripple" data-fx-toggle="multitask_enabled">
+        <div class="tgl-info"><span class="tgl-name" data-i18n="multitask_title">Multitasking Profile</span><span class="tgl-desc" data-i18n="multitask_desc">How aggressively background apps get closed to free RAM. Performance keeps more ready to resume instantly. Power Saving closes more of them sooner.</span></div>
+        <span data-fx-switch></span>
       </div>
-      <div class="tgl-row ripple" data-key="blur_disable">
+      <div class="dd-extras" data-fx-extra="multitask_enabled">
+        <div class="level-row" data-fx-levelgroup="multitask_profile">
+          <button class="lvl-btn ripple" data-fx-level="performance"><span class="lvl-name" data-i18n="lvl_performance">Performance</span></button>
+          <button class="lvl-btn ripple" data-fx-level="balanced"><span class="lvl-name" data-i18n="lvl_balanced">Balanced</span></button>
+          <button class="lvl-btn ripple" data-fx-level="powersaving"><span class="lvl-name" data-i18n="lvl_powersaving">Power Saving</span></button>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="tgl-row ripple" data-fx-toggle="blur_disable">
         <div class="tgl-info"><span class="tgl-name" data-i18n="tgl_blur">Disable Blur</span><span class="tgl-desc" data-i18n="tgl_blur_desc">Reduces GPU load, smoother on weaker devices</span></div>
-        <label class="tgl"><input type="checkbox" id="t-blur"><span class="tgl-sl"></span></label>
+        <span data-fx-switch></span>
       </div>
-      <div class="tgl-row ripple" data-key="log_killing">
+      <div class="tgl-row ripple" data-fx-toggle="log_killing">
         <div class="tgl-info"><span class="tgl-name" data-i18n="tgl_logs">Kill Logs</span><span class="tgl-desc" data-i18n="tgl_logs_desc">Stops background loggers, frees RAM</span><span class="reboot-tag" data-i18n="reboot_req">&#x26A0; Reboot required</span></div>
-        <label class="tgl"><input type="checkbox" id="t-logs"><span class="tgl-sl"></span></label>
+        <span data-fx-switch></span>
       </div>
-      <div class="tgl-row ripple" data-key="kill_tracking">
+      <div class="tgl-row ripple" data-fx-toggle="kill_tracking">
         <div class="tgl-info"><span class="tgl-name" data-i18n="tgl_tracking">Kill Google Tracking</span><span class="tgl-desc" data-i18n="tgl_tracking_desc">Disables GMS analytics, Clearcut telemetry, Phenotype polling and ad tracking at the app layer</span></div>
-        <label class="tgl"><input type="checkbox" id="t-tracking"><span class="tgl-sl"></span></label>
+        <span data-fx-switch></span>
       </div>
     </section>
   </div>
 
-  <!-- PAGE: DOZE -->
-  <div class="page" id="page-doze">
+  <div class="view" data-fx-view="doze">
     <section class="card">
       <h2 class="card-title" data-i18n="sec_doze">Doze</h2>
-      <div class="tgl-row ripple" data-key="custom_app_doze">
+      <div class="tgl-row ripple" data-fx-toggle="custom_app_doze">
         <div class="tgl-info"><span class="tgl-name" data-i18n="tgl_cad">App Doze</span><span class="tgl-desc" data-i18n="tgl_cad_desc">Removes selected apps from Android's Doze power-save exemption list. GMS can be selected here too.</span><span class="reboot-tag" data-i18n="reboot_req">&#x26A0; Reboot required</span></div>
-        <label class="tgl"><input type="checkbox" id="t-custom-app-doze"><span class="tgl-sl"></span></label>
+        <span data-fx-switch></span>
       </div>
-      <div class="cad-extras" id="cad-extras">
-        <button class="wl-btn ripple" id="cad-open"><span data-i18n="cad_btn">&#x25B6; Manage Apps</span><span class="wl-count" id="cad-count">0</span></button>
+      <div class="cad-extras" data-fx-extra="custom_app_doze">
+        <button class="wl-btn ripple" data-fx-picker-open="cad"><span data-i18n="cad_btn">&#x25B6; Manage Apps</span><span class="wl-count" data-fx-picker-count="cad">0</span></button>
       </div>
       <div class="divider"></div>
-      <div class="tgl-row ripple" data-key="deep_doze">
+      <div class="tgl-row ripple" data-fx-toggle="deep_doze">
         <div class="tgl-info"><span class="tgl-name" data-i18n="tgl_deep_doze">Deep Doze</span><span class="tgl-desc" data-i18n="tgl_deep_doze_desc">Restricts background activity for all apps</span></div>
-        <label class="tgl"><input type="checkbox" id="t-deep-doze"><span class="tgl-sl"></span></label>
+        <span data-fx-switch></span>
       </div>
-      <div class="dd-extras" id="dd-extras">
-        <div class="level-row">
-          <button class="lvl-btn ripple" data-level="minimum" id="lvl-min"><span class="lvl-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17,8C8,10,5.9,16.17,3.82,21.34L5.71,22l1-2.3A4.49,4.49,0,0,0,8,20C19,20,22,3,22,3,21,5,14,5.25,9,6.25S2,11.5,2,13.5a6.22,6.22,0,0,0,1.75,3.75C7,8,17,8,17,8Z"/></svg></span><span class="lvl-name" data-i18n="lvl_minimum">Minimum</span></button>
-          <button class="lvl-btn ripple" data-level="moderate" id="lvl-mod"><span class="lvl-ico"><svg viewBox="0 0 512 512" width="18" height="18" fill="currentColor"><path d="m500.609 322.275-57.428-162.834c.135.008.279.025.406.025 39.538.677 49.422-20.58 54.566-27.94 7.118-10.171-7.91-20.343-15.816-13.558-7.906 6.775-29.264 21.011-70.386 2.024-37.077-17.117-102.081-46.894-140.031-52.593v-39c0-8.799-7.127-15.921-15.918-15.921-8.795 0-15.922 7.122-15.922 15.921v39c-37.95 5.699-102.953 35.476-140.031 52.593-41.121 18.987-62.48 4.751-70.386-2.024-7.906-6.784-22.935 3.388-15.816 13.558 5.145 7.36 15.028 28.617 54.566 27.94.132 0 .276-.017.402-.025L11.391 322.275H0c11.497 38.025 46.804 65.736 88.595 65.736 41.786 0 77.093-27.711 88.59-65.736h-11.386l-60.355-171.134c37.183-11.467 89.569-31.056 134.636-34.072v24.23h-8.507v267.748H218.37v23.858h-24.874c-23.354 0-22.663 32.969-22.663 32.969-19.233 0-28.85 15.101-28.85 33.648h228.033c0-18.546-9.616-33.648-28.845-33.648 0 0 .686-32.969-22.668-32.969h-24.874v-23.858h-13.203V141.3h-8.507v-24.23c45.072 3.015 97.457 22.604 134.64 34.072l-60.358 171.134h-11.387c11.496 38.025 46.804 65.736 88.59 65.736 41.79 0 77.098-27.711 88.594-65.736zm-359.366 0H35.948L88.595 173zm229.515 0L423.41 173l52.643 149.275z"/></svg></span><span class="lvl-name" data-i18n="lvl_moderate">Moderate</span></button>
-          <button class="lvl-btn ripple" data-level="maximum" id="lvl-max"><span class="lvl-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg></span><span class="lvl-name" data-i18n="lvl_maximum">Maximum</span></button>
+      <div class="dd-extras" data-fx-extra="deep_doze">
+        <div class="level-row" data-fx-levelgroup="deep_doze_level">
+          <button class="lvl-btn ripple" data-fx-level="minimum"><span class="lvl-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17,8C8,10,5.9,16.17,3.82,21.34L5.71,22l1-2.3A4.49,4.49,0,0,0,8,20C19,20,22,3,22,3,21,5,14,5.25,9,6.25S2,11.5,2,13.5a6.22,6.22,0,0,0,1.75,3.75C7,8,17,8,17,8Z"/></svg></span><span class="lvl-name" data-i18n="lvl_minimum">Minimum</span></button>
+          <button class="lvl-btn ripple" data-fx-level="moderate"><span class="lvl-ico"><svg viewBox="0 0 512 512" width="18" height="18" fill="currentColor"><path d="m500.609 322.275-57.428-162.834c.135.008.279.025.406.025 39.538.677 49.422-20.58 54.566-27.94 7.118-10.171-7.91-20.343-15.816-13.558-7.906 6.775-29.264 21.011-70.386 2.024-37.077-17.117-102.081-46.894-140.031-52.593v-39c0-8.799-7.127-15.921-15.918-15.921-8.795 0-15.922 7.122-15.922 15.921v39c-37.95 5.699-102.953 35.476-140.031 52.593-41.121 18.987-62.48 4.751-70.386-2.024-7.906-6.784-22.935 3.388-15.816 13.558 5.145 7.36 15.028 28.617 54.566 27.94.132 0 .276-.017.402-.025L11.391 322.275H0c11.497 38.025 46.804 65.736 88.595 65.736 41.786 0 77.093-27.711 88.59-65.736h-11.386l-60.355-171.134c37.183-11.467 89.569-31.056 134.636-34.072v24.23h-8.507v267.748H218.37v23.858h-24.874c-23.354 0-22.663 32.969-22.663 32.969-19.233 0-28.85 15.101-28.85 33.648h228.033c0-18.546-9.616-33.648-28.845-33.648 0 0 .686-32.969-22.668-32.969h-24.874v-23.858h-13.203V141.3h-8.507v-24.23c45.072 3.015 97.457 22.604 134.64 34.072l-60.358 171.134h-11.387c11.496 38.025 46.804 65.736 88.59 65.736 41.79 0 77.098-27.711 88.594-65.736zm-359.366 0H35.948L88.595 173zm229.515 0L423.41 173l52.643 149.275z"/></svg></span><span class="lvl-name" data-i18n="lvl_moderate">Moderate</span></button>
+          <button class="lvl-btn ripple" data-fx-level="maximum"><span class="lvl-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg></span><span class="lvl-name" data-i18n="lvl_maximum">Maximum</span></button>
         </div>
-        <button class="wl-btn ripple" id="wl-open"><span data-i18n="wl_btn">&#x25B6; Manage Apps</span><span class="wl-count" id="wl-count">0</span></button>
+        <div class="tgl-row ripple" data-fx-toggle="deep_doze_always">
+          <div class="tgl-info"><span class="tgl-name" data-i18n="tgl_deep_doze_always">Always Doze (not only in lockscreen)</span><span class="tgl-desc" data-i18n="tgl_deep_doze_always_desc">Keeps Doze forced even after unlocking, not just while the screen is locked</span></div>
+          <span data-fx-switch></span>
+        </div>
+        <button class="wl-btn ripple" data-fx-picker-open="wl"><span data-i18n="wl_btn">&#x25B6; Manage Apps</span><span class="wl-count" data-fx-picker-count="wl">0</span></button>
       </div>
       <div class="divider"></div>
-      <div class="tgl-row ripple" data-key="battery_saver">
+      <div class="tgl-row ripple" data-fx-toggle="battery_saver">
         <div class="tgl-info"><span class="tgl-name" data-i18n="tgl_bss">Battery Saver Tuner</span><span class="tgl-desc" data-i18n="tgl_bss_desc">Tune Android's built-in battery saver behavior</span></div>
-        <label class="tgl"><input type="checkbox" id="t-bss"><span class="tgl-sl"></span></label>
+        <span data-fx-switch></span>
       </div>
-      <div class="bss-extras" id="bss-extras">
-        <button class="bss-cfg-btn ripple" id="bss-open"><span>&#x2699;&#xFE0F;</span><span data-i18n="bss_configure">Configure Options</span></button>
+      <div class="bss-extras" data-fx-extra="battery_saver">
+        <button class="bss-cfg-btn ripple" data-fx-modal-open="bss"><span><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M19.4 13a7.4 7.4 0 0 0 .1-1 7.4 7.4 0 0 0-.1-1l2.1-1.6a.5.5 0 0 0 .1-.6l-2-3.5a.5.5 0 0 0-.6-.2l-2.5 1a7.6 7.6 0 0 0-1.7-1L14.3 2a.5.5 0 0 0-.5-.4h-4a.5.5 0 0 0-.5.4l-.4 2.6a7.6 7.6 0 0 0-1.7 1l-2.5-1a.5.5 0 0 0-.6.2l-2 3.5a.5.5 0 0 0 .1.6L4.5 11a7.4 7.4 0 0 0-.1 1 7.4 7.4 0 0 0 .1 1l-2.1 1.6a.5.5 0 0 0-.1.6l2 3.5a.5.5 0 0 0 .6.2l2.5-1a7.6 7.6 0 0 0 1.7 1l.4 2.6a.5.5 0 0 0 .5.4h4a.5.5 0 0 0 .5-.4l.4-2.6a7.6 7.6 0 0 0 1.7-1l2.5 1a.5.5 0 0 0 .6-.2l2-3.5a.5.5 0 0 0-.1-.6L19.4 13zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg></span><span data-i18n="bss_configure">Configure Options</span></button>
       </div>
       <div class="divider"></div>
-      <div class="tgl-row ripple" data-key="screen_off_opt">
+      <div class="tgl-row ripple" data-fx-toggle="screen_off_opt">
         <div class="tgl-info"><span class="tgl-name" data-i18n="tgl_soo">Screen Off Optimization</span><span class="tgl-desc" data-i18n="tgl_soo_desc">Disables selected connections and optionally cleans RAM after a screen-off delay. Restores on unlock.</span></div>
-        <label class="tgl"><input type="checkbox" id="t-screen-off-opt"><span class="tgl-sl"></span></label>
+        <span data-fx-switch></span>
       </div>
-      <div class="bss-extras" id="soo-extras">
-        <button class="bss-cfg-btn ripple" id="soo-open"><span>&#x2699;&#xFE0F;</span><span data-i18n="soo_configure">Configure Options</span></button>
+      <div class="bss-extras" data-fx-extra="screen_off_opt">
+        <button class="bss-cfg-btn ripple" data-fx-modal-open="soo"><span><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M19.4 13a7.4 7.4 0 0 0 .1-1 7.4 7.4 0 0 0-.1-1l2.1-1.6a.5.5 0 0 0 .1-.6l-2-3.5a.5.5 0 0 0-.6-.2l-2.5 1a7.6 7.6 0 0 0-1.7-1L14.3 2a.5.5 0 0 0-.5-.4h-4a.5.5 0 0 0-.5.4l-.4 2.6a7.6 7.6 0 0 0-1.7 1l-2.5-1a.5.5 0 0 0-.6.2l-2 3.5a.5.5 0 0 0 .1.6L4.5 11a7.4 7.4 0 0 0-.1 1 7.4 7.4 0 0 0 .1 1l-2.1 1.6a.5.5 0 0 0-.1.6l2 3.5a.5.5 0 0 0 .6.2l2.5-1a7.6 7.6 0 0 0 1.7 1l.4 2.6a.5.5 0 0 0 .5.4h4a.5.5 0 0 0 .5-.4l.4-2.6a7.6 7.6 0 0 0 1.7-1l2.5 1a.5.5 0 0 0 .6-.2l2-3.5a.5.5 0 0 0-.1-.6L19.4 13zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg></span><span data-i18n="soo_configure">Configure Options</span></button>
       </div>
     </section>
   </div>
 
-  <!-- PAGE: GMS -->
-  <div class="page" id="page-gms">
+  <div class="view" data-fx-view="gms">
     <section class="card">
       <div class="card-title-row">
         <h2 class="card-title" data-i18n="sec_gms">GMS Categories</h2>
         <div class="cat-bulk-actions">
-          <button class="cat-bulk-btn cat-bulk-on ripple" id="cat-enable-all" type="button"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" aria-hidden="true"><path d="M4 12.5L9.5 18L20 6" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="cat_bulk_enable">Enable all</span></button>
-          <button class="cat-bulk-btn cat-bulk-off ripple" id="cat-disable-all" type="button"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" aria-hidden="true"><path d="M4 12.5L9.5 18L20 6" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="cat_bulk_disable">Disable all</span></button>
+          <button class="cat-bulk-btn cat-bulk-on ripple" data-fx-cat-bulk="on" type="button"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" aria-hidden="true"><path d="M4 12.5L9.5 18L20 6" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="cat_bulk_enable">Enable all</span></button>
+          <button class="cat-bulk-btn cat-bulk-off ripple" data-fx-cat-bulk="off" type="button"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" aria-hidden="true"><path d="M4 12.5L9.5 18L20 6" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="cat_bulk_disable">Disable all</span></button>
         </div>
       </div>
-      <div class="cat-row ripple" data-cat="telemetry"><div class="cat-left"><div class="cat-ico">&#x1F4CA;</div><div class="cat-info"><span class="cat-name" data-i18n="cat_telemetry">Telemetry</span><span class="cat-tag safe" data-i18n="cat_telemetry_tag">Safe &#xB7; Ads, analytics</span></div></div><label class="tgl"><input type="checkbox" id="t-telemetry"><span class="tgl-sl"></span></label></div>
-      <div class="cat-row ripple" data-cat="background"><div class="cat-left"><div class="cat-ico">&#x1F504;</div><div class="cat-info"><span class="cat-name" data-i18n="cat_background">Background</span><span class="cat-tag safe" data-i18n="cat_background_tag">Safe &#xB7; Updates, MDM</span></div></div><label class="tgl"><input type="checkbox" id="t-background"><span class="tgl-sl"></span></label></div>
-      <div class="cat-row ripple" data-cat="location"><div class="cat-left"><div class="cat-ico">&#x1F4CD;</div><div class="cat-info"><span class="cat-name" data-i18n="cat_location">Location</span><span class="cat-tag warn" data-i18n="cat_location_tag">Breaks Maps, GPS</span></div></div><label class="tgl"><input type="checkbox" id="t-location"><span class="tgl-sl"></span></label></div>
-      <div class="cat-row ripple" data-cat="connectivity"><div class="cat-left"><div class="cat-ico">&#x1F4E1;</div><div class="cat-info"><span class="cat-name" data-i18n="cat_connectivity">Connectivity</span><span class="cat-tag warn" data-i18n="cat_connectivity_tag">Breaks Cast, Quick Share</span></div></div><label class="tgl"><input type="checkbox" id="t-connectivity"><span class="tgl-sl"></span></label></div>
-      <div class="cat-row ripple" data-cat="cloud"><div class="cat-left"><div class="cat-ico">&#x2601;&#xFE0F;</div><div class="cat-info"><span class="cat-name" data-i18n="cat_cloud">Cloud</span><span class="cat-tag warn" data-i18n="cat_cloud_tag">Breaks Sign-in, Autofill</span></div></div><label class="tgl"><input type="checkbox" id="t-cloud"><span class="tgl-sl"></span></label></div>
-      <div class="cat-row ripple" data-cat="payments"><div class="cat-left"><div class="cat-ico">&#x1F4B3;</div><div class="cat-info"><span class="cat-name" data-i18n="cat_payments">Payments</span><span class="cat-tag warn" data-i18n="cat_payments_tag">Breaks Google Pay</span></div></div><label class="tgl"><input type="checkbox" id="t-payments"><span class="tgl-sl"></span></label></div>
-      <div class="cat-row ripple" data-cat="wearables"><div class="cat-left"><div class="cat-ico">&#x231A;</div><div class="cat-info"><span class="cat-name" data-i18n="cat_wearables">Wearables</span><span class="cat-tag warn" data-i18n="cat_wearables_tag">Breaks Wear OS, Fit</span></div></div><label class="tgl"><input type="checkbox" id="t-wearables"><span class="tgl-sl"></span></label></div>
-      <div class="cat-row ripple" data-cat="games"><div class="cat-left"><div class="cat-ico">&#x1F3AE;</div><div class="cat-info"><span class="cat-name" data-i18n="cat_games">Games</span><span class="cat-tag warn" data-i18n="cat_games_tag">Breaks Play Games</span></div></div><label class="tgl"><input type="checkbox" id="t-games"><span class="tgl-sl"></span></label></div>
+      <div class="cat-row ripple" data-fx-cat="telemetry"><div class="cat-left"><div class="cat-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 21V10h3v11H5zm5.5 0V3h3v18h-3zM16 21V14h3v7h-3z"/></svg></div><div class="cat-info"><span class="cat-name" data-i18n="cat_telemetry">Telemetry</span><span class="cat-tag safe" data-i18n="cat_telemetry_tag">Safe &#xB7; Ads, analytics</span></div></div><span data-fx-switch></span></div>
+      <div class="cat-row ripple" data-fx-cat="background"><div class="cat-left"><div class="cat-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 6V2L7 7l5 5V8a4 4 0 1 1-4 4H6a6 6 0 1 0 6-6z"/></svg></div><div class="cat-info"><span class="cat-name" data-i18n="cat_background">Background</span><span class="cat-tag safe" data-i18n="cat_background_tag">Safe &#xB7; Updates, MDM</span></div></div><span data-fx-switch></span></div>
+      <div class="cat-row ripple" data-fx-cat="location"><div class="cat-left"><div class="cat-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg></div><div class="cat-info"><span class="cat-name" data-i18n="cat_location">Location</span><span class="cat-tag warn" data-i18n="cat_location_tag">Breaks Maps, GPS</span></div></div><span data-fx-switch></span></div>
+      <div class="cat-row ripple" data-fx-cat="connectivity"><div class="cat-left"><div class="cat-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0-16C7.5 4 3.6 5.9 1 9l2 2.4C5.1 8.6 8.3 7 12 7s6.9 1.6 9 4.4L23 9c-2.6-3.1-6.5-5-11-5zm0 6c-2.8 0-5.2 1.2-7 3l2 2.4c1.2-1.4 3-2.4 5-2.4s3.8 1 5 2.4l2-2.4c-1.8-1.8-4.2-3-7-3z"/></svg></div><div class="cat-info"><span class="cat-name" data-i18n="cat_connectivity">Connectivity</span><span class="cat-tag warn" data-i18n="cat_connectivity_tag">Breaks Cast, Quick Share</span></div></div><span data-fx-switch></span></div>
+      <div class="cat-row ripple" data-fx-cat="cloud"><div class="cat-left"><div class="cat-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 18H6a4 4 0 0 1-.5-7.97A5.5 5.5 0 0 1 16.2 8.02 4.5 4.5 0 0 1 19 18z"/></svg></div><div class="cat-info"><span class="cat-name" data-i18n="cat_cloud">Cloud</span><span class="cat-tag warn" data-i18n="cat_cloud_tag">Breaks Sign-in, Autofill</span></div></div><span data-fx-switch></span></div>
+      <div class="cat-row ripple" data-fx-cat="payments"><div class="cat-left"><div class="cat-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4H4V6h16v2zm0 3v5H4v-5h16z"/></svg></div><div class="cat-info"><span class="cat-name" data-i18n="cat_payments">Payments</span><span class="cat-tag warn" data-i18n="cat_payments_tag">Breaks Google Pay</span></div></div><span data-fx-switch></span></div>
+      <div class="cat-row ripple" data-fx-cat="wearables"><div class="cat-left"><div class="cat-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" fill-rule="evenodd"><rect x="9" y="1" width="6" height="3.5" rx="0.8"/><rect x="9" y="19.5" width="6" height="3.5" rx="0.8"/><path d="M12 4.5a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15zm0 2a5.5 5.5 0 1 1 0 11 5.5 5.5 0 0 1 0-11z"/><rect x="11.3" y="7" width="1.4" height="5.5" rx="0.7"/><rect x="12" y="11.3" width="3.5" height="1.4" rx="0.7"/></svg></div><div class="cat-info"><span class="cat-name" data-i18n="cat_wearables">Wearables</span><span class="cat-tag warn" data-i18n="cat_wearables_tag">Breaks Wear OS, Fit</span></div></div><span data-fx-switch></span></div>
+      <div class="cat-row ripple" data-fx-cat="games"><div class="cat-left"><div class="cat-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17 6H7a5 5 0 0 0-5 5v1a5 5 0 0 0 5 5c1 0 1.6-.4 2.2-1l1-1h3.6l1 1c.6.6 1.2 1 2.2 1a5 5 0 0 0 5-5v-1a5 5 0 0 0-5-5zM9 12H7.5V13.5H6V12H4.5v-1.5H6V9h1.5v1.5H9V12zm5.5 1.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm2-3a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg></div><div class="cat-info"><span class="cat-name" data-i18n="cat_games">Games</span><span class="cat-tag warn" data-i18n="cat_games_tag">Breaks Play Games</span></div></div><span data-fx-switch></span></div>
     </section>
   </div>
 
-  <!-- PAGE: LOG -->
-  <div class="page" id="page-log">
+  <div class="view" data-fx-view="log">
     <section class="card">
       <div class="card-title-row">
         <h2 class="card-title" data-i18n="sec_log">Activity Log</h2>
         <div style="display:flex;gap:6px">
-          <button class="log-action-btn ripple" id="log-copy-btn"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button>
-          <button class="log-action-btn ripple" id="log-clear-btn"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
+          <button class="log-action-btn ripple" data-fx-log-copy aria-label="Copy" data-i18n-aria="log_copy_btn"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button>
+          <button class="log-action-btn ripple" data-fx-log-clear aria-label="Clear" data-i18n-aria="log_clear_btn"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
         </div>
       </div>
       <div class="log-wrap">
-        <div class="log-box" id="log-box" data-i18n-empty="log_empty" data-empty="No activity yet"></div>
-        <button class="log-expand-btn" id="log-expand-btn"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
+        <div class="log-box" data-fx-log></div>
       </div>
     </section>
   </div>
@@ -363,141 +306,91 @@
 </div><!-- /#app -->
 </div><!-- /.scroll-clip -->
 
-<nav class="float-nav" id="float-nav">
-  <button class="nav-tab active" data-page="home">
+<nav class="float-nav">
+  <button class="nav-tab" data-fx-nav="home">
     <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
     <span data-i18n="nav_home">Home</span>
   </button>
-  <button class="nav-tab" data-page="tweaks">
+  <button class="nav-tab" data-fx-nav="tweaks">
     <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg>
     <span data-i18n="nav_tweaks">Tweaks</span>
   </button>
-  <button class="nav-tab" data-page="doze">
+  <button class="nav-tab" data-fx-nav="doze">
     <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>
     <span data-i18n="nav_doze">Doze</span>
   </button>
-  <button class="nav-tab" data-page="gms">
+  <button class="nav-tab" data-fx-nav="gms">
     <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M22 11h-4.17l3.24-3.24-1.41-1.42L15 11h-2V9l4.66-4.66-1.42-1.41L13 6.17V2h-2v4.17L7.76 2.93 6.34 4.34 11 9v2H9L4.34 6.34 2.93 7.76 6.17 11H2v2h4.17l-3.24 3.24 1.41 1.42L9 13h2v2l-4.66 4.66 1.42 1.41L11 17.83V22h2v-4.17l3.24 3.24 1.42-1.41L13 15v-2h2l4.66 4.66 1.41-1.42L17.83 13H22z"/></svg>
     <span data-i18n="nav_gms">GMS</span>
   </button>
-  <button class="nav-tab" data-page="log">
+  <button class="nav-tab" data-fx-nav="log">
     <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
     <span data-i18n="nav_log">Log</span>
   </button>
 </nav>
 
-<div class="modal-overlay centered" id="lang-confirm-backdrop">
-  <div class="modal lang-welcome-modal">
-    <div class="lc-flag" id="lc-flag"></div>
-    <div class="lc-header" id="lc-header"></div>
-    <div class="lc-lang-name" id="lc-lang-name"></div>
-    <div class="lc-question" id="lc-question"></div>
-    <div class="lw-btns">
-      <button class="lw-btn lw-btn-keep ripple" id="lc-btn-keep"></button>
-      <button class="lw-btn ripple" id="lc-btn-en">&#x1F1EC;&#x1F1E7; English</button>
-    </div>
-  </div>
-</div>
+<script src="engine.js"></script>
+<script>
+(function () {
+  function applyDark(dark) {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    var meta = document.getElementById('theme-meta');
+    if (meta) meta.setAttribute('content', dark ? '#0D0F11' : '#F4F6F8');
+  }
+  var saved = null;
+  try { saved = localStorage.getItem('frosty-theme'); } catch (e) {}
+  applyDark(saved !== 'light');
+  document.getElementById('theme-toggle').addEventListener('click', function () {
+    var isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+    applyDark(!isDark);
+    try { localStorage.setItem('frosty-theme', !isDark ? 'dark' : 'light'); } catch (e) {}
+  });
 
-<div class="modal-overlay" id="cad-modal">
-  <div class="modal">
-    <div class="modal-head"><h3><span data-i18n="cad_title">App Doze</span></h3><button class="modal-x ripple" id="cad-close">&#x2715;</button></div>
-    <div class="modal-notice"><span>&#x2139;&#xFE0F;</span><span data-i18n="cad_notice">Selected apps will be removed from Android's Doze exemption list so the OS can optimize them. GMS can be selected here for the same effect as the old GMS Doze toggle.</span></div>
-    <div class="modal-controls"><input type="text" class="modal-search" placeholder="Search apps..." data-i18n-ph="cad_search" id="cad-search"></div>
-    <div class="modal-list" id="cad-list"></div>
-  </div>
-</div>
+  FX.registerSkin('stock', {});
 
-<div class="modal-overlay" id="bss-modal">
-  <div class="modal bss-modal">
-    <div class="modal-head"><h3><span data-i18n="bss_modal_title">Battery Saver Options</span></h3><button class="modal-x ripple" id="bss-close">&#x2715;</button></div>
-    <div class="bss-opt-list">
-      <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="bss_opt_datasaver">Enable data saver</span><span class="bss-opt-desc" data-i18n="bss_opt_datasaver_desc">Restricts background data usage for all apps while battery saver is active</span></div><label class="tgl"><input type="checkbox" id="bss-t-datasaver"><span class="tgl-sl"></span></label></div>
-      <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="bss_opt_hotword">Disable hotword detection</span><span class="bss-opt-desc" data-i18n="bss_opt_hotword_desc">Stops the always-on microphone from listening for "Hey Google"</span></div><label class="tgl"><input type="checkbox" id="bss-t-soundtrigger"><span class="tgl-sl"></span></label></div>
-      <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="bss_opt_fullbackup">Defer full backup</span><span class="bss-opt-desc" data-i18n="bss_opt_fullbackup_desc">Pauses full device backups while battery saver is on. Resumes when turned off.</span></div><label class="tgl"><input type="checkbox" id="bss-t-fullbackup"><span class="tgl-sl"></span></label></div>
-      <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="bss_opt_keybackup">Defer key-value backup</span><span class="bss-opt-desc" data-i18n="bss_opt_keybackup_desc">Pauses syncing of app settings and small data backups to the cloud.</span></div><label class="tgl"><input type="checkbox" id="bss-t-keybackup"><span class="tgl-sl"></span></label></div>
-      <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="bss_opt_force_standby">Force apps standby</span><span class="bss-opt-desc" data-i18n="bss_opt_force_standby_desc">Moves all background apps into the restricted standby bucket, heavily limiting their wakeups.</span></div><label class="tgl"><input type="checkbox" id="bss-t-force-standby"><span class="tgl-sl"></span></label></div>
-      <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="bss_opt_force_bg">Force background check</span><span class="bss-opt-desc" data-i18n="bss_opt_force_bg_desc">Applies stricter enforcement of background execution limits across all apps.</span></div><label class="tgl"><input type="checkbox" id="bss-t-force-bg"><span class="tgl-sl"></span></label></div>
-      <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="bss_opt_sensors">Disable optional sensors</span><span class="bss-opt-desc" data-i18n="bss_opt_sensors_desc">Turns off non-critical sensors like barometer, step counter, and rotation vector.</span></div><label class="tgl"><input type="checkbox" id="bss-t-sensors"><span class="tgl-sl"></span></label></div>
-      <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="bss_opt_max_refresh">Max refresh rate</span><span class="bss-opt-desc" data-i18n="bss_opt_max_refresh_desc">Keeps your screen at its highest refresh rate even while Battery Saver is on.</span></div><label class="tgl"><input type="checkbox" id="bss-t-max-refresh"><span class="tgl-sl"></span></label></div>
-      <div class="bss-section-head" data-i18n="bss_opt_gps">Location mode</div>
-      <div class="bss-mode-list">
-        <div class="bss-mode-row" id="bss-gps-0" data-gps="0"><div class="bss-mode-dot"></div><div class="bss-mode-info"><span class="bss-mode-name" data-i18n="bss_gps_0">No restriction</span><span class="bss-mode-desc" data-i18n="bss_gps_hint_0">GPS and all location services work normally at all times. No restriction applied.</span></div></div>
-        <div class="bss-mode-row" id="bss-gps-1" data-gps="1"><div class="bss-mode-dot"></div><div class="bss-mode-info"><span class="bss-mode-name" data-i18n="bss_gps_1">GPS off (screen off)</span><span class="bss-mode-desc" data-i18n="bss_gps_hint_1">GPS satellite chip shuts off when the screen goes off. Wi-Fi and cell-tower location keep working at lower accuracy. Safe for most navigation use cases.</span></div></div>
-        <div class="bss-mode-row" id="bss-gps-2" data-gps="2"><div class="bss-mode-dot"></div><div class="bss-mode-info"><span class="bss-mode-name" data-i18n="bss_gps_2">All off (screen off)</span><span class="bss-mode-desc" data-i18n="bss_gps_hint_2">Every location provider - GPS, Wi-Fi, and cell tower - stops when the screen goes off. Weather widgets, maps, and fitness trackers stop updating in the background.</span></div></div>
-        <div class="bss-mode-row" id="bss-gps-3" data-gps="3"><div class="bss-mode-dot"></div><div class="bss-mode-info"><span class="bss-mode-name" data-i18n="bss_gps_3">Foreground only</span><span class="bss-mode-desc" data-i18n="bss_gps_hint_3">Only the app on screen can access location. Any app running in the background is fully denied, regardless of permissions granted.</span></div></div>
-        <div class="bss-mode-row" id="bss-gps-4" data-gps="4"><div class="bss-mode-dot"></div><div class="bss-mode-info"><span class="bss-mode-name" data-i18n="bss_gps_4">Throttle (screen off)</span><span class="bss-mode-desc" data-i18n="bss_gps_hint_4">Background apps can still get location, but updates are rate-limited when the screen is off. Less battery impact with better app compatibility than a full disable.</span></div></div>
-      </div>
-    </div>
-    <div class="bss-actions"><button class="bss-apply-btn ripple" id="bss-apply"><span data-i18n="bss_apply">Apply &amp; Close</span></button></div>
-  </div>
-</div>
+  var dotsBtn = document.getElementById('hdr-dots-btn');
+  var dropdown = document.getElementById('hdr-dropdown');
+  if (dotsBtn && dropdown) {
+    var setMenu = function (open) {
+      dropdown.classList.toggle('open', open);
+      dotsBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+    dotsBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      setMenu(!dropdown.classList.contains('open'));
+    });
+    document.addEventListener('click', function (e) {
+      if (dropdown.contains(e.target)) return;
+      setMenu(false);
+    });
+    document.addEventListener('scroll', function (e) {
+      if (dropdown.contains(e.target)) return;
+      setMenu(false);
+    }, true);
+  }
 
-<div class="modal-overlay" id="soo-modal">
-  <div class="modal bss-modal">
-    <div class="modal-head"><h3><span data-i18n="soo_modal_title">Screen Off Options</span></h3><button class="modal-x ripple" id="soo-close">&#x2715;</button></div>
-    <div class="bss-opt-list">
-      <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="soo_opt_wifi">Disable Wi-Fi</span><span class="bss-opt-desc" data-i18n="soo_opt_wifi_desc">Turns off Wi-Fi after the connections off delay</span></div><label class="tgl"><input type="checkbox" id="soo-t-wifi"><span class="tgl-sl"></span></label></div>
-      <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="soo_opt_bt">Disable Bluetooth</span><span class="bss-opt-desc" data-i18n="soo_opt_bt_desc">Turns off Bluetooth after the connections off delay</span></div><label class="tgl"><input type="checkbox" id="soo-t-bt"><span class="tgl-sl"></span></label></div>
-      <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="soo_opt_data">Disable mobile data</span><span class="bss-opt-desc" data-i18n="soo_opt_data_desc">Turns off mobile data after the connections off delay</span></div><label class="tgl"><input type="checkbox" id="soo-t-data"><span class="tgl-sl"></span></label></div>
-      <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="soo_opt_location">Disable location</span><span class="bss-opt-desc" data-i18n="soo_opt_location_desc">Turns off all location providers after the connections off delay</span></div><label class="tgl"><input type="checkbox" id="soo-t-location"><span class="tgl-sl"></span></label></div>
-      <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="soo_opt_sensors">Disable sensors</span><span class="bss-opt-desc" data-i18n="soo_opt_sensors_desc">Turns off all sensors (accelerometer, gyroscope, step counter, etc.)</span></div><label class="tgl"><input type="checkbox" id="soo-t-sensors"><span class="tgl-sl"></span></label></div>
-      <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="soo_opt_panel_lpm">Panel LPM</span><span class="bss-opt-desc" data-i18n="soo_opt_panel_lpm_desc">Enables the display panel's low-power mode when screen is off, reducing power draw on brief wake-ups</span></div><label class="tgl"><input type="checkbox" id="soo-t-panel-lpm"><span class="tgl-sl"></span></label></div>
-      <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="soo_opt_conn_delay">Connections off delay</span><span class="bss-opt-desc" data-i18n="soo_opt_conn_delay_desc">Minutes after screen-off before disabling connections</span></div><select id="soo-conn-delay" style="background:var(--surface-3);color:var(--on-surface);border:1px solid var(--stroke-var);border-radius:10px;padding:8px 10px;font-size:0.82rem;font-weight:700;min-width:70px"><option value="1">1 min</option><option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option><option value="20">20 min</option><option value="30">30 min</option><option value="60">60 min</option><option value="120">120 min</option><option value="180">180 min</option><option value="240">240 min</option></select></div>
-      <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="soo_opt_restore">Restore on unlock</span><span class="bss-opt-desc" data-i18n="soo_opt_restore_desc">Re-enables all connections that were disabled when the screen turns back on</span></div><label class="tgl"><input type="checkbox" id="soo-t-restore"><span class="tgl-sl"></span></label></div>
-      <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="soo_opt_ram_clean">Clean RAM on screen off</span><span class="bss-opt-desc" data-i18n="soo_opt_ram_clean_desc">Run RAM cleaner after the delay below</span></div><select id="soo-t-ram-clean-mode" style="background:var(--surface-3);color:var(--on-surface);border:1px solid var(--stroke-var);border-radius:10px;padding:8px 10px;font-size:0.82rem;font-weight:700;min-width:100px"><option value="off" data-i18n="soo_ram_clean_off">Off</option><option value="safe" data-i18n="soo_ram_clean_safe">Safe</option><option value="aggressive" data-i18n="soo_ram_clean_aggressive">Aggressive</option><option value="extreme" data-i18n="soo_ram_clean_extreme">Extreme</option></select></div>
-      <div id="soo-ram-clean-extras" style="overflow:hidden;max-height:0;transition:max-height 0.25s ease">
-        <div class="bss-opt-row"><div class="bss-opt-info"><span class="bss-opt-name" data-i18n="soo_opt_ram_clean_delay">RAM clean delay</span><span class="bss-opt-desc" data-i18n="soo_opt_ram_clean_delay_desc">Minutes after screen-off before running the RAM cleaner</span></div><select id="soo-ram-clean-delay" style="background:var(--surface-3);color:var(--on-surface);border:1px solid var(--stroke-var);border-radius:10px;padding:8px 10px;font-size:0.82rem;font-weight:700;min-width:70px"><option value="1">1 min</option><option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option><option value="20">20 min</option><option value="30">30 min</option><option value="60">60 min</option><option value="120">120 min</option><option value="180">180 min</option><option value="240">240 min</option></select></div>
-      </div>
-    </div>
-    <div class="bss-actions"><button class="bss-apply-btn ripple" id="soo-apply"><span data-i18n="soo_apply">Apply &amp; Close</span></button></div>
-  </div>
-</div>
+  var kpiFill = document.getElementById('kpi-fill');
+  var CIRC = 534.07, KPI_TOTAL = 19;
+  function drawKpiRing() {
+    if (!kpiFill) return;
+    var total = FX.counts().total;
+    kpiFill.style.strokeDashoffset = (CIRC * (1 - total / KPI_TOTAL)).toFixed(2);
+  }
+  FX.on('render', drawKpiRing);
+  drawKpiRing();
 
-<div class="modal-overlay" id="ram-clean-modal">
-  <div class="modal bss-modal ram-clean-modal">
-    <div class="modal-head">
-      <h3><span data-i18n="ram_cleaner_title">RAM Cleaner</span></h3>
-      <button class="modal-x ripple" id="ram-clean-close">&#x2715;</button>
-    </div>
-    <div id="ram-clean-picker" class="rc-picker">
-      <button class="wl-btn ripple" id="ram-wl-open"><span data-i18n="ram_wl_btn">&#x25B6; RAM Cleaner Whitelist</span><span class="wl-count" id="ramwl-count">0</span></button>
-      <p class="ram-clean-sub" data-i18n="ram_cleaner_subtitle">Free up memory by clearing cached processes</p>
-      <div class="ram-clean-modes" id="ram-clean-modes">
-        <button class="ram-clean-mode ripple" data-mode="safe">
-          <span class="rcm-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg></span>
-          <span class="rcm-info"><span class="rcm-name" data-i18n="ram_clean_safe_name">Safe</span><span class="rcm-desc" data-i18n="ram_clean_safe_desc">Releases cached background apps using the system mechanism. Minimal impact, safe to use anytime.</span></span>
-        </button>
-        <button class="ram-clean-mode ripple" data-mode="aggressive">
-          <span class="rcm-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></svg></span>
-          <span class="rcm-info"><span class="rcm-name" data-i18n="ram_clean_aggressive_name">Aggressive</span><span class="rcm-desc" data-i18n="ram_clean_aggressive_desc">Force-stops all 3rd-party apps and drops page cache. Apps will need to reload.</span></span>
-        </button>
-        <button class="ram-clean-mode ripple" data-mode="extreme">
-          <span class="rcm-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67z"/></svg></span>
-          <span class="rcm-info"><span class="rcm-name" data-i18n="ram_clean_extreme_name">Extreme</span><span class="rcm-desc" data-i18n="ram_clean_extreme_desc">Force-stops all apps with critical system exclusions. Maximum RAM recovery.</span></span>
-        </button>
-      </div>
-    </div>
-    <div id="ram-clean-processing" class="rc-proc-wrap" style="display:none">
-      <div id="rc-spinner-wrap" class="rc-spinner-area">
-        <div class="spinner rc-spinner"></div>
-        <div class="rc-proc-mode" id="rc-proc-mode"></div>
-      </div>
-      <div id="rc-result-box" class="rc-result-grid" style="display:none">
-        <div class="rc-stat-card">
-          <div class="rc-stat-val" id="rc-apps-val">—</div>
-          <div class="rc-stat-lbl" data-i18n="rc_stat_apps">Apps stopped</div>
-        </div>
-        <div class="rc-stat-card">
-          <div class="rc-stat-val" id="rc-freed-val">—</div>
-          <div class="rc-stat-lbl" data-i18n="rc_stat_freed">RAM freed</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script src="api.js"></script>
-<script src="app.js"></script>
+  var kpiWrap = document.getElementById('kpi-ring-wrap');
+  function drawHasActive() {
+    var c = FX.counts();
+    if (kpiWrap) kpiWrap.classList.toggle('has-active', c.total > 0);
+    ['tweaks', 'doze', 'gms'].forEach(function (g) {
+      var card = document.querySelector('.status-card[data-fx-nav="' + g + '"]');
+      if (card) card.classList.toggle('has-active', (c[g] || 0) > 0);
+    });
+  }
+  FX.on('render', drawHasActive);
+  drawHasActive();
+})();
+</script>
 </body>
 </html>

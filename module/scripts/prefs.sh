@@ -29,11 +29,12 @@ list_wl() {
 
 add_to_wl() {
   local pkg="$1"
-  [ -z "$pkg" ] && { echo '{"status":"error"}'; return; }
+  _valid_pkg "$pkg" || { echo '{"status":"error"}'; return; }
   local wl="$MODDIR/config/doze_whitelist.txt"
   mkdir -p "$MODDIR/config"
   [ -f "$wl" ] || touch "$wl"
   grep -qFx "$pkg" "$wl" 2>/dev/null || echo "$pkg" >> "$wl"
+  [ "$ENABLE_DEEP_DOZE" = "1" ] && sh "$MODDIR/scripts/deep_doze.sh" unrestrict_pkg "$pkg" >/dev/null 2>&1
   echo '{"status":"ok"}'
 }
 
@@ -45,6 +46,7 @@ remove_from_wl() {
   local escaped
   escaped=$(printf '%s' "$pkg" | sed 's/[][\.*^$\/]/\\&/g')
   sed -i "/^${escaped}$/d" "$wl"
+  [ "$ENABLE_DEEP_DOZE" = "1" ] && sh "$MODDIR/scripts/deep_doze.sh" restrict_pkg "$pkg" >/dev/null 2>&1
   echo '{"status":"ok"}'
 }
 
@@ -67,7 +69,7 @@ list_ram_wl() {
 
 add_to_ram_wl() {
   local pkg="$1"
-  [ -z "$pkg" ] && { echo '{"status":"error"}'; return; }
+  _valid_pkg "$pkg" || { echo '{"status":"error"}'; return; }
   mkdir -p "$MODDIR/config"
   [ -f "$RAM_WL_FILE" ] || touch "$RAM_WL_FILE"
   grep -qFx "$pkg" "$RAM_WL_FILE" 2>/dev/null || echo "$pkg" >> "$RAM_WL_FILE"

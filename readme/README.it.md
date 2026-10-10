@@ -34,14 +34,14 @@ Frosty ottimizza la durata della batteria congelando i servizi GMS, applicando m
 
 - **Congelamento GMS**: Disabilita i servizi GMS in 8 categorie.
 - **App Doze**: Rimuove qualsiasi app dall'elenco delle eccezioni del risparmio energetico Doze di Android. Anche i GMS possono essere selezionati qui, sostituendo il vecchio interruttore dedicato GMS Doze.
-- **Deep Doze**: Restrizioni aggressive in background per tutte le app (Moderato / Massimo).
-- **Ottimizzazione Schermo Spento**: Disabilita le connessioni selezionate (Wi-Fi, Bluetooth, dati, posizione) ed esegue opzionalmente la pulizia RAM dopo un ritardo configurabile di spegnimento schermo, ripristina tutto allo sblocco.
+- **Deep Doze**: Restrizioni in background per tutte le app mentre il dispositivo è bloccato (Minimo / Moderato / Massimo)
+- **Ottimizzazione Schermo Spento**: Disabilita le connessioni selezionate (Wi-Fi, Bluetooth, dati, NFC, posizione, sensori, modalità basso consumo del pannello) ed esegue opzionalmente la pulizia RAM dopo che il dispositivo è rimasto bloccato per un ritardo configurabile, ripristina tutto allo sblocco
 - **Disabilita Tracciamento Google**: Disabilita l'analisi GMS, la telemetria Clearcut, il polling Phenotype e il tracciamento degli annunci.
 - **Tweak del Kernel**: Ottimizzazioni per scheduler, VM, rete e debug.
-- **Ottimizzatore RAM**: Auto-tuning ZRAM, soglie LMK/LMKD/PSI, disabilitazione reclaim OEM, parametri memoria VM (Moderato / Massimo), pulitore RAM configurabile, Profilo multitasking (Prestazioni / Bilanciato / Risparmio energetico)
+- **Ottimizzatore RAM**: Auto-tuning ZRAM, soglie LMK/LMKD/PSI, disabilitazione reclaim OEM, parametri memoria VM (Moderato / Massimo), pulitore RAM configurabile.
 - **Proprietà di Sistema**: Disabilita le proprietà di debug per risparmiare RAM e batteria.
 - **Terminazione Log**: Arresta i processi di log e di debug che consumano batteria.
-- **Ottimizzatore Risparmio Energetico**: Personalizza il comportamento del risparmio energetico integrato di Android quando è attivo, inclusa un'opzione per mantenere la frequenza di aggiornamento massima quando è attivo.
+- **Ottimizzatore Risparmio Energetico**: Personalizza il comportamento del risparmio energetico integrato di Android quando è attivo.
 
 ## Installazione
 
@@ -90,15 +90,19 @@ Apri la WebUI dal tuo gestore root:
 
 ## Livelli Deep Doze
 
-Entrambi i livelli riscrivono le costanti Doze, forzano IDLE mentre il dispositivo è bloccato, eseguono un killer di wakelock dopo 5 minuti di blocco, e attivano la policy flex-idle di JobScheduler su Android 13+. Le restrizioni seguono lo stato di blocco, non lo stato dello schermo: controllare l'ora o guardare il display ambient non resetta nulla, solo lo sblocco lo fa. **Massimo** usa inoltre il bucket di standby `restricted` (Moderato usa `rare`), nega `WAKE_LOCK`, disabilita il sensore di movimento mentre è bloccato, e termina i wakelock immediatamente all'applicazione.
+Tutti i livelli riscrivono le costanti Doze e attivano la policy flex-idle di JobScheduler su Android 14+ dove il sistema lo supporta. **Minimo** è il livello più delicato: timeout Doze più brevi e il bucket di standby `frequent`, senza killer di wakelock, senza negazione di `WAKE_LOCK` e senza restrizione dei sensori. **Moderato** e **Massimo** forzano IDLE mentre il dispositivo è bloccato ed eseguono un killer di wakelock dopo 5 minuti di blocco; dopo quei 5 minuti le app passano al bucket `rare` (Moderato) o `restricted` (Massimo), e lo sblocco le ripristina. Le restrizioni seguono lo stato di blocco, non lo stato dello schermo: controllare l'ora o guardare il display ambient non resetta nulla, solo lo sblocco lo fa. **Massimo** nega inoltre `WAKE_LOCK` per le app limitate, blocca l'accesso ai sensori (incluso solleva-per-svegliare) per ogni app tranne il dialer predefinito mentre è bloccato (ripristinato durante le chiamate e allo sblocco), e termina i wakelock immediatamente all'applicazione.
 
 ## Ottimizzatore RAM
 
-Auto-tiene la compressione ZRAM, le soglie LMK / LMKD / PSI, i nodi di reclaim OEM e i parametri di memoria VM. **Massimo** scala i pesi LMK di ~60-70% verso l'alto e usa soglie LMKD/PSI più proattive. Il Profilo multitasking (Prestazioni / Bilanciato / Risparmio energetico) controlla separatamente quante app in background l'ActivityManager mantiene pronte per riprendere istantaneamente.
+Auto-tiene la compressione ZRAM, le soglie LMK / LMKD / PSI, i nodi di reclaim OEM e i parametri di memoria VM. **Massimo** scala i pesi LMK di ~50-70% verso l'alto e usa soglie LMKD/PSI più proattive. Il Profilo multitasking (Prestazioni / Bilanciato / Risparmio energetico) controlla separatamente quante app in background l'ActivityManager mantiene pronte per riprendere istantaneamente.
 ## FAQ
 
 **D: Perché le mie notifiche sono in ritardo?**  
-R: App Doze e Deep Doze limitano l'attività in background. Aggiungi le tue app di messaggistica alla whitelist di Deep Doze nella WebUI. GMS/Firebase stesso è in whitelist per impostazione predefinita, quindi la consegna push resta intatta, ma le app di messaggistica di terze parti devono comunque essere aggiunte alla whitelist di Deep Doze nella WebUI.
+R: App Doze e Deep Doze limitano l'attività in background. Aggiungi le tue app di messaggistica alla whitelist di Deep Doze nella WebUI.
+
+
+**D: Cosa succede se disabilito il modulo nel gestore invece di spegnere le funzioni?**  
+R: Frosty smette di funzionare al prossimo riavvio, ma le impostazioni che ha già scritto (costanti Doze, bucket di standby, app ops, impostazioni di sistema) restano attive e i suoi monitor continuano a funzionare finché non riavvii. Spegni prima le funzioni nella WebUI, poi disabilita il modulo. Rimuovere il modulo esegue la reversione di disinstallazione di Frosty al prossimo riavvio.
 
 **D: Dov'è finito GMS Doze?**  
 R: Ora fa parte di App Doze. Apri il selettore di App Doze e seleziona GMS: stesso effetto, interfaccia unificata.
@@ -116,7 +120,7 @@ R: No. Tutto è spento per impostazione predefinita. Abilita solo ciò di cui ha
 - **Azyrn** [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** [Script di disabilitazione componenti GMS](https://t.me/MoZoiDStack/137)
 - **s1m** [SaverTuner](https://codeberg.org/s1m/savertuner)
-- [xizt158](https://github.com/xizt159) per molti contributi di qualità
+- [xizt159](https://github.com/xizt159) per molti contributi di qualità
 
 ## Licenza
 

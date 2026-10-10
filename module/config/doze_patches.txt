@@ -1,7 +1,7 @@
 # Frosty - Custom App Doze
 # Apps listed here are removed from Android's Doze power-save exemption list.
 # Add package names one per line. Lines starting with # are comments.
-# Note: Add com.google.android.gms to enable GMS Doze.
+# Note: Add com.google.android.gms to include Google Play Services in App Doze.
 # Common apps that tend to bypass battery optimization:
 #   com.android.vending
 #   com.google.android.apps.tachyon

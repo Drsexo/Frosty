@@ -6,6 +6,7 @@ MODVER=$(grep "^version=" "$MODDIR/module.prop" 2>/dev/null | cut -d= -f2)
 LOGDIR="$MODDIR/logs"
 SERVICES_LOG="$LOGDIR/services.log"
 RAM_LOG="$LOGDIR/ram.log"
+MT_LOG="$LOGDIR/multitask.log"
 TWEAKS_LOG="$LOGDIR/kernel_tweaks.log"
 PROPS_LOG="$LOGDIR/props.log"
 BS_LOG="$LOGDIR/battery_saver.log"
@@ -32,6 +33,7 @@ mkdir -p "$LOGDIR" "$MODDIR/config" "$MODDIR/tmp" "$MODDIR/backup"
 
 log_service() { printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$1" >> "$SERVICES_LOG"; }
 log_ram()     { printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$1" >> "$RAM_LOG"; }
+log_mt()      { printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$1" >> "$MT_LOG"; }
 log_tweak()   { printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$1" >> "$TWEAKS_LOG"; }
 log_props()   { printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$1" >> "$PROPS_LOG"; }
 log_bss()     { printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$1" >> "$BS_LOG"; }
@@ -79,15 +81,7 @@ _devcfg_restore() {
   fi
 }
 
-get_fg_pkg() {
-  local _pkg
-  _pkg=$(dumpsys activity activities 2>/dev/null \
-    | grep -m1 "mResumedActivity\|topResumedActivity" \
-    | sed -n 's/.*{[^ ]* [^ ]* \([^/]*\)\/.*/\1/p' | tr -d ' ')
-  if [ -z "$_pkg" ]; then
-    _pkg=$(dumpsys window windows 2>/dev/null \
-      | grep -m1 "mCurrentFocus\|mFocusedWindow" \
-      | sed -n 's/.*{[^ ]* [^ ]* \([^/]*\)\/.*/\1/p' | tr -d ' ')
-  fi
-  printf '{"pkg":"%s"}\n' "${_pkg:-}"
+_valid_pkg() {
+  case "$1" in ''|*[!A-Za-z0-9_.]*|[!A-Za-z]*) return 1 ;; esac
+  return 0
 }

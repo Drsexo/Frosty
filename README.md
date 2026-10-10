@@ -34,8 +34,8 @@ Frosty optimizes battery life by freezing GMS services, applying system-wide doz
 
 - **GMS Freezing**: Disable GMS services across 8 categories
 - **App Doze**: Remove any app from Android's Doze power-save exemption list. GMS is selectable here too, replacing the old dedicated GMS Doze toggle
-- **Deep Doze**: Aggressive background restrictions for all apps (Moderate / Maximum)
-- **Screen Off Optimization**: Disable selected connections (Wi-Fi, Bluetooth, data, location) and optionally run the RAM cleaner after a configurable screen-off delay, restores on unlock
+- **Deep Doze**: Background restrictions for all apps while the device is locked (Minimum / Moderate / Maximum)
+- **Screen Off Optimization**: Disable selected connections (Wi-Fi, Bluetooth, data, NFC, location, sensors, panel low-power mode) and optionally run the RAM cleaner after the device has been locked for a configurable delay, restores on unlock
 - **Kill Google Tracking**: Disables GMS analytics, Clearcut telemetry, Phenotype polling, and ad tracking
 - **Kernel Tweaks**: Scheduler, VM, network, and debug optimizations
 - **RAM Optimizer**: ZRAM auto-tuning, LMK/LMKD/PSI thresholds, OEM reclaim disabling, VM memory params (Moderate / Maximum), configurable RAM Cleaner, Multitasking Profile (Performance / Balanced / Power Saving)
@@ -89,16 +89,19 @@ Open the WebUI from your root manager:
 
 ## Deep Doze Levels
 
-Both levels rewrite Doze constants, force IDLE while the device is locked, run a 5-min wakelock killer once it's been locked that long, and enable JobScheduler flex-idle on Android 13+. Restrictions follow lock state, not screen state: checking the time or glancing at ambient display doesn't reset anything, only unlocking does. **Maximum** additionally uses the `restricted` standby bucket (Moderate uses `rare`), denies `WAKE_LOCK`, disables the motion sensor while locked, and kills wakelocks immediately on apply.
+All levels rewrite Doze constants and enable JobScheduler flex-idle on Android 14+ where the system supports it. **Minimum** is the gentlest tier: shorter Doze timeouts and the `frequent` standby bucket, with no wakelock killer, no `WAKE_LOCK` denial and no sensor restriction. **Moderate** and **Maximum** force IDLE while the device is locked and run a 5-min wakelock killer once it has been locked that long; after those 5 minutes apps move to the `rare` bucket (Moderate) or the `restricted` bucket (Maximum), and unlocking restores them. Restrictions follow lock state, not screen state: checking the time or glancing at ambient display doesn't reset anything, only unlocking does. **Maximum** additionally denies `WAKE_LOCK` for restricted apps, blocks sensor access (including lift-to-wake) for every app except the default dialer while locked (restored during calls and on unlock), and kills wakelocks immediately on apply.
 
 ## RAM Optimizer
 
-Auto-tunes ZRAM compression, LMK / LMKD / PSI thresholds, OEM reclaim nodes, and VM memory params. **Maximum** scales LMK weights up ~60-70% and uses more proactive LMKD/PSI thresholds. Multitasking Profile (Performance / Balanced / Power Saving) separately controls how many background apps ActivityManager keeps ready to resume instantly.
+Auto-tunes ZRAM compression, LMK / LMKD / PSI thresholds, OEM reclaim nodes, and VM memory params. **Maximum** scales LMK weights up ~50-70% and uses more proactive LMKD/PSI thresholds. Multitasking Profile (Performance / Balanced / Power Saving) separately controls how many background apps ActivityManager keeps ready to resume instantly.
 
 ## FAQ
 
 **Q: Why are my notifications delayed?**  
 A: App Doze and Deep Doze restrict background activity. GMS/Firebase itself is whitelisted by default so push delivery stays intact, but third-party messaging apps still need to be added to the Deep Doze whitelist in the WebUI.
+
+**Q: What happens if I disable the module in the manager instead of turning features off?**  
+A: Frosty stops running at the next boot, but settings it already wrote (Doze constants, standby buckets, app ops, system settings) stay in place and its monitors keep running until you reboot. Turn the features off in the WebUI first, then disable the module. Removing the module runs Frosty's uninstall revert at the next boot.
 
 **Q: Where did GMS Doze go?**  
 A: It's now part of App Doze. Open the App Doze picker and select GMS, same effect, unified interface.

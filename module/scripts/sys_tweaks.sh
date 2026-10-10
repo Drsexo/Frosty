@@ -5,7 +5,8 @@ apply_system_props() {
     fi
     echo "Frosty v${MODVER:-?} - Props - $(date '+%Y-%m-%d %H:%M:%S')" > "$PROPS_LOG"
     if [ -f "$SYSPROP" ]; then
-      local pc=$(grep -c '^[^#]' "$SYSPROP" 2>/dev/null || echo "0")
+      local pc=$(grep -c '^[^#]' "$SYSPROP" 2>/dev/null)
+      pc=${pc:-0}
       log_props "[OK] system.prop ENABLED - $pc props, reboot for effect"
     else
       log_props "[WARN] system.prop ENABLED but file missing"
@@ -67,11 +68,7 @@ apply_blur() {
       _set_prop "${_pv%%=*}" "${_pv#*=}"
     done
 
-    if [ "${_sdk:-0}" -ge 29 ]; then
-      cmd window disable-blur 1 >/dev/null 2>&1
-    else
-      cmd wm disable-blur 1 >/dev/null 2>&1
-    fi
+    [ "${_sdk:-0}" -ge 29 ] && cmd window disable-blur 1 >/dev/null 2>&1
 
     if [ "$_partial" = "1" ]; then
       echo '{"status":"ok","blur":"partial","message":"Some properties need Magisk/resetprop or a reboot to apply"}'
@@ -121,11 +118,7 @@ apply_blur() {
       _del_prop "$_p"
     done
 
-    if [ "${_sdk:-0}" -ge 29 ]; then
-      cmd window disable-blur 0 >/dev/null 2>&1
-    else
-      cmd wm disable-blur 0 >/dev/null 2>&1
-    fi
+    [ "${_sdk:-0}" -ge 29 ] && cmd window disable-blur 0 >/dev/null 2>&1
 
     echo '{"status":"ok","blur":"enabled","message":"Reboot for full effect"}'
   fi

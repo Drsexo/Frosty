@@ -34,14 +34,14 @@ Frosty 通过冻结 GMS 服务、应用系统级 Doze 增强以及自动化息�
 
 - **GMS 冻结**：在 8 个类别中禁用 GMS 服务。
 - **App Doze**：将任何应用从 Android 的 Doze 省电豁免名单中移除。这里也支持选择 GMS，从而取代了旧版专用的 GMS Doze 开关。
-- **Deep Doze**：对所有应用实施激进的后台限制（中度 / 最高）。
-- **息屏优化**：禁用所选连接（Wi-Fi、蓝牙、移动数据、定位），并在可配置的息屏延迟后可选运行 RAM 清理器，解锁时恢复所有内容。
+- **Deep Doze**：设备锁定时所有应用的后台限制 (最低 / 中度 / 最高)
+- **息屏优化**：禁用所选连接（Wi-Fi、蓝牙、数据、NFC、定位、传感器、面板低功耗模式），并在设备锁定设定时间后可选运行 RAM 清理器，解锁时恢复
 - **禁用 Google 跟踪**：禁用 GMS 分析、Clearcut 遥测、Phenotype 轮询以及广告跟踪。
 - **内核优化**：调度器、虚拟机 (VM)、网络和调试优化。
-- **RAM 优化器**：ZRAM 自动调优、LMK/LMKD/PSI 阈值、OEM reclaim 禁用、VM 内存参数（中度 / 最高）、可配置的 RAM 清理器、多任务配置文件 (性能 / 均衡 / 省电)。
+- **RAM 优化器**：ZRAM 自动调优、LMK/LMKD/PSI 阈值、OEM reclaim 禁用、VM 内存参数（中度 / 最高），可配置的 RAM 清理器。
 - **系统 Props**：禁用调试属性以节省 RAM 和电池。
 - **终止日志**：强制停止耗电的日志记录和调试进程。
-- **省电模式调节器**：自定义 Android 内置省电模式处于活动状态时的行为，包括在其开启时保持最大刷新率的选项。
+- **省电模式调节器**：自定义 Android 内置省电模式处于活动状态时的行为。
 
 ## 安装
 
@@ -66,7 +66,7 @@ Frosty 通过冻结 GMS 服务、应用系统级 Doze 增强以及自动化息�
 - **系统优化**：内核优化、系统 Props、禁用模糊、终止日志、禁用跟踪、RAM 优化器和清理器。
 - **Doze**：带有应用选择器的 App Doze，以及带有级别选择和白名单编辑器的 Deep Doze。
 - **息屏优化**：每项连接的独立开关、延迟计时器、解锁时恢复。
-- **GMS 类别**：冻结单独的 GMS 服务组，或使用全部启用 / 全部禁用来批量处理尚未处于所需状态的类别。
+- **GMS 类别**：冻结单独的 GMS 服务组。
 - **省电模式调节器**：微调省电模式的行为。
 - **导入 / 导出**：备份和恢复您的完整配置。
 
@@ -90,7 +90,7 @@ Frosty 通过冻结 GMS 服务、应用系统级 Doze 增强以及自动化息�
 
 ## Deep Doze 级别
 
-两个级别都会重写 Doze 常量、在设备锁定时强制 IDLE 状态、锁定 5 分钟后运行 wakelock 终止器，并在 Android 13+ 上启用 JobScheduler flex-idle 策略。限制跟随锁定状态，而非屏幕状态：查看时间或瞥一眼息屏显示不会重置任何内容，只有解锁才会。**最高**级别还会使用 `restricted` 待机桶（中度使用 `rare`）、拒绝 `WAKE_LOCK`、在锁定时禁用运动传感器，并在应用时立即终止 wakelock。
+所有级别都会重写 Doze 常量，并在系统支持的 Android 14+ 上启用 JobScheduler flex-idle 策略。**最低**是最温和的级别：较短的 Doze 超时和 `frequent` 待机桶，没有 wakelock 终止器，没有 `WAKE_LOCK` 拒绝和传感器限制。**中度**和**最高**在设备锁定时强制 IDLE，并在锁定 5 分钟后运行 wakelock 终止器；在这 5 分钟后应用移动到 `rare` 桶（中度）或 `restricted` 桶（最高），解锁恢复它们。限制跟随锁定状态，而非屏幕状态：查看时间或瞥一眼息屏显示不会重置任何内容，只有解锁才会。**最高**还拒绝受限应用的 `WAKE_LOCK`，在锁定时阻止除默认拨号器外所有应用的传感器访问（包括抬起唤醒）（通话期间和解锁时恢复），并在应用时立即终止 wakelock。
 
 ## RAM 优化器
 
@@ -98,7 +98,11 @@ Frosty 通过冻结 GMS 服务、应用系统级 Doze 增强以及自动化息�
 ## 常见问题
 
 **问：为什么我的通知会延迟？**
-答：App Doze 和 Deep Doze 会限制后台活动。请在 WebUI 中将您的即时通讯应用添加到 Deep Doze 白名单中。GMS/Firebase 本身默认在白名单中，因此推送投递保持不变，但第三方即时通讯应用仍需在 WebUI 中添加到 Deep Doze 白名单。
+答：App Doze 和 Deep Doze 会限制后台活动。请在 WebUI 中将您的即时通讯应用添加到 Deep Doze 白名单中。
+
+
+**问：如果我在管理器中禁用模块而不是关闭功能会怎样？**  
+答：Frosty 在下次启动时停止运行，但它已写入的设置（Doze 常量、待机桶、应用操作、系统设置）保持不变，其监视器继续运行直到重启。请先在 WebUI 中关闭功能，然后禁用模块。移除模块会在下次启动时运行 Frosty 的卸载还原。
 
 **问：GMS Doze 去哪了？**
 答：它现在属于 App Doze 的一部分。打开 App Doze 选择器并选择 GMS，效果是一样的，只是界面更加统一。
@@ -116,7 +120,7 @@ Frosty 通过冻结 GMS 服务、应用系统级 Doze 增强以及自动化息�
 - **Azyrn** [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** [GMS 组件禁用脚本](https://t.me/MoZoiDStack/137)
 - **s1m** [SaverTuner](https://codeberg.org/s1m/savertuner)
-- [xizt158](https://github.com/xizt159) 感谢其多项高质量贡献
+- [xizt159](https://github.com/xizt159) 感谢其多项高质量贡献
 
 ## 许可证
 

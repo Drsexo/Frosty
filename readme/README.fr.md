@@ -34,14 +34,14 @@ Frosty optimise la durée de vie de la batterie en gelant les services GMS, en a
 
 - **Gel des GMS** : Désactivez les services GMS à travers 8 catégories.
 - **App Doze** : Retirez n'importe quelle application de la liste d'exemption d'économie d'énergie Doze d'Android. GMS est également sélectionnable ici, remplaçant l'ancien interrupteur dédié GMS Doze.
-- **Deep Doze** : Restrictions agressives en arrière-plan pour toutes les applications (Modéré / Maximum).
-- **Optimisation Écran Éteint** : Désactive les connexions sélectionnées (Wi-Fi, Bluetooth, données, localisation) et exécute optionnellement le nettoyage RAM après un délai configurable d'extinction de l'écran, restaure au déverrouillage.
+- **Deep Doze** : Restrictions en arrière-plan pour toutes les applications pendant que l'appareil est verrouillé (Minimum / Modéré / Maximum)
+- **Optimisation Écran Éteint** : Désactive les connexions sélectionnées (Wi-Fi, Bluetooth, données, NFC, localisation, capteurs, mode basse consommation du panneau) et exécute optionnellement le nettoyage RAM après que l'appareil est resté verrouillé pendant un délai configurable, restaure au déverrouillage
 - **Désactiver le suivi Google** : Désactive les analyses GMS, la télémétrie Clearcut, le polling Phenotype et le suivi publicitaire.
 - **Ajustements du Kernel** : Optimisations du planificateur, de la VM, du réseau et du débogage.
-- **Optimiseur de RAM** : Réglage automatique ZRAM, seuils LMK/LMKD/PSI, désactivation de la récupération OEM, paramètres mémoire VM (Modéré / Maximum), Nettoyeur RAM configurable, Profil multitâche (Performance / Équilibré / Économie d'énergie)
+- **Optimiseur de RAM** : Réglage automatique ZRAM, seuils LMK/LMKD/PSI, désactivation de la récupération OEM, paramètres mémoire VM (Modéré / Maximum), Nettoyeur RAM configurable.
 - **Props Système** : Désactivez les propriétés de débogage pour économiser la RAM et la batterie.
 - **Arrêt des Logs** : Arrête les processus de journalisation (logs) et de débogage qui drainent la batterie.
-- **Tuner Économiseur de Batterie** : Personnalisez ce que fait l'économiseur de batterie intégré à Android lorsqu'il est actif, y compris une option pour conserver le taux de rafraîchissement maximal lorsqu'il est actif.
+- **Tuner Économiseur de Batterie** : Personnalisez ce que fait l'économiseur de batterie intégré à Android lorsqu'il est actif.
 
 ## Installation
 
@@ -90,7 +90,7 @@ Ouvrez la WebUI depuis votre gestionnaire root :
 
 ## Niveaux de Deep Doze
 
-Les deux niveaux réécrivent les constantes Doze, forcent l'état IDLE pendant que l'appareil est verrouillé, exécutent un tueur de wakelocks après 5 minutes de verrouillage, et activent la politique flex-idle du JobScheduler sur Android 13+. Les restrictions suivent l'état de verrouillage, pas l'état de l'écran : consulter l'heure ou regarder l'écran ambiant ne réinitialise rien, seul le déverrouillage le fait. Le niveau **Maximum** utilise en plus le bucket de standby `restricted` (le Modéré utilise `rare`), refuse `WAKE_LOCK`, désactive le capteur de mouvement pendant le verrouillage, et tue les wakelocks immédiatement lors de l'application.
+Tous les niveaux réécrivent les constantes Doze et activent la politique flex-idle du JobScheduler sur Android 14+ lorsque le système le prend en charge. **Minimum** est le niveau le plus doux : des délais Doze plus courts et le bucket de standby `frequent`, sans tueur de wakelocks, sans refus de `WAKE_LOCK` et sans restriction de capteur. **Modéré** et **Maximum** forcent l'état IDLE pendant que l'appareil est verrouillé et exécutent un tueur de wakelocks après 5 minutes de verrouillage ; après ces 5 minutes les applications passent au bucket `rare` (Modéré) ou `restricted` (Maximum), et le déverrouillage les restaure. Les restrictions suivent l'état de verrouillage, pas l'état de l'écran : consulter l'heure ou regarder l'écran ambiant ne réinitialise rien, seul le déverrouillage le fait. **Maximum** refuse en plus `WAKE_LOCK` pour les applications restreintes, bloque l'accès aux capteurs (y compris lever-pour-réveiller) pour toutes les applications sauf le dialer par défaut pendant le verrouillage (restauré pendant les appels et au déverrouillage), et tue les wakelocks immédiatement lors de l'application.
 
 ## Optimiseur RAM
 
@@ -98,7 +98,11 @@ Réglage automatique de la compression ZRAM, des seuils LMK / LMKD / PSI, des n�
 ## FAQ
 
 **Q : Pourquoi mes notifications sont-elles retardées ?**  
-R : App Doze et Deep Doze restreignent l'activité en arrière-plan. Ajoutez vos applications de messagerie à la liste blanche de Deep Doze dans la WebUI. GMS/Firebase lui-même est sur liste blanche par défaut, donc la livraison push reste intacte, mais les applications de messagerie tierces doivent toujours être ajoutées à la liste blanche de Deep Doze dans la WebUI.
+R : App Doze et Deep Doze restreignent l'activité en arrière-plan. Ajoutez vos applications de messagerie à la liste blanche de Deep Doze dans la WebUI.
+
+
+**Q : Que se passe-t-il si je désactive le module dans le gestionnaire au lieu d'éteindre les fonctionnalités ?**  
+R : Frosty cesse de fonctionner au prochain redémarrage, mais les paramètres qu'il a déjà écrits (constantes Doze, buckets de standby, app ops, paramètres système) restent en place et ses moniteurs continuent de fonctionner jusqu'à ce que vous redémarriez. Éteignez d'abord les fonctionnalités dans la WebUI, puis désactivez le module. Supprimer le module exécute la réversion de désinstallation de Frosty au prochain redémarrage.
 
 **Q : Où est passé GMS Doze ?**  
 R : Il fait désormais partie de App Doze. Ouvrez le sélecteur d'App Doze et sélectionnez GMS, même effet, interface unifiée.
@@ -116,7 +120,7 @@ R : Non. Tout est désactivé par défaut. Activez uniquement ce dont vous avez 
 - **Azyrn** [DeepDoze Enforcer](https://github.com/Azyrn/DeepDoze-Enforcer)
 - **MoZoiD** [Script de désactivation des composants GMS](https://t.me/MoZoiDStack/137)
 - **s1m** [SaverTuner](https://codeberg.org/s1m/savertuner)
-- [xizt158](https://github.com/xizt159) pour de nombreuses contributions de qualité
+- [xizt159](https://github.com/xizt159) pour de nombreuses contributions de qualité
 
 ## Licence
 

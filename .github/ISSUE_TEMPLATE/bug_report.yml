@@ -85,7 +85,7 @@ body:
     id: frosty_version
     attributes:
       label: Frosty version
-      placeholder: e.g. 3.5
+      placeholder: e.g. 4.5
     validations:
       required: true
 
@@ -97,12 +97,16 @@ body:
         - Kernel Tweaks
         - System Props
         - RAM Optimizer
+        - Multitasking Profile
         - Kill Logs
         - Kill Google Tracking
-        - GMS Doze
+        - GMS Freezing
+        - App Doze
         - Deep Doze
         - Battery Saver Tuner
+        - Screen Off Optimization
         - Doze Whitelist
+        - Import / Export
         - WebUI / Interface
         - Install / Uninstall
         - Other
