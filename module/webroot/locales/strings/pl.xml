@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="hdr_sub">Optymalizator baterii</string>
-  <string name="kpi_sub">z 19 aktywnych</string>
+  <string name="kpi_sub">z {max} aktywnych</string>
   <string name="status_count">{0} z {1} aktywnych</string>
-  <string name="home_active">aktywne</string>
   <string name="menu_io">Import / Eksport</string>
   <string name="menu_lang">Język</string>
   <string name="menu_bugreport">Zgłoś błąd</string>
@@ -49,7 +48,6 @@
   <string name="loading_reverting_kernel">Przywracanie kernela...</string>
   <string name="log_kernel_applied">Kernel: {0} zastosowano, {1} niepowodzenie/nie znaleziono, {2} pominięto</string>
   <string name="log_kernel_restored">Kernel: {0} przywrócono</string>
-  <string name="log_kernel_vals_restored">Kernel: {0} wartości przywrócono</string>
   <string name="tgl_sysprops">Props systemu</string>
   <string name="tgl_sysprops_desc">Wyłącza logowanie debugowania, oszczędza baterię i RAM</string>
   <string name="loading_applying_sysprops">Włączanie propsów systemu...</string>
@@ -61,7 +59,6 @@
   <string name="tgl_blur_desc">Zmniejsza obciążenie GPU, płynniejsze na słabszych urządzeniach</string>
   <string name="loading_applying_blur">Stosowanie ustawień rozmycia...</string>
   <string name="log_blur_state">Rozmycie: {0}</string>
-  <string name="log_blur_restored">Rozmycie przywrócone</string>
   <string name="tgl_logs">Zabij logi</string>
   <string name="tgl_logs_desc">Zatrzymuje procesy logowania w tle, zwalnia RAM</string>
   <string name="loading_killing_logs">Zabijanie procesów logów...</string>
@@ -80,7 +77,6 @@
   <string name="cad_btn">▶ Zarządzaj aplikacjami</string>
   <string name="cad_title">Doze aplikacji</string>
   <string name="cad_notice">Wybrane aplikacje zostaną usunięte z listy wyjątków Doze Androida, aby system operacyjny mógł je zoptymalizować. GMS można wybrać dla GMS Doze.</string>
-  <string name="cad_search">Szukaj aplikacji...</string>
   <string name="cad_loading">Ładowanie...</string>
   <string name="cad_empty">Nie znaleziono aplikacji</string>
   <string name="cad_warn_system">⚠ Ten pakiet jest wymagany przez system i nie może zostać dodany</string>
@@ -105,7 +101,6 @@
   <string name="wl_system">System</string>
   <string name="wl_loading">Ładowanie aplikacji...</string>
   <string name="wl_empty">Nie znaleziono aplikacji</string>
-  <string name="wl_sep_other">Inne aplikacje</string>
   <string name="loading_applying_deep_doze">Stosowanie Głębokiego Doze...</string>
   <string name="loading_reverting_deep_doze">Przywracanie Głębokiego Doze...</string>
   <string name="loading_reapplying_deep">Ponowne stosowanie Głębokiego Doze...</string>
@@ -121,13 +116,11 @@
     <string name="multitask_title">Profil wielozadaniowości</string>
 <string name="multitask_desc">Dostosuj, jak szybko aplikacje w tle są zamykane, aby zwolnić pamięć RAM. Wydajność utrzymuje więcej aplikacji gotowych. Oszczędzanie energii zamyka ich więcej szybciej.</string>
   <string name="log_multitask_profile">Profil wielozadaniowości ustawiony na {0}</string>
-  <string name="log_multitask_reapplied">Profil wielozadaniowości ponownie zastosowany</string>
   <string name="loading_applying_mt">Stosowanie profilu wielozadaniowości...</string>
   <string name="loading_reverting_mt">Przywracanie profilu wielozadaniowości...</string>
   <string name="log_mt_enabled">Profil wielozadaniowości włączony: {0}</string>
   <string name="log_mt_reverted">Profil wielozadaniowości przywrócony</string>
   <string name="log_mt_reapplied">Profil wielozadaniowości ponownie zastosowany</string>
-  <string name="log_mt_ram_off">Profil wielozadaniowości wyłączony razem z optymalizatorem RAM</string>
   <string name="ram_wl_btn">▶ Biała lista czyszczenia RAM</string>
   <string name="ram_wl_title">Biała lista czyszczenia RAM</string>
   <string name="ram_wl_notice">Aplikacje na białej liście nigdy nie są wymuszone zatrzymywane przez czyszczenie RAM.</string>
@@ -184,13 +177,10 @@
   <string name="cat_games">Gry</string>
   <string name="cat_games_tag">Psuje · Play Games</string>
   <string name="loading_freezing_services">Wyłączanie usług GMS...</string>
-  <string name="loading_freezing_cats">Wyłączanie kategorii GMS...</string>
   <string name="log_gms_frozen">GMS: {0} wyłączono, {1} ponownie włączono, {2} niepowodzenie/nie znaleziono</string>
   <string name="log_gms_restored">GMS: {0} ponownie włączono, {1} niepowodzenie/nie znaleziono</string>
   <string name="log_cat_frozen">{0}: {1} wyłączono, {2} niepowodzenie/nie znaleziono</string>
   <string name="log_cat_restored">{0}: {1} ponownie włączono, {2} niepowodzenie/nie znaleziono</string>
-  <string name="log_cats_enabled">Wszystkie kategorie GMS włączone</string>
-  <string name="log_cats_disabled">Wszystkie kategorie GMS wyłączone</string>
   <string name="cat_bulk_enable">Włącz wszystkie</string>
   <string name="cat_bulk_disable">Wyłącz wszystkie</string>
   <string name="loading_enabling_all_cats">Włączanie pozostałych kategorii...</string>
@@ -240,7 +230,6 @@
   <string name="loading_reverting_bss">Przywracanie oszczędzania baterii...</string>
   <string name="log_bss_applied">Profil oszczędzania baterii zastosowano</string>
   <string name="log_bss_reverted">Oszczędzanie baterii przywrócono</string>
-  <string name="log_bss_reapplied">Oszczędzanie baterii ponownie zastosowano</string>
   <string name="tgl_ram_optimizer">Optymalizator RAM</string>
   <string name="tgl_ram_optimizer_desc">Ogranicza procesy w tle w pamięci podręcznej i puste, dostosowuje zachowanie swapu zram dla większej ilości wolnego RAM</string>
   <string name="loading_applying_ram">Stosowanie optymalizatora RAM...</string>
@@ -260,7 +249,6 @@
   <string name="rc_stat_freed">RAM zwolniony</string>
   <string name="io_title">Import / Eksport</string>
   <string name="io_export">Eksportuj bieżące ustawienia</string>
-  <string name="io_backups">Zapisane kopie zapasowe</string>
   <string name="io_empty">Nie znaleziono kopii zapasowych</string>
   <string name="io_loading">Ładowanie...</string>
   <string name="io_error">Błąd ładowania kopii zapasowych</string>
@@ -275,7 +263,6 @@
   <string name="bugreport_title">Zgłoś błąd</string>
   <string name="bugreport_notice">Zbiera informacje techniczne o urządzeniu, konfigurację i logi Frosty oraz listę innych zainstalowanych modułów. Dołącz ten plik podczas zgłaszania błędu.</string>
   <string name="bugreport_generate">Wygeneruj raport o błędzie</string>
-  <string name="bugreport_saved">Zapisane raporty</string>
   <string name="bugreport_empty">Nie znaleziono raportów o błędach</string>
   <string name="bugreport_generated">Raport o błędzie zapisany w Frosty/Logs</string>
   <string name="bugreport_failed">Nie udało się wygenerować raportu o błędzie</string>
@@ -286,19 +273,11 @@
   <string name="loading_freezing">Wyłączanie</string>
   <string name="loading_unfreezing">Włączanie ponownie</string>
   <string name="loading_enabling_all">Włączanie wszystkich ustawień...</string>
-  <string name="loading_enabling_toggles">Włączanie wszystkich przełączników...</string>
   <string name="loading_reverting_all">Przywracanie wszystkiego...</string>
-  <string name="loading_disabling_toggles">Wyłączanie wszystkich przełączników...</string>
-  <string name="loading_disabling_cats">Wyłączanie wszystkich kategorii...</string>
-  <string name="loading_restoring_kernel">Przywracanie wartości kernela...</string>
-  <string name="loading_re_enabling_gms">Ponowne włączanie usług GMS...</string>
-  <string name="loading_restoring_blur">Przywracanie rozmycia...</string>
   <string name="loading_reapplying">Ponowne stosowanie ustawień...</string>
   <string name="log_freeze_all">Włącz wszystko: włączanie wszystkiego...</string>
   <string name="log_reverting_all">Przywróć wszystko: wyłączanie wszystkiego...</string>
   <string name="log_reapply_start">Rozpoczynanie ponownego stosowania...</string>
-  <string name="log_toggles_enabled">Wszystkie przełączniki systemowe włączone</string>
-  <string name="log_toggles_disabled">Wszystkie przełączniki systemowe wyłączone</string>
   <string name="toast_frozen">Wszystko wyłączono i zastosowano</string>
   <string name="toast_stocked">Wszystko przywrócono do ustawień fabrycznych</string>
   <string name="toast_refreshed">Odświeżono</string>
@@ -312,7 +291,6 @@
   <string name="toast_nothing_to_apply">Nic do zastosowania — najpierw coś włącz</string>
   <string name="sec_log">Dziennik aktywności</string>
   <string name="log_webui_ready">WebUI gotowe</string>
-  <string name="log_empty">Brak aktywności</string>
   <string name="log_reboot_effect">Uruchom ponownie dla pełnego efektu</string>
   <string name="log_not_applied">Zapisane ustawienia nie są jeszcze zastosowane. Uruchom ponownie lub użyj Wymuś ponowne zastosowanie ustawień.</string>
   <string name="kpi_title">Status systemu</string>
@@ -326,8 +304,5 @@
   <string name="theme_retro_desc">Klasyczny wygląd Windows 95.</string>
   <string name="theme_terminal_desc">Ekran fosforowy CRT z wiersza poleceń.</string>
   <string name="theme_handheld_desc">Powłoka przenośnej konsoli do gier.</string>
-  <string name="about_github">Zobacz na GitHub</string>
   <string name="about_desc">Maksymalne oszczędzanie baterii i optymalizacja GMS. Zamrażaj usługi GMS, włączaj Doze, zabijaj logi, stosuj optymalizacje kernela. Użyj przycisku WebUI do edycji ustawień.</string>
-  <string name="ksu_unavailable_title">API KSU niedostępne</string>
-  <string name="ksu_unavailable_desc">Ten WebUI wymaga KernelSU. Dla Magisk/APatch użyj przycisku Akcja lub WebUI-X.</string>
 </resources>

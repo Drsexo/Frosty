@@ -4,18 +4,20 @@ _MT_LEGACY_KEYFILE="$MODDIR/tmp/multitask_keys.txt"
 
 _revert_multitask_keys() {
   rm -f "$_MT_LEGACY_KEYFILE" "$MT_BASE"
-  [ -f "$MT_KEYFILE" ] || return 1
-  while IFS= read -r _mtkey; do
-    [ -z "$_mtkey" ] && continue
-    _devcfg_restore activity_manager "$_mtkey"
-  done < "$MT_KEYFILE"
-  rm -f "$MT_KEYFILE"
+  if [ -f "$MT_KEYFILE" ]; then
+    while IFS= read -r _mtkey; do
+      [ -z "$_mtkey" ] && continue
+      _devcfg_restore activity_manager "$_mtkey"
+    done < "$MT_KEYFILE"
+    rm -f "$MT_KEYFILE"
+  fi
   cmd activity memory-factor reset >/dev/null 2>&1 || cmd activity memory-factor set 0 >/dev/null 2>&1
   return 0
 }
 
 apply_multitasking() {
   local _tier="$1" _mult
+  command -v device_config >/dev/null 2>&1 || { echo '{"status":"error","message":"device_config needs Android 10+"}'; return 1; }
   case "$_tier" in
     performance) _mult=125 ;;
     balanced)    _mult=100 ;;
@@ -25,7 +27,7 @@ apply_multitasking() {
 
   rm -f "$_MT_LEGACY_KEYFILE"
   mkdir -p "$MODDIR/tmp" "$MODDIR/backup"
-  : > "$MT_KEYFILE"
+  touch "$MT_KEYFILE"
   local _tmp="$MODDIR/tmp/_am_settings.tmp"
   dumpsys activity settings 2>/dev/null | grep -iE 'cached' > "$_tmp"
 
@@ -43,16 +45,16 @@ apply_multitasking() {
     _new=$(( _base * _mult / 100 ))
     _devcfg_backup activity_manager "$_key"
     if device_config put activity_manager "$_key" "$_new" >/dev/null 2>&1; then
-      echo "$_key" >> "$MT_KEYFILE"
+      grep -qFx "$_key" "$MT_KEYFILE" || echo "$_key" >> "$MT_KEYFILE"
       _count=$((_count + 1))
     fi
   done < "$_tmp"
   rm -f "$_tmp"
 
   case "$_tier" in
-    performance) cmd activity memory-factor set 0 2>/dev/null ;;
-    balanced)    cmd activity memory-factor set 1 2>/dev/null ;;
-    powersaving) cmd activity memory-factor set 2 2>/dev/null ;;
+    performance) cmd activity memory-factor set 0 2>/dev/null || cmd activity memory-factor set NORMAL 2>/dev/null ;;
+    balanced)    cmd activity memory-factor set 1 2>/dev/null || cmd activity memory-factor set MODERATE 2>/dev/null ;;
+    powersaving) cmd activity memory-factor set 2 2>/dev/null || cmd activity memory-factor set LOW 2>/dev/null ;;
   esac
 
   log_mt "[OK] Multitasking profile: $_tier ($_count keys)"

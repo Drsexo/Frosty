@@ -315,7 +315,10 @@ var FX = (function () {
   var _lang = 'en';
   var RTL_LANGS = ['ar'];
 
-  function t(key) { return _strings[key] || _enStrings[key] || key; }
+  function t(key) {
+    var s = _strings[key] || _enStrings[key] || key;
+    return s.indexOf('{max}') === -1 ? s : s.replace(/\{max\}/g, counts().max);
+  }
 
   function tf(key) {
     var s = t(key);
@@ -343,7 +346,7 @@ var FX = (function () {
   function applyStrings() {
     document.querySelectorAll('[data-i18n]').forEach(function (el) {
       var key = el.getAttribute('data-i18n');
-      if (_strings[key]) el.textContent = _strings[key];
+      if (_strings[key]) el.textContent = t(key);
     });
     document.querySelectorAll('[data-i18n-ph]').forEach(function (el) {
       var key = el.getAttribute('data-i18n-ph');
@@ -394,7 +397,7 @@ var FX = (function () {
     try { saved = localStorage.getItem('frosty_lang'); } catch (e) {}
     var navFull = (navigator.language || 'en');
     var navShort = navFull.split('-')[0];
-    var supported = ['en','fr','de','pl','it','es','pt-BR','tr','id','ru','uk','zh-CN','ja','ar'];
+    var supported = LANGUAGES.map(function (l) { return l[0]; });
     var detected = supported.find(function (c) { return c === navFull; }) ||
                    supported.find(function (c) { return c.split('-')[0] === navShort; }) ||
                    'en';
@@ -494,12 +497,18 @@ var FX = (function () {
         ':where(.fx-spin){width:26px;height:26px;border-radius:50%;border:3px solid rgba(255,255,255,.15);border-top-color:var(--fx-accent,#4da3ff);animation:fxspin .8s linear infinite}' +
         '@keyframes fxspin{to{transform:rotate(360deg)}}' +
         ':where(.fx-loadtxt){font:600 12.5px/1.35 system-ui,sans-serif;text-align:center}' +
-        ':where(.fx-modal){position:fixed;inset:0;z-index:5000;display:none;align-items:flex-end;justify-content:center;background:var(--fx-modal-dim,rgba(0,0,0,.5))}' +
+        ':where(.fx-modal){position:fixed;inset:var(--fx-vvtop,0px) 0 var(--fx-kb,0px) 0;z-index:5000;display:none;align-items:flex-end;justify-content:center;background:var(--fx-modal-dim,rgba(0,0,0,.5))}' +
         '.fx-modal.fx-open{display:flex}' +
         '.fx-modal.fx-centered{align-items:center}' +
-        ':where(.fx-modal-card){display:flex;flex-direction:column;width:min(100vw,560px);max-height:86vh;background:var(--fx-modal-bg,#181a1d);color:var(--fx-modal-fg,#eee);border-radius:16px 16px 0 0;overflow:hidden}' +
+        ':where(.fx-modal-card){display:flex;flex-direction:column;width:min(100vw,560px);max-height:min(86vh,calc(100% - var(--fx-safe-top,0px) - 12px));background:var(--fx-modal-bg,#181a1d);color:var(--fx-modal-fg,#eee);border-radius:16px 16px 0 0;overflow:hidden}' +
         '.fx-modal.fx-centered .fx-modal-card{border-radius:16px}' +
         '@media(min-width:600px){.fx-modal{align-items:center}.fx-modal-card{border-radius:16px}}' +
+        '.fx-modal-card.fx-picker-card{height:min(86vh,calc(100% - var(--fx-safe-top,0px) - 12px))}' +
+        '.fx-modal-body.fx-picker{display:flex;flex-direction:column;overflow:hidden;min-height:0}' +
+        'div.fx-modal .fx-modal-body.fx-picker{padding-bottom:0}' +
+        '.fx-picker>.fx-notice,.fx-picker>.fx-picker-controls{flex:none}' +
+        '.fx-picker .fx-applist{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;padding-bottom:calc(8px + var(--window-inset-bottom,env(safe-area-inset-bottom,0px)))}' +
+        '.fx-modal.fx-sfocus .fx-applist{padding-bottom:8px}' +
         ':where(.fx-modal-head){display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px 10px;font:700 15px/1.2 system-ui,sans-serif}' +
         ':where(.fx-x){border:0;background:transparent;color:inherit;opacity:.6;padding:6px;cursor:pointer;display:flex}' +
         ':where(.fx-modal-body){padding:4px 18px 18px;overflow-y:auto;flex:1}' +
@@ -536,6 +545,18 @@ var FX = (function () {
         '.fx-flag-ar::before{content:\'\u0644\u0627 \u0625\u0644\u0647 \u0625\u0644\u0627 \u0627\u0644\u0644\u0647 \u0645\u062d\u0645\u062f \u0631\u0633\u0648\u0644 \u0627\u0644\u0644\u0647\';display:block;width:100%;padding-top:18%;font:700 5.2px/1 \'Noto Naskh Arabic\',\'Noto Sans Arabic\',\'DejaVu Sans\',system-ui,sans-serif;color:#FFFFFF;text-align:center;white-space:nowrap;overflow:hidden}' +
         '.fx-flag-ar::after{content:\'\';display:block;width:62%;height:2px;background:#FFFFFF;margin:14% auto 0}';
       document.head.appendChild(st);
+      if (window.visualViewport) {
+        var vv = window.visualViewport;
+        var syncVV = function () {
+          var kb = Math.round(window.innerHeight - vv.height - vv.offsetTop);
+          var rs = document.documentElement.style;
+          rs.setProperty('--fx-kb', (kb > 80 ? kb : 0) + 'px');
+          rs.setProperty('--fx-vvtop', Math.max(0, Math.round(vv.offsetTop)) + 'px');
+        };
+        vv.addEventListener('resize', syncVV);
+        vv.addEventListener('scroll', syncVV);
+        syncVV();
+      }
     }
   }
 
@@ -551,9 +572,12 @@ var FX = (function () {
   }
 
   function esc0(s) {
-    var d = document.createElement('span');
-    d.textContent = String(s);
-    return d.innerHTML;
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   var loadingEl = null, loadingTxt = null;
@@ -614,12 +638,32 @@ var FX = (function () {
 
   // ── state loading and render ──
 
+  var effectiveWarned = {};
+  var lastEffectiveCheck = 0;
+  async function checkEffective() {
+    var s;
+    try { s = await runJSON('sh ' + MODDIR + '/scripts/frosty.sh feature_state 2>/dev/null'); } catch (e) { return; }
+    if (!s || s.status !== 'ok' || !s.applied) return;
+    Object.keys(s).forEach(function (k) {
+      if (k === 'status' || k === 'applied' || state.prefs[k] === undefined) return;
+      var want = state.prefs[k] ? 1 : 0;
+      var tag = k + ':' + want;
+      if (s[k] !== want && !effectiveWarned[tag]) {
+        effectiveWarned[tag] = true;
+        log(t('log_not_applied') + ' (' + k + ')', 'warn');
+      }
+    });
+  }
   async function loadPrefs() {
     try {
       var r = await getPrefs();
       state.prefs = r.prefs;
       state.categories = r.categories;
       render();
+      if (Date.now() - lastEffectiveCheck > 60000) {
+        lastEffectiveCheck = Date.now();
+        checkEffective();
+      }
     } catch (e) {
       toast(tf('log_load_failed', e.message), 'err');
     }
@@ -637,6 +681,13 @@ var FX = (function () {
     groups.doze.forEach(function (k) { if (p[k]) res.doze++; });
     groups.gms.forEach(function (k) { if (c[k]) res.gms++; });
     res.total = res.tweaks + res.doze + res.gms;
+    res.size = {
+      tweaks: groups.tweaks.length,
+      doze: groups.doze.length,
+      gms: groups.gms.length
+    };
+    res.size.total = res.size.tweaks + res.size.doze + res.size.gms;
+    res.max = res.size.total;
     return res;
   }
 
@@ -655,7 +706,7 @@ var FX = (function () {
     var cn = counts();
 
     document.documentElement.style.setProperty('--fx-kpi', cn.total);
-    document.documentElement.style.setProperty('--fx-kpi-pct', (cn.total / 19 * 100).toFixed(1) + '%');
+    document.documentElement.style.setProperty('--fx-kpi-pct', (cn.total / cn.max * 100).toFixed(1) + '%');
 
     $all('[data-fx-toggle]').forEach(function (row) {
       var key = row.getAttribute('data-fx-toggle');
@@ -693,7 +744,7 @@ var FX = (function () {
     });
     $all('[data-fx-ratio]').forEach(function (n) {
       var g = n.getAttribute('data-fx-ratio');
-      n.textContent = cn[g] + '/' + (g === 'total' ? 19 : g === 'tweaks' ? 7 : g === 'doze' ? 4 : 8);
+      n.textContent = cn[g] + '/' + cn.size[g];
     });
     $all('[data-fx-pills]').forEach(function (n) {
       var g = n.getAttribute('data-fx-pills');
@@ -721,6 +772,11 @@ var FX = (function () {
     return k.replace(/_/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
   }
 
+  function need(r, key) {
+    if (!r || r.status === 'error') throw new Error(key + ': ' + ((r && r.message) || 'backend error'));
+    return r;
+  }
+
   async function togglePref(key) {
     if (busy) return;
     var current = state.prefs[key] || 0;
@@ -736,27 +792,29 @@ var FX = (function () {
         if (nv) {
           updateLoading(t('loading_applying_kernel'));
           var r = await runJSON('sh ' + MODDIR + '/scripts/frosty.sh apply_kernel 2>/dev/null');
-          if (r.status === 'ok') logAction(tf('log_kernel_applied', r.applied, r.failed, r.skipped || 0), r.failed > 0 ? 'warn' : 'ok');
+          need(r, key);
+          logAction(tf('log_kernel_applied', r.applied, r.failed, r.skipped || 0), r.failed > 0 ? 'warn' : 'ok');
         } else {
           updateLoading(t('loading_reverting_kernel'));
           var r2 = await runJSON('sh ' + MODDIR + '/scripts/frosty.sh revert_kernel 2>/dev/null');
-          if (r2.status === 'ok') logAction(tf('log_kernel_restored', r2.restored), 'ok');
+          need(r2, key);
+          logAction(tf('log_kernel_restored', r2.restored), 'ok');
         }
       } else if (key === 'blur_disable') {
         updateLoading(t('loading_applying_blur'));
         var rb = await runJSON('sh ' + MODDIR + '/scripts/frosty.sh apply_blur 2>/dev/null');
-        if (rb.status === 'ok') {
-          logAction(tf('log_blur_state', t(rb.blur === 'enabled' ? 'word_enabled' : 'word_disabled')), 'ok');
-          if (rb.message) log(t('log_reboot_effect'), 'warn');
-        }
+        need(rb, key);
+        logAction(tf('log_blur_state', t(rb.blur === 'enabled' ? 'word_enabled' : 'word_disabled')), 'ok');
+        if (rb.message) log(t('log_reboot_effect'), 'warn');
       } else if (key === 'log_killing') {
         if (nv) {
           updateLoading(t('loading_killing_logs'));
           var rl = await runJSON('sh ' + MODDIR + '/scripts/frosty.sh kill_logs 2>/dev/null');
-          if (rl.status === 'ok') logAction(tf('log_killed_logs', rl.killed), 'ok');
+          need(rl, key);
+          logAction(tf('log_killed_logs', rl.killed), 'ok');
         } else {
           updateLoading(t('loading_reverting_logs'));
-          await runJSON('sh ' + MODDIR + '/scripts/frosty.sh revert_logs 2>/dev/null');
+          need(await runJSON('sh ' + MODDIR + '/scripts/frosty.sh revert_logs 2>/dev/null'), key);
           logAction(t('log_logs_reverted'), 'ok');
         }
         log(t('log_reboot_effect'), 'warn');
@@ -764,52 +822,54 @@ var FX = (function () {
         if (nv) {
           updateLoading(t('loading_applying_tracking'));
           var rt = await runJSON('sh ' + MODDIR + '/scripts/frosty.sh kill_tracking 2>/dev/null');
-          if (rt.status === 'ok') logAction(t('log_tracking_applied'), 'ok');
+          need(rt, key);
+          logAction(t('log_tracking_applied'), 'ok');
         } else {
           updateLoading(t('loading_reverting_tracking'));
           var rt2 = await runJSON('sh ' + MODDIR + '/scripts/frosty.sh revert_tracking 2>/dev/null');
-          if (rt2.status === 'ok') logAction(t('log_tracking_reverted'), 'ok');
+          need(rt2, key);
+          logAction(t('log_tracking_reverted'), 'ok');
         }
       } else if (key === 'system_props') {
         updateLoading(nv ? t('loading_applying_sysprops') : t('loading_disabling_sysprops'));
         var rsp = await runJSON('sh ' + MODDIR + '/scripts/frosty.sh apply_sysprops 2>/dev/null');
-        if (rsp.status === 'ok') logAction(t(nv ? 'log_sysprops_enabled' : 'log_sysprops_disabled'), 'ok');
-        else logAction(tf('log_sysprops_failed', rsp.message || ''), 'err');
+        need(rsp, key);
+        logAction(t(nv ? 'log_sysprops_enabled' : 'log_sysprops_disabled'), 'ok');
         log(t('log_reboot_effect'), 'warn');
       } else if (key === 'screen_off_opt') {
         if (nv) {
           updateLoading(t('loading_applying_soo'));
-          await run('sh ' + MODDIR + '/scripts/frosty.sh apply_soo 2>&1');
+          need(await runJSON('sh ' + MODDIR + '/scripts/frosty.sh apply_soo 2>/dev/null'), key);
           logAction(t('log_soo_applied'), 'ok');
         } else {
           updateLoading(t('loading_reverting_soo'));
-          await run('sh ' + MODDIR + '/scripts/frosty.sh revert_soo 2>&1');
+          need(await runJSON('sh ' + MODDIR + '/scripts/frosty.sh revert_soo 2>/dev/null'), key);
           logAction(t('log_soo_reverted'), 'ok');
         }
       } else if (key === 'deep_doze') {
         if (nv) {
           updateLoading(t('loading_applying_deep_doze'));
-          await run('sh ' + MODDIR + '/scripts/deep_doze.sh freeze 2>&1');
+          await runStrict('sh ' + MODDIR + '/scripts/deep_doze.sh freeze 2>&1');
           logAction(t('log_deep_doze_applied'), 'ok');
         } else {
           updateLoading(t('loading_reverting_deep_doze'));
-          await run('sh ' + MODDIR + '/scripts/deep_doze.sh stock 2>&1');
+          await runStrict('sh ' + MODDIR + '/scripts/deep_doze.sh stock 2>&1');
           logAction(t('log_deep_doze_reverted'), 'ok');
         }
       } else if (key === 'deep_doze_always') {
         logAction(tf('log_deep_doze_always', t(nv ? 'word_enabled' : 'word_disabled')), 'ok');
         if (state.prefs.deep_doze) {
           updateLoading(t('loading_reapplying_deep'));
-          await run('sh ' + MODDIR + '/scripts/deep_doze.sh freeze 2>&1');
+          await runStrict('sh ' + MODDIR + '/scripts/deep_doze.sh freeze 2>&1');
         }
       } else if (key === 'ram_optimizer') {
         if (nv) {
           updateLoading(t('loading_applying_ram'));
-          await runJSON('sh ' + MODDIR + '/scripts/frosty.sh apply_ram 2>/dev/null');
+          need(await runJSON('sh ' + MODDIR + '/scripts/frosty.sh apply_ram 2>/dev/null'), key);
           logAction(t('log_ram_applied'), 'ok');
         } else {
           updateLoading(t('loading_reverting_ram'));
-          await runJSON('sh ' + MODDIR + '/scripts/frosty.sh revert_ram 2>/dev/null');
+          need(await runJSON('sh ' + MODDIR + '/scripts/frosty.sh revert_ram 2>/dev/null'), key);
           logAction(t('log_ram_reverted'), 'ok');
         }
       } else if (key === 'multitask_enabled') {
@@ -817,8 +877,8 @@ var FX = (function () {
           updateLoading(t('loading_applying_mt'));
           var tier = state.prefs.multitask_profile || 'balanced';
           var rmt = await runJSON('sh ' + MODDIR + '/scripts/frosty.sh apply_multitask ' + tier + ' 2>/dev/null');
-          if (rmt.status === 'ok') logAction(tf('log_mt_enabled', tier), 'ok');
-          else logAction(t('toast_error'), 'err');
+          need(rmt, key);
+          logAction(tf('log_mt_enabled', tier), 'ok');
         } else {
           updateLoading(t('loading_reverting_mt'));
           await runJSON('sh ' + MODDIR + '/scripts/frosty.sh revert_multitask 2>/dev/null');
@@ -827,24 +887,24 @@ var FX = (function () {
       } else if (key === 'custom_app_doze') {
         if (nv) {
           updateLoading(t('loading_applying_cad'));
-          await run('sh ' + MODDIR + '/scripts/app_doze.sh apply 2>&1');
+          await runStrict('sh ' + MODDIR + '/scripts/app_doze.sh apply 2>&1');
           logAction(t('log_cad_applied'), 'ok');
           var cadReboot = await run('[ -f "' + MODDIR + '/tmp/cad_needs_reboot" ] && echo "1" || echo "0"');
           if (cadReboot.trim() === '1') log(t('log_reboot_effect'), 'warn');
         } else {
           updateLoading(t('loading_reverting_cad'));
-          await run('sh ' + MODDIR + '/scripts/app_doze.sh revert 2>&1');
+          await runStrict('sh ' + MODDIR + '/scripts/app_doze.sh revert 2>&1');
           logAction(t('log_cad_reverted'), 'ok');
           log(t('log_reboot_effect'), 'warn');
         }
       } else if (key === 'battery_saver') {
         if (nv) {
           updateLoading(t('loading_applying_bss'));
-          await runJSON('sh ' + MODDIR + '/scripts/frosty.sh apply_bss 2>/dev/null');
+          need(await runJSON('sh ' + MODDIR + '/scripts/frosty.sh apply_bss 2>/dev/null'), key);
           logAction(t('log_bss_applied'), 'ok');
         } else {
           updateLoading(t('loading_reverting_bss'));
-          await runJSON('sh ' + MODDIR + '/scripts/frosty.sh revert_bss 2>/dev/null');
+          need(await runJSON('sh ' + MODDIR + '/scripts/frosty.sh revert_bss 2>/dev/null'), key);
           logAction(t('log_bss_reverted'), 'ok');
         }
       }
@@ -853,6 +913,7 @@ var FX = (function () {
       state.prefs[key] = nv;
       render();
     } catch (e) {
+      try { await setPref(key, current); } catch (e2) {}
       toast(tf('log_load_failed', e.message), 'err');
       log(tf('log_load_failed', e.message), 'err');
       await loadPrefs();
@@ -916,15 +977,20 @@ var FX = (function () {
     for (var i = 0; i < pending.length; i++) {
       var cat = pending[i];
       updateLoading(tf('loading_cat_progress', tkey(cat), i + 1, pending.length));
+      var prefSet = false;
       try {
         var res = await setPref(cat, targetOn ? 1 : 0);
         if (res.status !== 'ok') { failCount++; continue; }
+        prefSet = true;
         var r = targetOn
           ? await runJSON('sh ' + MODDIR + '/scripts/frosty.sh freeze_category \'' + esc(cat) + '\' 2>/dev/null')
           : await runJSON('sh ' + MODDIR + '/scripts/frosty.sh unfreeze_category \'' + esc(cat) + '\' 2>/dev/null');
         if (r.status === 'ok') { state.categories[cat] = targetOn ? 1 : 0; okCount++; }
-        else failCount++;
-      } catch (e) { failCount++; }
+        else { failCount++; await setPref(cat, targetOn ? 0 : 1); }
+      } catch (e) {
+        failCount++;
+        if (prefSet) { try { await setPref(cat, targetOn ? 0 : 1); } catch (e2) {} }
+      }
     }
     logAction(tf(targetOn ? 'log_cats_all_enabled' : 'log_cats_all_disabled', okCount, failCount), failCount > 0 ? 'warn' : 'ok');
     toast(tf(targetOn ? 'toast_cats_enabled_n' : 'toast_cats_disabled_n', okCount), failCount > 0 ? 'warn' : 'ok');
@@ -1263,6 +1329,7 @@ var FX = (function () {
     ensureChrome();
     opts = opts || {};
     if (!node.parentNode) { document.body.appendChild(node); applyStrings(); updatePickerCounts(); }
+    node.style.zIndex = String(5000 + modalStack.length + 1);
     node.classList.add('fx-open');
     modalStack.push(node);
     if (!opts.quiet) {
@@ -1274,6 +1341,7 @@ var FX = (function () {
     var i = modalStack.indexOf(node);
     if (i !== -1) modalStack.splice(i, 1);
     node.classList.remove('fx-open');
+    node.style.zIndex = '';
     if (node.dataset.fxDynamic === '1') {
       setTimeout(function () { node.remove(); }, 30);
     }
@@ -1432,6 +1500,8 @@ var FX = (function () {
       if (searchTimer) clearTimeout(searchTimer);
       searchTimer = setTimeout(function () { applyFilter(); render(true); }, 150);
     });
+    search.addEventListener('focus', function () { wrap.classList.add('fx-sfocus'); });
+    search.addEventListener('blur', function () { wrap.classList.remove('fx-sfocus'); });
     if (cfg.sysToggle) {
       wrap.querySelector('.fx-sysin').addEventListener('change', function () {
         applyFilter();
@@ -1442,21 +1512,21 @@ var FX = (function () {
     function applyFilter() {
       var q = search.value.toLowerCase();
       var showSys = cfg.sysToggle ? wrap.querySelector('.fx-sysin').checked : false;
-      var src = cfg.listScope === 'scan' ? scanCache : (allApps || []);
+      var src = cfg.listScope === 'scan'
+        ? scanCache.concat(selected.filter(function (p) { return scanCache.indexOf(p) === -1; }))
+        : (allApps || []);
       filtered = src.filter(function (a) {
         if (cfg.listScope === 'scan') return !q || a.toLowerCase().indexOf(q) !== -1;
         if (!showSys && a.system) return false;
         if (q) return a.label.toLowerCase().indexOf(q) !== -1 || a.pkg.toLowerCase().indexOf(q) !== -1;
         return true;
       });
-      if (cfg.listScope !== 'scan') {
-        var checked = [], unchecked = [];
-        filtered.forEach(function (a) {
-          if (selected.indexOf(a.pkg) !== -1) checked.push(a);
-          else unchecked.push(a);
-        });
-        filtered = checked.concat(unchecked);
-      }
+      var checked = [], unchecked = [];
+      filtered.forEach(function (a) {
+        if (selected.indexOf(cfg.listScope === 'scan' ? a : a.pkg) !== -1) checked.push(a);
+        else unchecked.push(a);
+      });
+      filtered = checked.concat(unchecked);
     }
 
     function monogram(pkg) {
@@ -1534,13 +1604,15 @@ var FX = (function () {
       }
     }
 
-    listEl.addEventListener('scroll', function () {
-      if (listEl.scrollTop + listEl.clientHeight >= listEl.scrollHeight - 300) {
-        if (rendered < filtered.length) render(false);
-      }
-    }, { passive: true });
+    function loadMore(e) {
+      var s = e.currentTarget;
+      if (s.scrollTop + s.clientHeight >= s.scrollHeight - 300 && rendered < filtered.length) render(false);
+    }
+    listEl.addEventListener('scroll', loadMore, { passive: true });
+    body.addEventListener('scroll', loadMore, { passive: true });
 
     function open() {
+      wrap.classList.remove('fx-sfocus');
       listEl.innerHTML = '<div class="fx-emptystate">' + esc0(t(cfg.loadingKey || 'wl_loading')) + '</div>';
       selected = cfg.getSelected();
       openModal(wrap);
@@ -1561,6 +1633,13 @@ var FX = (function () {
 
   var scanCache = [];
 
+  var pickerQueue = Promise.resolve();
+  function queuePicker(fn) {
+    var p = pickerQueue.then(fn, fn);
+    pickerQueue = p.then(function () {}, function () {});
+    return p;
+  }
+
   var pickers = {
     wl: makePicker({
       id: 'wl', titleKey: 'wl_title', noticeKey: 'wl_notice', sysToggle: true, listScope: 'all',
@@ -1575,9 +1654,11 @@ var FX = (function () {
         return Promise.all(jobs);
       },
       toggle: function (pkg, on) {
-        return runJSON('sh ' + MODDIR + '/scripts/frosty.sh ' + (on ? 'add_wl' : 'remove_wl') + ' \'' + esc(pkg) + '\' 2>/dev/null')
-          .then(function (r) { return r.status === 'ok'; })
-          .catch(function () { return false; });
+        return queuePicker(function () {
+          return runJSON('sh ' + MODDIR + '/scripts/frosty.sh ' + (on ? 'add_wl' : 'remove_wl') + ' \'' + esc(pkg) + '\' 2>/dev/null')
+            .then(function (r) { return r.status === 'ok'; })
+            .catch(function () { return false; });
+        });
       }
     }),
     ramwl: makePicker({
@@ -1592,9 +1673,11 @@ var FX = (function () {
         return Promise.all(jobs);
       },
       toggle: function (pkg, on) {
-        return runJSON('sh ' + MODDIR + '/scripts/frosty.sh ' + (on ? 'add_ram_wl' : 'remove_ram_wl') + ' \'' + esc(pkg) + '\' 2>/dev/null')
-          .then(function (r) { return r.status === 'ok'; })
-          .catch(function () { return false; });
+        return queuePicker(function () {
+          return runJSON('sh ' + MODDIR + '/scripts/frosty.sh ' + (on ? 'add_ram_wl' : 'remove_ram_wl') + ' \'' + esc(pkg) + '\' 2>/dev/null')
+            .then(function (r) { return r.status === 'ok'; })
+            .catch(function () { return false; });
+        });
       }
     }),
     cad: makePicker({
@@ -1612,9 +1695,11 @@ var FX = (function () {
         return Promise.all(jobs);
       },
       toggle: function (pkg, on) {
-        return runJSON('sh ' + MODDIR + '/scripts/app_doze.sh ' + (on ? 'add' : 'remove') + ' \'' + esc(pkg) + '\' 2>/dev/null')
-          .then(function (r) { return r.status === 'ok'; })
-          .catch(function () { return false; });
+        return queuePicker(function () {
+          return runJSON('sh ' + MODDIR + '/scripts/app_doze.sh ' + (on ? 'add' : 'remove') + ' \'' + esc(pkg) + '\' 2>/dev/null')
+            .then(function (r) { return r.status === 'ok'; })
+            .catch(function () { return false; });
+        });
       }
     })
   };
@@ -1725,7 +1810,13 @@ var FX = (function () {
     return '<label class="fx-switch"><input type="checkbox" data-soo="' + key + '"' + (checked ? ' checked' : '') + '><span class="fx-swtrack"><span class="fx-swknob"></span></span></label>';
   }
   function sooSelect(key, val, options) {
-    var opts = options.map(function (o) {
+    var list = options.slice();
+    var has = list.some(function (o) { return String(o.v) === String(val); });
+    if (!has && /^[0-9]+$/.test(String(val))) {
+      list.push({ v: val, l: String(val) + ' min' });
+      list.sort(function (a, b) { return a.v - b.v; });
+    }
+    var opts = list.map(function (o) {
       return '<option value="' + o.v + '"' + (String(o.v) === String(val) ? ' selected' : '') + '>' + esc0(o.l) + '</option>';
     }).join('');
     return '<select class="fx-select" data-soo="' + key + '">' + opts + '</select>';
@@ -2475,3 +2566,21 @@ var FX = (function () {
     getLang: function () { return _lang; }
   };
 })();
+
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('[data-fx-kpi-max]').forEach(function (el) {
+    el.textContent = '/' + FX.counts().max;
+  });
+  document.querySelectorAll('[data-fx-nav]').forEach(function (el) {
+    if (el.tagName === 'BUTTON' || el.tagName === 'A') return;
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
+    });
+  });
+  document.querySelectorAll('[data-fx-log]').forEach(function (el) {
+    el.setAttribute('role', 'log');
+    el.setAttribute('aria-live', 'polite');
+  });
+});

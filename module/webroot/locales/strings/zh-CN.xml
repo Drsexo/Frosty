@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="hdr_sub">电池优化器</string>
-  <string name="kpi_sub">共 19 个已激活</string>
+  <string name="kpi_sub">共 {max} 个已激活</string>
   <string name="status_count">{0} / {1} 项活跃</string>
-  <string name="home_active">活跃</string>
   <string name="menu_io">导入 / 导出</string>
   <string name="menu_lang">语言</string>
   <string name="menu_bugreport">错误报告</string>
@@ -49,7 +48,6 @@
   <string name="loading_reverting_kernel">正在恢复内核...</string>
   <string name="log_kernel_applied">内核：已应用 {0}，失败/未找到 {1}，已跳过 {2}</string>
   <string name="log_kernel_restored">内核：已恢复 {0}</string>
-  <string name="log_kernel_vals_restored">内核：已恢复 {0} 个值</string>
   <string name="tgl_sysprops">系统属性 (Props)</string>
   <string name="tgl_sysprops_desc">禁用调试日志记录，节省电量和内存</string>
   <string name="loading_applying_sysprops">正在启用系统属性...</string>
@@ -61,7 +59,6 @@
   <string name="tgl_blur_desc">降低 GPU 负载，在低配置设备上运行更流畅</string>
   <string name="loading_applying_blur">正在应用模糊设置...</string>
   <string name="log_blur_state">模糊：{0}</string>
-  <string name="log_blur_restored">模糊已恢复</string>
   <string name="tgl_logs">终止日志</string>
   <string name="tgl_logs_desc">强制停止后台日志记录进程，释放内存</string>
   <string name="loading_killing_logs">正在终止日志进程...</string>
@@ -80,7 +77,6 @@
   <string name="cad_btn">▶ 管理应用</string>
   <string name="cad_title">应用 Doze</string>
   <string name="cad_notice">选定的应用将从 Android 的 Doze 豁免名单中移除，以便系统可以优化它们。可以为 GMS Doze 选择 GMS。</string>
-  <string name="cad_search">搜索应用...</string>
   <string name="cad_loading">正在加载...</string>
   <string name="cad_empty">未找到应用</string>
   <string name="cad_warn_system">⚠ 该应用为系统必需，无法添加</string>
@@ -105,7 +101,6 @@
   <string name="wl_system">系统</string>
   <string name="wl_loading">正在加载应用...</string>
   <string name="wl_empty">未找到应用</string>
-  <string name="wl_sep_other">其他应用</string>
   <string name="loading_applying_deep_doze">正在应用深度 Doze...</string>
   <string name="loading_reverting_deep_doze">正在恢复深度 Doze...</string>
   <string name="loading_reapplying_deep">正在重新应用深度 Doze...</string>
@@ -121,13 +116,11 @@
     <string name="multitask_title">多任务配置文件</string>
 <string name="multitask_desc">调整关闭后台应用以释放内存的速度。性能模式保留更多应用就绪。省电模式更早关闭更多应用。</string>
   <string name="log_multitask_profile">多任务配置文件已设置为 {0}</string>
-  <string name="log_multitask_reapplied">多任务配置文件已重新应用</string>
   <string name="loading_applying_mt">正在应用多任务配置文件...</string>
   <string name="loading_reverting_mt">正在恢复多任务配置文件...</string>
   <string name="log_mt_enabled">多任务配置文件已启用：{0}</string>
   <string name="log_mt_reverted">多任务配置文件已恢复</string>
   <string name="log_mt_reapplied">多任务配置文件已重新应用</string>
-  <string name="log_mt_ram_off">多任务配置文件已与 RAM 优化器一起禁用</string>
   <string name="ram_wl_btn">▶ 内存清理白名单</string>
   <string name="ram_wl_title">内存清理白名单</string>
   <string name="ram_wl_notice">白名单中的应用永远不会被内存清理器强行停止。</string>
@@ -184,13 +177,10 @@
   <string name="cat_games">游戏</string>
   <string name="cat_games_tag">会使 Play Games 失效</string>
   <string name="loading_freezing_services">正在冻结 GMS 服务...</string>
-  <string name="loading_freezing_cats">正在冻结 GMS 分类...</string>
   <string name="log_gms_frozen">GMS：已禁用 {0}，已重新启用 {1}，失败/未找到 {2}</string>
   <string name="log_gms_restored">GMS：已重新启用 {0}，失败/未找到 {1}</string>
   <string name="log_cat_frozen">{0}：已禁用 {1}，失败/未找到 {2}</string>
   <string name="log_cat_restored">{0}：已重新启用 {1}，失败/未找到 {2}</string>
-  <string name="log_cats_enabled">所有 GMS 分类已启用</string>
-  <string name="log_cats_disabled">所有 GMS 分类已禁用</string>
   <string name="cat_bulk_enable">全部启用</string>
   <string name="cat_bulk_disable">全部禁用</string>
   <string name="loading_enabling_all_cats">正在启用剩余类别...</string>
@@ -240,7 +230,6 @@
   <string name="loading_reverting_bss">正在恢复省电模式...</string>
   <string name="log_bss_applied">省电配置已应用</string>
   <string name="log_bss_reverted">省电模式已恢复</string>
-  <string name="log_bss_reapplied">省电模式已重新应用</string>
   <string name="tgl_ram_optimizer">内存优化器</string>
   <string name="tgl_ram_optimizer_desc">限制缓存的和空闲的后台进程，调整 zram 交换行为以获取更多空闲内存</string>
   <string name="loading_applying_ram">正在应用内存优化器...</string>
@@ -260,7 +249,6 @@
   <string name="rc_stat_freed">已释放内存</string>
   <string name="io_title">导入 / 导出</string>
   <string name="io_export">导出当前设置</string>
-  <string name="io_backups">已保存的备份</string>
   <string name="io_empty">未找到备份</string>
   <string name="io_loading">正在加载...</string>
   <string name="io_error">加载备份时出错</string>
@@ -275,7 +263,6 @@
   <string name="bugreport_title">错误报告</string>
   <string name="bugreport_notice">收集设备技术信息、Frosty 的配置和日志，以及其他已安装模块的列表。报告错误时请附上此文件。</string>
   <string name="bugreport_generate">生成错误报告</string>
-  <string name="bugreport_saved">已保存的报告</string>
   <string name="bugreport_empty">未找到错误报告</string>
   <string name="bugreport_generated">错误报告已保存到 Frosty/Logs</string>
   <string name="bugreport_failed">生成错误报告失败</string>
@@ -286,19 +273,11 @@
   <string name="loading_freezing">正在冻结</string>
   <string name="loading_unfreezing">正在解冻</string>
   <string name="loading_enabling_all">正在启用所有设置...</string>
-  <string name="loading_enabling_toggles">正在开启所有开关...</string>
   <string name="loading_reverting_all">正在还原所有设置...</string>
-  <string name="loading_disabling_toggles">正在关闭所有开关...</string>
-  <string name="loading_disabling_cats">正在关闭所有分类...</string>
-  <string name="loading_restoring_kernel">正在还原内核值...</string>
-  <string name="loading_re_enabling_gms">正在解冻 GMS 服务...</string>
-  <string name="loading_restoring_blur">正在恢复模糊...</string>
   <string name="loading_reapplying">正在重新应用设置...</string>
   <string name="log_freeze_all">全部启用：正在开启所有功能...</string>
   <string name="log_reverting_all">全部恢复：正在关闭所有功能...</string>
   <string name="log_reapply_start">开始重新应用...</string>
-  <string name="log_toggles_enabled">所有系统开关已开启</string>
-  <string name="log_toggles_disabled">所有系统开关已关闭</string>
   <string name="toast_frozen">全部已冻结并应用</string>
   <string name="toast_stocked">全部已恢复至默认</string>
   <string name="toast_refreshed">已刷新</string>
@@ -312,7 +291,6 @@
   <string name="toast_nothing_to_apply">没有可应用的内容——请先开启某些功能</string>
   <string name="sec_log">活动日志</string>
   <string name="log_webui_ready">WebUI 已就绪</string>
-  <string name="log_empty">暂无活动</string>
   <string name="log_reboot_effect">重启后完全生效</string>
   <string name="log_not_applied">保存的设置尚未应用。请重启或使用强制重新应用设置。</string>
   <string name="kpi_title">系统状态</string>
@@ -326,8 +304,5 @@
   <string name="theme_retro_desc">经典的 Windows 95 外观。</string>
   <string name="theme_terminal_desc">命令行 CRT 荧光屏。</string>
   <string name="theme_handheld_desc">掌上游戏机外壳。</string>
-  <string name="about_github">在 GitHub 上查看</string>
   <string name="about_desc">实现最大的省电幅度和 GMS 优化。冻结 GMS 服务、开启 Doze、终止日志、应用内核微调。使用 WebUI 按钮来修改设置。</string>
-  <string name="ksu_unavailable_title">KernelSU API 不可用</string>
-  <string name="ksu_unavailable_desc">此 WebUI 需要 KernelSU。如果是 Magisk/APatch，请使用 Action 按钮或 WebUI-X。</string>
 </resources>

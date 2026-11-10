@@ -76,7 +76,8 @@ backup_settings() {
     "SOO_RAM_CLEAN_MODE": "${SOO_RAM_CLEAN_MODE:-off}",
     "SOO_RAM_CLEAN_DELAY": ${SOO_RAM_CLEAN_DELAY:-5},
     "SOO_KILL_SENSORS": ${SOO_KILL_SENSORS:-0},
-    "SOO_KILL_PANEL_LPM": ${SOO_KILL_PANEL_LPM:-0}
+    "SOO_KILL_PANEL_LPM": ${SOO_KILL_PANEL_LPM:-0},
+    "WEBUI_THEME": "${WEBUI_THEME:-stock}"
   },
   "whitelist_b64": "$wl_b64",
   "patches_b64": "$patches_b64",
@@ -152,6 +153,7 @@ restore_settings() {
   local bss_fbg=$(pi BSS_FORCE_BG_CHECK);           [ -z "$bss_fbg" ] && bss_fbg=0
   local bss_sen=$(pi BSS_SENSORS_DISABLED);         [ -z "$bss_sen" ] && bss_sen=0
   local bss_gps=$(pi BSS_GPS_MODE);                 [ -z "$bss_gps" ] && bss_gps=0
+  case "$bss_gps" in 0|1|2|3|4) ;; *) bss_gps=0 ;; esac
   local bss_dat=$(pi BSS_DATASAVER);                [ -z "$bss_dat" ] && bss_dat=0
   local bss_mrf=$(pi BSS_MAX_REFRESH);              [ -z "$bss_mrf" ] && bss_mrf=0
   local dis_tel=$(pi DISABLE_TELEMETRY);            [ -z "$dis_tel" ] && dis_tel=0
@@ -182,10 +184,25 @@ restore_settings() {
   [ "${#soo_rcd}" -gt 3 ] && soo_rcd=120
   local soo_sensors=$(pi SOO_KILL_SENSORS);          [ -z "$soo_sensors" ] && soo_sensors=0
   local soo_panel_lpm=$(pi SOO_KILL_PANEL_LPM);      [ -z "$soo_panel_lpm" ] && soo_panel_lpm=0
+  local wl_theme; wl_theme=$(ps_ WEBUI_THEME)
+  _valid_enum "$wl_theme" stock comic retro terminal handheld || wl_theme=""
 
   local legacy_gms_doze=$(pi ENABLE_GMS_DOZE)
   if [ "$legacy_gms_doze" = "1" ] && [ "$cad_ena" != "1" ]; then
     cad_ena=1
+  fi
+
+  restore_lists "$file"
+  if [ "$sys_pro" = "1" ]; then
+    [ -f "$SYSPROP_OLD" ] && mv -f "$SYSPROP_OLD" "$SYSPROP"
+  else
+    [ -f "$SYSPROP" ] && mv -f "$SYSPROP" "$SYSPROP_OLD"
+  fi
+
+  if [ "$legacy_gms_doze" = "1" ]; then
+    mkdir -p "$MODDIR/config"
+    grep -qFx "com.google.android.gms" "$MODDIR/config/doze_patches.txt" 2>/dev/null || \
+      echo "com.google.android.gms" >> "$MODDIR/config/doze_patches.txt"
   fi
 
   cat > "$MODDIR/config/user_prefs.tmp" << ENDPREFS
@@ -233,16 +250,13 @@ SOO_RAM_CLEAN_DELAY=$soo_rcd
 SOO_KILL_SENSORS=$soo_sensors
 SOO_KILL_PANEL_LPM=$soo_panel_lpm
 ENDPREFS
-  grep '^WEBUI_THEME=' "$MODDIR/config/user_prefs" >> "$MODDIR/config/user_prefs.tmp" 2>/dev/null
-  mv -f "$MODDIR/config/user_prefs.tmp" "$MODDIR/config/user_prefs"
-  restore_lists "$file"
-  rm -f "$MODDIR/tmp/applied"
-
-  if [ "$legacy_gms_doze" = "1" ]; then
-    mkdir -p "$MODDIR/config"
-    grep -qFx "com.google.android.gms" "$MODDIR/config/doze_patches.txt" 2>/dev/null || \
-      echo "com.google.android.gms" >> "$MODDIR/config/doze_patches.txt"
+  if [ -n "$wl_theme" ]; then
+    echo "WEBUI_THEME=$wl_theme" >> "$MODDIR/config/user_prefs.tmp"
+  else
+    grep '^WEBUI_THEME=' "$MODDIR/config/user_prefs" >> "$MODDIR/config/user_prefs.tmp" 2>/dev/null
   fi
+  mv -f "$MODDIR/config/user_prefs.tmp" "$MODDIR/config/user_prefs"
+  rm -f "$MODDIR/tmp/applied"
 
   echo "OK"
 }

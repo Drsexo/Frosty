@@ -36,11 +36,12 @@ log_ram()     { printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$1" >> "$RAM_LOG"; }
 log_mt()      { printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$1" >> "$MT_LOG"; }
 log_tweak()   { printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$1" >> "$TWEAKS_LOG"; }
 log_props()   { printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$1" >> "$PROPS_LOG"; }
-log_bss()     { printf '[%s] %s\n' "$(date '+%H:%M:%S')" "$1" >> "$BS_LOG"; }
 
 load_prefs() { [ -f "$USER_PREFS" ] && . "$USER_PREFS"; }
 
 _bool() { [ "$1" = "1" ] && echo "true" || echo "false"; }
+
+_PERSIST_BACKUP="$MODDIR/backup/persist_props.txt"
 
 _set_prop() {
   if command -v resetprop >/dev/null 2>&1; then
@@ -49,16 +50,28 @@ _set_prop() {
   fi
   case "$1" in
     ro.*) setprop "$1" "$2" 2>/dev/null; return 1 ;;
+    persist.*)
+      grep -q "^$1=" "$_PERSIST_BACKUP" 2>/dev/null || \
+        printf '%s=%s\n' "$1" "$(getprop "$1")" >> "$_PERSIST_BACKUP"
+      ;;
   esac
   setprop "$1" "$2" 2>/dev/null
 }
 
 _del_prop() {
-  command -v resetprop >/dev/null 2>&1 && resetprop --delete "$1" 2>/dev/null || true
+  if command -v resetprop >/dev/null 2>&1; then
+    resetprop --delete "$1" 2>/dev/null
+    return 0
+  fi
+  grep -q "^$1=" "$_PERSIST_BACKUP" 2>/dev/null || return 0
+  setprop "$1" "$(grep "^$1=" "$_PERSIST_BACKUP" | cut -d= -f2-)" 2>/dev/null
+  grep -v "^$1=" "$_PERSIST_BACKUP" > "${_PERSIST_BACKUP}.tmp" 2>/dev/null
+  mv -f "${_PERSIST_BACKUP}.tmp" "$_PERSIST_BACKUP"
 }
 
 _devcfg_backup() {
   local _ns="$1" _key="$2"
+  command -v device_config >/dev/null 2>&1 || return 0
   grep -qF "${_ns}.${_key}=" "$DEVCFG_BACKUP" 2>/dev/null && return
   local _cur
   _cur=$(device_config get "$_ns" "$_key" 2>/dev/null)

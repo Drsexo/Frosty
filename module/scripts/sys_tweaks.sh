@@ -62,7 +62,7 @@ apply_blur() {
       persist.vendor.sf.blur.type=none \
       persist.sys.disable_blur_view=true \
       persist.meizu.gpu_blur=0 \
-      persist.sys.force_no_blur=0 \
+      persist.sys.force_no_blur=1 \
       persist.sys.disable_glass_blur=true \
     ; do
       _set_prop "${_pv%%=*}" "${_pv#*=}"

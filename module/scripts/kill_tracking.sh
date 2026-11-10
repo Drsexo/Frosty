@@ -56,13 +56,14 @@ KT_LOOP
   grep -q '^schema=2$' "$_KT_BACKUP" 2>/dev/null || echo 'schema=2' >> "$_KT_BACKUP"
 
   settings delete global bug_report_in_power_menu >/dev/null 2>&1
-  _clear_legacy_blacklist
+  [ "$_legacy" = "1" ] && _clear_legacy_blacklist
 
   echo '{"status":"ok"}'
 }
 
 revert_kill_tracking() {
-  local _key _val
+  local _key _val _legacy=0
+  [ -f "$_KT_BACKUP" ] && ! grep -q '^schema=2$' "$_KT_BACKUP" && _legacy=1
   while IFS='|' read -r _key _; do
     [ -n "$_key" ] || continue
     _val=$(grep "^${_key}=" "$_KT_BACKUP" 2>/dev/null | cut -d= -f2-)
@@ -76,7 +77,7 @@ $(_kt_settings)
 KT_LOOP
   rm -f "$_KT_BACKUP"
   settings delete global bug_report_in_power_menu >/dev/null 2>&1
-  _clear_legacy_blacklist
+  [ "$_legacy" = "1" ] && _clear_legacy_blacklist
 
   echo '{"status":"ok"}'
 }

@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="hdr_sub">Pil Optimize Edici</string>
-  <string name="kpi_sub">19 etkinden</string>
+  <string name="kpi_sub">{max} etkinden</string>
   <string name="status_count">{0} / {1} etkin</string>
-  <string name="home_active">etkin</string>
   <string name="menu_io">İçe / Dışa Aktar</string>
   <string name="menu_lang">Dil</string>
   <string name="menu_bugreport">Hata Bildir</string>
@@ -49,7 +48,6 @@
   <string name="loading_reverting_kernel">Çekirdek ayarları geri alınıyor...</string>
   <string name="log_kernel_applied">Çekirdek: {0} uygulandı, {1} başarısız/bulunamadı, {2} atlandı</string>
   <string name="log_kernel_restored">Çekirdek: {0} geri yüklendi</string>
-  <string name="log_kernel_vals_restored">Çekirdek: {0} değer geri yüklendi</string>
   <string name="tgl_sysprops">Sistem Özellikleri (Props)</string>
   <string name="tgl_sysprops_desc">Hata ayıklama günlüklerini devre dışı bırakır, pil ve RAM tasarrufu sağlar</string>
   <string name="loading_applying_sysprops">Sistem özellikleri etkinleştiriliyor...</string>
@@ -61,7 +59,6 @@
   <string name="tgl_blur_desc">GPU yükünü azaltır, zayıf cihazlarda daha akıcı çalışır</string>
   <string name="loading_applying_blur">Bulanıklık ayarları uygulanıyor...</string>
   <string name="log_blur_state">Bulanıklık: {0}</string>
-  <string name="log_blur_restored">Bulanıklık geri yüklendi</string>
   <string name="tgl_logs">Günlükleri Sonlandır</string>
   <string name="tgl_logs_desc">Arka plan günlük süreçlerini zorla durdurur, RAM boşaltır</string>
   <string name="loading_killing_logs">Günlük süreçleri sonlandırılıyor...</string>
@@ -80,7 +77,6 @@
   <string name="cad_btn">▶ Uygulamaları Yönet</string>
   <string name="cad_title">Uygulama Doze</string>
   <string name="cad_notice">Seçilen uygulamalar Android'in Doze istisna listesinden kaldırılır, böylece işletim sistemi onları optimize edebilir. GMS, GMS Doze için seçilebilir.</string>
-  <string name="cad_search">Uygulamalarda ara...</string>
   <string name="cad_loading">Yükleniyor...</string>
   <string name="cad_empty">Uygulama bulunamadı</string>
   <string name="cad_warn_system">⚠ Bu paket sistem için gereklidir ve eklenemez</string>
@@ -105,7 +101,6 @@
   <string name="wl_system">Sistem</string>
   <string name="wl_loading">Uygulamalar yükleniyor...</string>
   <string name="wl_empty">Uygulama bulunamadı</string>
-  <string name="wl_sep_other">Diğer uygulamalar</string>
   <string name="loading_applying_deep_doze">Derin Doze uygulanıyor...</string>
   <string name="loading_reverting_deep_doze">Derin Doze geri alınıyor...</string>
   <string name="loading_reapplying_deep">Derin Doze yeniden uygulanıyor...</string>
@@ -121,13 +116,11 @@
     <string name="multitask_title">Çoklu görev profili</string>
 <string name="multitask_desc">RAM boşaltmak için arka plan uygulamalarının ne hızla kapatılacağını ayarlayın. Performans daha fazla uygulamayı hazır tutar. Güç Tasarrufu daha fazlasını daha erken kapatır.</string>
   <string name="log_multitask_profile">Çoklu görev profili {0} olarak ayarlandı</string>
-  <string name="log_multitask_reapplied">Çoklu görev profili yeniden uygulandı</string>
   <string name="loading_applying_mt">Çoklu görev profili uygulanıyor...</string>
   <string name="loading_reverting_mt">Çoklu görev profili geri alınıyor...</string>
   <string name="log_mt_enabled">Çoklu görev profili etkinleştirildi: {0}</string>
   <string name="log_mt_reverted">Çoklu görev profili geri alındı</string>
   <string name="log_mt_reapplied">Çoklu görev profili yeniden uygulandı</string>
-  <string name="log_mt_ram_off">Çoklu görev profili RAM iyileştirici ile birlikte devre dışı bırakıldı</string>
   <string name="ram_wl_btn">▶ RAM Temizleyici İzin Listesi</string>
   <string name="ram_wl_title">RAM Temizleyici İzin Listesi</string>
   <string name="ram_wl_notice">İzin listesindeki uygulamalar RAM temizleyici tarafından asla zorla durdurulmaz.</string>
@@ -184,13 +177,10 @@
   <string name="cat_games">Oyunlar</string>
   <string name="cat_games_tag">Play Games'i bozar</string>
   <string name="loading_freezing_services">GMS servisleri donduruluyor...</string>
-  <string name="loading_freezing_cats">GMS kategorileri donduruluyor...</string>
   <string name="log_gms_frozen">GMS: {0} devre dışı bırakıldı, {1} yeniden etkinleştirildi, {2} başarısız/bulunamadı</string>
   <string name="log_gms_restored">GMS: {0} yeniden etkinleştirildi, {1} başarısız/bulunamadı</string>
   <string name="log_cat_frozen">{0}: {1} devre dışı bırakıldı, {2} başarısız/bulunamadı</string>
   <string name="log_cat_restored">{0}: {1} yeniden etkinleştirildi, {2} başarısız/bulunamadı</string>
-  <string name="log_cats_enabled">Tüm GMS kategorileri etkinleştirildi</string>
-  <string name="log_cats_disabled">Tüm GMS kategorileri devre dışı bırakıldı</string>
   <string name="cat_bulk_enable">Tümünü etkinleştir</string>
   <string name="cat_bulk_disable">Tümünü devre dışı bırak</string>
   <string name="loading_enabling_all_cats">Kalan kategoriler etkinleştiriliyor...</string>
@@ -240,7 +230,6 @@
   <string name="loading_reverting_bss">Pil Tasarrufu geri alınıyor...</string>
   <string name="log_bss_applied">Pil Tasarrufu profili uygulandı</string>
   <string name="log_bss_reverted">Pil Tasarrufu geri alındı</string>
-  <string name="log_bss_reapplied">Pil Tasarrufu yeniden uygulandı</string>
   <string name="tgl_ram_optimizer">RAM Optimize Edici</string>
   <string name="tgl_ram_optimizer_desc">Önbelleğe alınmış ve boş arka plan süreçlerini sınırlar, daha fazla boş RAM için zram takas davranışını ayarlar</string>
   <string name="loading_applying_ram">RAM optimize edici uygulanıyor...</string>
@@ -260,7 +249,6 @@
   <string name="rc_stat_freed">Serbest bırakılan RAM</string>
   <string name="io_title">İçe / Dışa Aktar</string>
   <string name="io_export">Mevcut Ayarları Dışa Aktar</string>
-  <string name="io_backups">Kaydedilen yedekler</string>
   <string name="io_empty">Yedek bulunamadı</string>
   <string name="io_loading">Yükleniyor...</string>
   <string name="io_error">Yedekler yüklenirken hata oluştu</string>
@@ -275,7 +263,6 @@
   <string name="bugreport_title">Hata Bildir</string>
   <string name="bugreport_notice">Cihazın teknik bilgilerini, Frosty'nin yapılandırmasını ve günlüklerini ve diğer yüklü modüllerinizin listesini toplar. Hata bildirirken bu dosyayı ekleyin.</string>
   <string name="bugreport_generate">Hata raporu oluştur</string>
-  <string name="bugreport_saved">Kayıtlı raporlar</string>
   <string name="bugreport_empty">Hata raporu bulunamadı</string>
   <string name="bugreport_generated">Hata raporu Frosty/Logs klasörüne kaydedildi</string>
   <string name="bugreport_failed">Hata raporu oluşturulamadı</string>
@@ -286,19 +273,11 @@
   <string name="loading_freezing">Donduruluyor</string>
   <string name="loading_unfreezing">Çözülüyor</string>
   <string name="loading_enabling_all">Tüm ayarlar etkinleştiriliyor...</string>
-  <string name="loading_enabling_toggles">Tüm geçişler etkinleştiriliyor...</string>
   <string name="loading_reverting_all">Her şey geri alınıyor...</string>
-  <string name="loading_disabling_toggles">Tüm geçişler devre dışı bırakılıyor...</string>
-  <string name="loading_disabling_cats">Tüm kategoriler devre dışı bırakılıyor...</string>
-  <string name="loading_restoring_kernel">Çekirdek değerleri geri yükleniyor...</string>
-  <string name="loading_re_enabling_gms">GMS servisleri çözülüyor...</string>
-  <string name="loading_restoring_blur">Bulanıklık geri yükleniyor...</string>
   <string name="loading_reapplying">Ayarlar yeniden uygulanıyor...</string>
   <string name="log_freeze_all">Tümünü Etkinleştir: her şey açılıyor...</string>
   <string name="log_reverting_all">Tümünü Geri Al: her şey devre dışı bırakılıyor...</string>
   <string name="log_reapply_start">Yeniden uygulama başlatılıyor...</string>
-  <string name="log_toggles_enabled">Tüm sistem geçişleri etkinleştirildi</string>
-  <string name="log_toggles_disabled">Tüm sistem geçişleri devre dışı bırakıldı</string>
   <string name="toast_frozen">Her şey donduruldu ve uygulandı</string>
   <string name="toast_stocked">Her şey orijinal durumuna geri alındı</string>
   <string name="toast_refreshed">Yenilendi</string>
@@ -312,7 +291,6 @@
   <string name="toast_nothing_to_apply">Uygulanacak bir şey yok — önce bir şeyi etkinleştirin</string>
   <string name="sec_log">Etkinlik Günlüğü</string>
   <string name="log_webui_ready">WebUI hazır</string>
-  <string name="log_empty">Henüz etkinlik yok</string>
   <string name="log_reboot_effect">Tam etki için yeniden başlatın</string>
   <string name="log_not_applied">Kaydedilen ayarlar henüz uygulanmadı. Yeniden başlatın veya Ayarları Yeniden Uygula'yı kullanın.</string>
   <string name="kpi_title">Sistem Durumu</string>
@@ -326,8 +304,5 @@
   <string name="theme_retro_desc">Klasik Windows 95 görünümü.</string>
   <string name="theme_terminal_desc">Komut satırı CRT fosfor ekranı.</string>
   <string name="theme_handheld_desc">El tipi oyun konsolu kabuğu.</string>
-  <string name="about_github">GitHub'da Görüntüle</string>
   <string name="about_desc">Maksimum pil tasarrufu ve GMS optimizasyonu. GMS servislerini dondurun, doze modunu etkinleştirin, günlükleri sonlandırın, çekirdek ince ayarlarını uygulayın. Ayarları düzenlemek için WebUI düğmesini kullanın.</string>
-  <string name="ksu_unavailable_title">KernelSU API Kullanılamıyor</string>
-  <string name="ksu_unavailable_desc">Bu WebUI KernelSU gerektirir. Magisk/APatch için Action düğmesini veya WebUI-X kullanın.</string>
 </resources>

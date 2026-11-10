@@ -5,6 +5,7 @@ apply_battery_saver() {
     constants="advertise_is_enabled=true"
     constants="$constants,enable_datasaver=$(_bool ${BSS_DATASAVER:-0})"
     constants="$constants,soundtrigger_mode=$(( ${BSS_SOUNDTRIGGER_DISABLED:-0} * 2 ))"
+    constants="$constants,disable_soundtrigger=$(_bool ${BSS_SOUNDTRIGGER_DISABLED:-0})"
     constants="$constants,defer_full_backup=$(_bool $BSS_FULLBACKUP_DEFERRED)"
     constants="$constants,defer_keyvalue_backup=$(_bool $BSS_KEYVALUEBACKUP_DEFERRED)"
     constants="$constants,force_all_apps_standby=$(_bool $BSS_FORCE_STANDBY)"

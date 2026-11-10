@@ -30,6 +30,15 @@ _find_caller_pkg() {
   return 1
 }
 
+_ram_clean_protected() {
+  {
+    sed 's/#.*//;s/[[:space:]]//g' "$MODDIR/config/doze_whitelist.txt" 2>/dev/null
+    settings get secure default_input_method 2>/dev/null | cut -d/ -f1
+    cmd telecom get-default-dialer 2>/dev/null
+    settings get secure sms_default_application 2>/dev/null
+  } | tr -d '\r' | grep -E '^[A-Za-z][A-Za-z0-9_.]*$'
+}
+
 _ram_clean_worker() {
   local mode="$1" exclude="$2"
   local _count=0 _skip=0
@@ -43,28 +52,17 @@ _ram_clean_worker() {
     "$(date '+%Y-%m-%d %H:%M:%S')" > "$_RAM_CLEAN_LOG"
   _rc_log "Memory before: ${_mem_before_mb} MB available"
 
-  local _fg=""
+  local _fg="" _prot=""
   if [ "$mode" = "aggressive" ] || [ "$mode" = "extreme" ]; then
     _fg=$(_find_caller_pkg)
+    _prot=$(_ram_clean_protected)
   fi
-
-  _rc_log "Syncing and dropping page cache..."
-  sync
-  echo 3 > /proc/sys/vm/drop_caches 2>/dev/null
 
   case "$mode" in
     safe)
       _rc_log "Releasing cached background processes..."
       am kill-all 2>/dev/null
       _rc_log "[OK] Background processes released"
-      sync
-      echo 3 > /proc/sys/vm/drop_caches 2>/dev/null
-      if [ -f /proc/sys/vm/compact_memory ]; then
-        _rc_log "Compacting memory..."
-        echo 1 > /proc/sys/vm/compact_memory 2>/dev/null
-        _rc_log "[OK] Memory compacted"
-      fi
-      [ -f /sys/block/zram0/compact ] && echo 1 > /sys/block/zram0/compact 2>/dev/null
       ;;
     aggressive)
       _rc_log "Force-stopping 3rd-party apps..."
@@ -73,18 +71,11 @@ _ram_clean_worker() {
         [ -n "$_fg" ]     && [ "$_pkg" = "$_fg" ]     && { _skip=$((_skip+1)); continue; }
         [ -n "$exclude" ] && [ "$_pkg" = "$exclude" ] && { _skip=$((_skip+1)); continue; }
         grep -qFx "$_pkg" "$RAM_WL_FILE" 2>/dev/null    && { _skip=$((_skip+1)); continue; }
+        printf '%s\n' "$_prot" | grep -qFx "$_pkg"      && { _skip=$((_skip+1)); continue; }
         am force-stop "$_pkg" 2>/dev/null
         _count=$((_count+1))
       done
       _rc_log "[OK] Force-stopped $_count apps${_skip:+ ($_skip protected)}"
-      sync
-      echo 3 > /proc/sys/vm/drop_caches 2>/dev/null
-      if [ -f /proc/sys/vm/compact_memory ]; then
-        _rc_log "Compacting memory..."
-        echo 1 > /proc/sys/vm/compact_memory 2>/dev/null
-        _rc_log "[OK] Memory compacted"
-      fi
-      [ -f /sys/block/zram0/compact ] && echo 1 > /sys/block/zram0/compact 2>/dev/null
       ;;
     extreme)
       local _home _excl="com.android.systemui com.android.phone android.process.acore"
@@ -94,11 +85,12 @@ _ram_clean_worker() {
       [ -n "$_home" ]   && _excl="$_excl $_home"
       [ -n "$_fg" ]     && _excl="$_excl $_fg"
       [ -n "$exclude" ] && _excl="$_excl $exclude"
+      [ -n "$_prot" ]   && _excl="$_excl $_prot"
       [ -f "$RAM_WL_FILE" ] && _excl="$_excl $(grep -v '^#' "$RAM_WL_FILE" 2>/dev/null | tr '\n' ' ')"
       _rc_log "Force-stopping all packages..."
       for _pkg in $(pm list packages --user 0 2>/dev/null | \
           cut -d: -f2 | tr -d '\r' | sort); do
-        case "$_pkg" in android|com.android.*|android.process.*) _skip=$((_skip+1)); continue ;; esac
+        case "$_pkg" in android|com.android.*|android.process.*|com.google.android.gms|com.google.android.gsf) _skip=$((_skip+1)); continue ;; esac
         local _blocked=0
         for _ex in $_excl; do
           [ "$_pkg" = "$_ex" ] && { _blocked=1; break; }
@@ -108,16 +100,18 @@ _ram_clean_worker() {
         _count=$((_count+1))
       done
       _rc_log "[OK] Force-stopped $_count apps${_skip:+ ($_skip protected)}"
-      sync
-      echo 3 > /proc/sys/vm/drop_caches 2>/dev/null
-      if [ -f /proc/sys/vm/compact_memory ]; then
-        _rc_log "Compacting memory..."
-        echo 1 > /proc/sys/vm/compact_memory 2>/dev/null
-        _rc_log "[OK] Memory compacted"
-      fi
-      [ -f /sys/block/zram0/compact ] && echo 1 > /sys/block/zram0/compact 2>/dev/null
       ;;
   esac
+
+  _rc_log "Syncing and dropping page cache..."
+  sync
+  echo 3 > /proc/sys/vm/drop_caches 2>/dev/null
+  if [ -f /proc/sys/vm/compact_memory ]; then
+    _rc_log "Compacting memory..."
+    echo 1 > /proc/sys/vm/compact_memory 2>/dev/null
+    _rc_log "[OK] Memory compacted"
+  fi
+  [ -f /sys/block/zram0/compact ] && echo 1 > /sys/block/zram0/compact 2>/dev/null
 
   local _mem_after _mem_after_mb _freed_mb=0
   _mem_after=$(awk '/MemAvailable/{print $2}' /proc/meminfo 2>/dev/null)

@@ -132,7 +132,7 @@ apply_ram_optimizer() {
     if [ "$_cur" = "$_best" ]; then
       printf '%s\n' "$_streams" > "$_z/max_comp_streams" 2>/dev/null
       log_ram "[OK] ZRAM: algo=$_best streams=$_streams"
-    elif [ -b "$_dev" ] && _zram_swapoff_is_safe "$_z" && timeout 15 swapoff "$_dev" 2>/dev/null; then
+    elif [ -b "$_dev" ] && [ "$(cat "$_z/disksize" 2>/dev/null || echo 0)" -gt 0 ] && _zram_swapoff_is_safe "$_z" && timeout 15 swapoff "$_dev" 2>/dev/null; then
       local _ds; _ds=$(cat "$_z/disksize" 2>/dev/null)
       printf '1\n' > "$_z/reset" 2>/dev/null
       printf '%s\n' "$_best" > "$_z/comp_algorithm" 2>/dev/null
@@ -226,16 +226,7 @@ apply_ram_optimizer() {
       _set_prop ro.lmk.use_psi false
     fi
 
-    if ! _set_prop lmkd.reinit 1 2>/dev/null; then
-      local _lmkd_pid
-      _lmkd_pid=$(pidof lmkd 2>/dev/null)
-      if [ -n "$_lmkd_pid" ]; then
-        kill -HUP "$_lmkd_pid" 2>/dev/null
-      else
-        stop lmkd 2>/dev/null
-        start lmkd 2>/dev/null
-      fi
-    fi
+    _set_prop lmkd.reinit 1 2>/dev/null
 
     log_ram "[OK] LMKD ($_lmk_kernel) tuned for $_lmk_lvl"
     kcount=$((kcount + 1))
@@ -291,16 +282,21 @@ revert_ram_optimizer() {
       local _z=/sys/block/zram0 _dev=/dev/block/zram0
       local _cur_algo
       _cur_algo=$(cat "$_z/comp_algorithm" 2>/dev/null | sed -n 's/.*\[\([a-z0-9-]*\)\].*/\1/p')
-      if [ "$_cur_algo" != "$_zram_algo" ] && [ -b "$_dev" ]; then
-        if timeout 15 swapoff "$_dev" 2>/dev/null; then
+      if [ "$_cur_algo" != "$_zram_algo" ] && [ -b "$_dev" ] && [ -n "$_zram_disksize" ]; then
+        if _zram_swapoff_is_safe "$_z" && timeout 15 swapoff "$_dev" 2>/dev/null; then
           printf '1\n' > "$_z/reset" 2>/dev/null
           printf '%s\n' "$_zram_algo" > "$_z/comp_algorithm" 2>/dev/null
           [ -n "$_zram_streams" ] && printf '%s\n' "$_zram_streams" > "$_z/max_comp_streams" 2>/dev/null
           [ -n "$_zram_disksize" ] && printf '%s\n' "$_zram_disksize" > "$_z/disksize" 2>/dev/null
           mkswap "$_dev" >/dev/null 2>&1
           swapon -p 32767 "$_dev" 2>/dev/null || swapon "$_dev" 2>/dev/null
-          log_ram "[OK] ZRAM: algo restored $_cur_algo→$_zram_algo"
-          kcount=$((kcount + 1))
+          if grep -q 'zram0' /proc/swaps 2>/dev/null; then
+            log_ram "[OK] ZRAM: algo restored $_cur_algo→$_zram_algo"
+            kcount=$((kcount + 1))
+          else
+            log_ram "[WARN] ZRAM: swapon failed after restore, reboot to recover swap"
+            _zram_partial=1
+          fi
         else
           log_ram "[WARN] ZRAM: swapoff failed, algo not restored"
           _zram_partial=1
@@ -310,7 +306,7 @@ revert_ram_optimizer() {
       fi
     fi
 
-    rm -f "$RAM_BACKUP"
+    [ "$_zram_partial" = "1" ] || rm -f "$RAM_BACKUP"
     log_ram "[OK] RAM values restored ($kcount)"
   else
     log_ram "No RAM backup found"
@@ -329,11 +325,7 @@ revert_ram_optimizer() {
       fi
     done < "$LMKD_BACKUP"
     rm -f "$LMKD_BACKUP"
-    if ! _set_prop lmkd.reinit 1 2>/dev/null; then
-      local _lp
-      _lp=$(pidof lmkd 2>/dev/null)
-      [ -n "$_lp" ] && kill -HUP "$_lp" 2>/dev/null
-    fi
+    _set_prop lmkd.reinit 1 2>/dev/null
     log_ram "[OK] LMKD props restored"
   fi
 

@@ -1,7 +1,7 @@
 id=Frosty
 name=Frosty - Battery Saver
-version=4.5
-versionCode=45
+version=4.6
+versionCode=46
 author=DrSexo
 description=Maximum battery saving and GMS optimization. Freeze GMS services, enable doze, nuke logs, apply kernel tweaks. Use WebUI button to edit settings.
 banner=banner.jpg

@@ -145,7 +145,7 @@ html[dir=rtl] .row.fx-on{box-shadow:inset -3px 0 0 0 var(--ink)}
 html[dir=rtl] .fx-switch input:checked + .fx-swtrack .fx-swknob{transform:translateX(-24px)}
 html[dir=rtl] .linkrow svg:last-of-type{transform:scaleX(-1)}
 
-div.fx-modal div.fx-modal-card{background:var(--bezel);border:2px solid var(--shedge);border-radius:10px 10px 0 0;padding:10px;width:min(100vw,520px);max-height:88vh;box-shadow:0 14px 40px rgba(0,0,0,.42)}
+div.fx-modal div.fx-modal-card{background:var(--bezel);border:2px solid var(--shedge);border-radius:10px 10px 0 0;padding:10px;width:min(100vw,520px);box-shadow:0 14px 40px rgba(0,0,0,.42)}
 div.fx-modal.fx-centered div.fx-modal-card{border-radius:10px}
 div.fx-modal div.fx-modal-card.fx-langconfirm{background:var(--scr);border:2px solid var(--ink);padding:16px;border-radius:8px;color:var(--ink)}
 @media(min-width:600px){div.fx-modal div.fx-modal-card{border-radius:10px}}
@@ -182,7 +182,7 @@ html[dir=rtl] .fx-gpsrow.fx-lvl-on{box-shadow:inset -3px 0 0 0 var(--ink)}
 .fx-search::placeholder{color:var(--mid)}
 .fx-syscheck{display:flex;align-items:center;gap:5px;font:700 11px var(--mono);color:var(--ink)}
 .fx-syscheck input{width:17px;height:17px;accent-color:var(--ink)}
-.fx-applist{max-height:46vh;overflow-y:auto;padding:0 6px 8px;min-height:0}
+.fx-applist{overflow-y:auto;padding:0 6px 8px}
 .fx-approw{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:2px solid var(--ink);cursor:pointer}
 .fx-approw:last-child{border-bottom:0}
 .fx-appico{width:40px;height:40px;border:2px solid var(--ink);border-radius:2px;background:var(--ltn);display:flex;align-items:center;justify-content:center;font:700 13px var(--mono);color:var(--ink);overflow:hidden;flex:none}
@@ -314,9 +314,9 @@ div.fx-loadcard{background:var(--bezel);color:var(--ink);border:2px solid var(--
     <div class="view" data-fx-view="home">
       <div class="kpi">
         <div class="kpi-n" data-fx-kpi>0</div>
-        <div class="kpi-s" data-i18n="kpi_sub">of 19 active</div>
+        <div class="kpi-s" data-i18n="kpi_sub">active</div>
         <div class="pixrow" id="kpi-pix" aria-hidden="true"></div>
-        <span class="pixchip" id="kpi-chip">0/19</span>
+        <span class="pixchip" id="kpi-chip">0/--</span>
       </div>
       <div class="acts">
         <div class="acts-r">
@@ -476,7 +476,7 @@ div.fx-loadcard{background:var(--bezel);color:var(--ink);border:2px solid var(--
   var chip = document.getElementById('kpi-chip');
   if (!wrap) return;
   var cells = [];
-  for (var i = 0; i < 19; i++) {
+  for (var i = 0; i < FX.counts().max; i++) {
     var c = document.createElement('span');
     c.className = 'px-c';
     wrap.appendChild(c);
@@ -488,8 +488,8 @@ div.fx-loadcard{background:var(--bezel);color:var(--ink);border:2px solid var(--
       var v = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--fx-kpi'));
       if (v) n = v;
     }
-    for (var j = 0; j < 19; j++) cells[j].classList.toggle('on', j < n);
-    if (chip) chip.textContent = n + '/19';
+    for (var j = 0; j < FX.counts().max; j++) cells[j].classList.toggle('on', j < n);
+    if (chip) chip.textContent = n + '/' + FX.counts().max;
   }
   FX.on('render', paint);
   paint();

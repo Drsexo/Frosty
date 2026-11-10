@@ -107,7 +107,7 @@
       </svg>
       <div class="kpi-center">
         <span class="kpi-num" data-fx-kpi>0</span>
-        <span class="kpi-sub" data-i18n="kpi_sub">of 19 active</span>
+        <span class="kpi-sub" data-i18n="kpi_sub">active</span>
       </div>
     </div>
     <div class="actions">
@@ -370,7 +370,7 @@
   }
 
   var kpiFill = document.getElementById('kpi-fill');
-  var CIRC = 534.07, KPI_TOTAL = 19;
+  var CIRC = 534.07, KPI_TOTAL = FX.counts().max;
   function drawKpiRing() {
     if (!kpiFill) return;
     var total = FX.counts().total;

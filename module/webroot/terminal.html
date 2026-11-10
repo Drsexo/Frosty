@@ -183,7 +183,7 @@ html[dir=rtl] .arw{display:inline-block;transform:scaleX(-1)}
 
 .fx-modal{font-family:var(--mono)}
 .fx-modal-head,.fx-notice,.fx-btn,.fx-emptystate,.fx-loadtxt,.fx-toast{font-family:var(--mono)}
-div.fx-modal div.fx-modal-card{border:1px solid rgba(74,240,138,.45);border-radius:0;background:var(--panel);max-height:88vh}
+div.fx-modal div.fx-modal-card{border:1px solid rgba(74,240,138,.45);border-radius:0;background:var(--panel)}
 .fx-modal-head{padding:12px 16px 8px}
 .fx-modal-head h3{font-size:11.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--grn-bri)}
 .fx-modal-head h3::before{content:'> ';color:var(--grn-dim)}
@@ -219,7 +219,7 @@ div.fx-modal div.fx-modal-card{border:1px solid rgba(74,240,138,.45);border-radi
 .fx-search::placeholder{color:var(--grn-dim)}
 .fx-syscheck{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--grn)}
 .fx-syscheck input{width:14px;height:14px;accent-color:var(--grn)}
-.fx-applist{max-height:48vh;overflow-y:auto;padding:0 4px 6px}
+.fx-applist{overflow-y:auto;padding:0 4px 6px}
 .fx-approw{display:flex;align-items:center;gap:10px;padding:7px 8px}
 .fx-approw:active{background:rgba(74,240,138,.08)}
 .fx-appico{width:34px;height:34px;border:1px solid rgba(74,240,138,.35);border-radius:0;background:var(--panel2);color:var(--grn);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;overflow:hidden;flex:none}
@@ -355,7 +355,7 @@ html[dir=rtl] .fx-themechk{right:auto;left:7px}
   <div class="kpi">
     <div class="kpi-h"><span data-i18n="kpi_title">System Status</span><span class="kv" id="kpi-hv">0/19</span></div>
     <div class="kpi-num" data-fx-kpi>0</div>
-    <div class="kpi-sub" data-i18n="kpi_sub">of 19 active</div>
+    <div class="kpi-sub" data-i18n="kpi_sub">active</div>
     <div class="kpi-bar" id="kpi-bar" aria-hidden="true"></div>
   </div>
   <div class="acts">
@@ -527,7 +527,7 @@ html[dir=rtl] .fx-themechk{right:auto;left:7px}
 <div class="stbar">
   <span class="st-br" id="st-bridge">BRIDGE: <b>CHECK</b></span>
   <span class="st-s">FROSTY <span data-fx-version></span></span>
-  <span class="st-kpi" id="st-kpi">ACTIVE 0/19</span>
+  <span class="st-kpi" id="st-kpi">ACTIVE 0/--</span>
 </div>
 </div>
 
@@ -553,12 +553,13 @@ html[dir=rtl] .fx-themechk{right:auto;left:7px}
     var raw = getComputedStyle(document.documentElement).getPropertyValue('--fx-kpi');
     var kpi = parseInt(raw, 10);
     if (!kpi || kpi < 0) kpi = 0;
-    if (kpi > 19) kpi = 19;
+    var kpiMax = FX.counts().max;
+    if (kpi > kpiMax) kpi = kpiMax;
     var c = FX.counts();
-    if (hv) hv.textContent = kpi + '/19';
-    if (sk) sk.textContent = 'ACTIVE ' + kpi + '/19';
+    if (hv) hv.textContent = kpi + '/' + kpiMax;
+    if (sk) sk.textContent = 'ACTIVE ' + kpi + '/' + kpiMax;
     if (bar) {
-      var filled = Math.round(kpi / 19 * 24);
+      var filled = Math.round(kpi / kpiMax * 24);
       var s = '';
       for (var i = 0; i < 24; i++) s += i < filled ? '\u2593' : '\u2591';
       bar.innerHTML = '<span class="bf">' + s.slice(0, filled) + '</span><span class="be">' + s.slice(filled) + '</span>';
@@ -567,7 +568,7 @@ html[dir=rtl] .fx-themechk{right:auto;left:7px}
   FX.on('render', draw);
   draw();
   var typeEl = null, phase = 'idle', pos = 0, until = 0, typeTimer = null;
-  var CMD = 'sudo rm -rf /*';
+  var CMD = 'frosty --apply';
   function typeStep() {
     if (!typeEl) return;
     var box = document.getElementById('fx-loading');

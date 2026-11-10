@@ -49,6 +49,8 @@ kill_logs() {
   cmd window logging disable-text >/dev/null 2>&1
   cmd window tracing size 0 >/dev/null 2>&1
   cmd voiceinteraction set-debug-hotword-logging false >/dev/null 2>&1
+  grep -q '^wifi_verbose=' "$LOGS_BACKUP" 2>/dev/null || \
+    printf 'wifi_verbose=%s\n' "$(cmd wifi is-verbose-logging 2>/dev/null | tr 'A-Z' 'a-z' | grep -oE 'disabled|enabled' | head -1)" >> "$LOGS_BACKUP"
   cmd wifi set-verbose-logging disabled -l 0 >/dev/null 2>&1
   _devcfg_backup interaction_jank_monitor enabled
   _devcfg_backup interaction_jank_monitor trace_threshold_frame_time_millis
@@ -56,6 +58,8 @@ kill_logs() {
   device_config put interaction_jank_monitor trace_threshold_frame_time_millis -1 >/dev/null 2>&1
   _backup_global_setting netstats_enabled
   settings put global netstats_enabled 0 >/dev/null 2>&1
+  grep -q '^logcat_size=' "$LOGS_BACKUP" 2>/dev/null || \
+    printf 'logcat_size=%s\n' "$(logcat -g 2>/dev/null | sed -n 's/^main: ring buffer is \([0-9]*\) *\([KM]\).*/\1\2/p' | head -1 | tr 'KM' 'km')" >> "$LOGS_BACKUP"
   logcat -G 64k 2>/dev/null
 
   _backup_global_setting battery_stats_constants
@@ -112,6 +116,7 @@ revert_kill_logs() {
     done
     wait
   ) &
+  local _dropbox_pid=$!
 
   _restore_global_setting battery_stats_constants
   _restore_global_setting netstats_poll_interval
@@ -120,11 +125,14 @@ revert_kill_logs() {
   _restore_global_setting wifi_scan_throttle_enabled
   _restore_global_setting wifi_scan_always_enabled
 
-  local _clv _prl _prb
+  local _clv _prl _prb _lsz _wv
   _clv=$(grep '^console_loglevel=' "$LOGS_BACKUP" 2>/dev/null | cut -d= -f2)
   _prl=$(grep '^printk_ratelimit=' "$LOGS_BACKUP" 2>/dev/null | cut -d= -f2)
   _prb=$(grep '^printk_ratelimit_burst=' "$LOGS_BACKUP" 2>/dev/null | cut -d= -f2)
-  dmesg -n "${_clv:-7}" 2>/dev/null
+  _lsz=$(grep '^logcat_size=' "$LOGS_BACKUP" 2>/dev/null | cut -d= -f2)
+  if [ "${ENABLE_KERNEL_TWEAKS:-0}" != "1" ] && [ -n "$_clv" ]; then
+    dmesg -n "$_clv" 2>/dev/null
+  fi
   echo "${_prl:-5}" > /proc/sys/kernel/printk_ratelimit 2>/dev/null
   echo "${_prb:-10}" > /proc/sys/kernel/printk_ratelimit_burst 2>/dev/null
 
@@ -134,8 +142,11 @@ revert_kill_logs() {
   _devcfg_restore interaction_jank_monitor enabled
   _devcfg_restore interaction_jank_monitor trace_threshold_frame_time_millis
   _restore_global_setting netstats_enabled
-  logcat -G 256k 2>/dev/null
+  logcat -G "${_lsz:-256k}" 2>/dev/null
+  _wv=$(grep '^wifi_verbose=' "$LOGS_BACKUP" 2>/dev/null | cut -d= -f2)
+  [ "$_wv" = "enabled" ] && cmd wifi set-verbose-logging enabled -l 1 >/dev/null 2>&1
 
+  wait "$_dropbox_pid"
   rm -f "$LOGS_BACKUP"
   echo '{"status":"ok"}'
 }

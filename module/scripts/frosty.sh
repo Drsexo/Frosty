@@ -11,6 +11,16 @@ load_prefs
 
 cmd="$1"; shift
 
+_gms_lock() {
+  local _i=0
+  until mkdir "$MODDIR/tmp/gms_freeze.lock" 2>/dev/null; do
+    _i=$((_i + 1))
+    [ "$_i" -ge 120 ] && return 0
+    sleep 1
+  done
+  trap 'rmdir "$MODDIR/tmp/gms_freeze.lock" 2>/dev/null' EXIT
+}
+
 case "$cmd" in
   apply_kernel|revert_kernel)
     . "$SCRIPTS/kernel_tweaks.sh"
@@ -63,6 +73,7 @@ case "$cmd" in
 
   freeze|stock|freeze_category|unfreeze_category)
     . "$SCRIPTS/gms_freeze.sh"
+    _gms_lock
     case "$cmd" in
       freeze)             freeze_services ;;
       stock)              unfreeze_services ;;
@@ -78,7 +89,7 @@ case "$cmd" in
       ram_clean_silent) ram_clean_silent "$1" ;;
     esac ;;
 
-  list_wl|add_wl|remove_wl|list_ram_wl|add_ram_wl|remove_ram_wl|apply_soo|revert_soo)
+  list_wl|add_wl|remove_wl|list_ram_wl|add_ram_wl|remove_ram_wl|apply_soo|revert_soo|feature_state)
     . "$SCRIPTS/prefs.sh"
     case "$cmd" in
       list_wl)       list_wl ;;
@@ -89,6 +100,7 @@ case "$cmd" in
       remove_ram_wl) remove_from_ram_wl "$1" ;;
       apply_soo)     apply_soo ;;
       revert_soo)    revert_soo ;;
+      feature_state) feature_state ;;
     esac ;;
 
   export|import|list_backups)

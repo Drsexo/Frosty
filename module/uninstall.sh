@@ -11,6 +11,8 @@ mkdir -p "$TEMP_DIR"
 [ -f "$MODDIR/config/user_prefs" ]       && cp -f "$MODDIR/config/user_prefs"       "$TEMP_DIR/"
 [ -f "$MODDIR/config/doze_patches.txt" ] && cp -f "$MODDIR/config/doze_patches.txt" "$TEMP_DIR/"
 [ -f "$MODDIR/tmp/frozen_services.txt" ] && cp -f "$MODDIR/tmp/frozen_services.txt" "$TEMP_DIR/"
+[ -f "$MODDIR/tmp/cad_orig_wl.txt" ]     && cp -f "$MODDIR/tmp/cad_orig_wl.txt"     "$TEMP_DIR/"
+[ -f "$MODDIR/tmp/cad_unwl.txt" ]        && cp -f "$MODDIR/tmp/cad_unwl.txt"        "$TEMP_DIR/"
 [ -f "$MODDIR/backup/logs_values.txt" ]  && cp -f "$MODDIR/backup/logs_values.txt"  "$TEMP_DIR/"
 [ -f "$MODDIR/backup/lmkd_values.txt" ]  && cp -f "$MODDIR/backup/lmkd_values.txt"  "$TEMP_DIR/"
 [ -f "$MODDIR/backup/bss_values.txt" ]   && cp -f "$MODDIR/backup/bss_values.txt"   "$TEMP_DIR/"
@@ -23,8 +25,11 @@ mkdir -p "$TEMP_DIR"
 [ -f "$MODDIR/backup/deep_doze_settings.txt" ] && cp -f "$MODDIR/backup/deep_doze_settings.txt" "$TEMP_DIR/"
 [ -f "$MODDIR/backup/kt_netpolicy_cleared" ] && cp -f "$MODDIR/backup/kt_netpolicy_cleared" "$TEMP_DIR/"
 [ -f "$MODDIR/tmp/soo_disabled" ]         && cp -f "$MODDIR/tmp/soo_disabled"         "$TEMP_DIR/"
+[ -f "$MODDIR/tmp/soo_sensor_idle.txt" ] && cp -f "$MODDIR/tmp/soo_sensor_idle.txt" "$TEMP_DIR/"
+[ -f "$MODDIR/backup/persist_props.txt" ] && cp -f "$MODDIR/backup/persist_props.txt" "$TEMP_DIR/"
 [ -f "$MODDIR/tmp/deep_doze_restricted.txt" ] && cp -f "$MODDIR/tmp/deep_doze_restricted.txt" "$TEMP_DIR/"
 [ -f "$MODDIR/tmp/deep_doze_lockcycle" ]  && cp -f "$MODDIR/tmp/deep_doze_lockcycle"  "$TEMP_DIR/"
+[ -f "$MODDIR/tmp/deep_doze_allow.txt" ] && cp -f "$MODDIR/tmp/deep_doze_allow.txt" "$TEMP_DIR/"
 [ -f "$MODDIR/config/doze_xml_overlays.txt" ] && cp -f "$MODDIR/config/doze_xml_overlays.txt" "$TEMP_DIR/"
 
 . "$MODDIR/scripts/monitor_common.sh"
@@ -66,6 +71,10 @@ _all_user_ids() {
   echo "$_ids"
 }
 _user_ids=$(_all_user_ids)
+WL_ORIG="$TEMP_DIR/cad_orig_wl.txt"
+_was_in_wl() {
+  [ ! -f "$WL_ORIG" ] || grep -qFx "$1 $2" "$WL_ORIG"
+}
 
 log() { echo "[$(date '+%H:%M:%S')] $1" >> "$LOGFILE"; }
 echo "Frosty uninstall - $(date)" > "$LOGFILE"
@@ -96,12 +105,13 @@ for prop in tombstoned.max_tombstone_count tombstoned.max_anr_count ro.lmk.debug
             persist.traced.enable sys.wifitracing.started persist.vendor.wifienhancelog; do
   _del_prop "$prop"
 done
-_bl_sdk=$(getprop ro.build.version.sdk 2>/dev/null)
-if [ "${_bl_sdk:-0}" -ge 29 ]; then
-  cmd window disable-blur 0 >/dev/null 2>&1
-else
-  cmd wm disable-blur 0 >/dev/null 2>&1
+if [ -f "$TEMP_DIR/persist_props.txt" ] && ! command -v resetprop >/dev/null 2>&1; then
+  while IFS= read -r _pl; do
+    [ -n "$_pl" ] && setprop "${_pl%%=*}" "${_pl#*=}" 2>/dev/null
+  done < "$TEMP_DIR/persist_props.txt"
 fi
+_bl_sdk=$(getprop ro.build.version.sdk 2>/dev/null)
+[ "${_bl_sdk:-0}" -ge 29 ] && cmd window disable-blur 0 >/dev/null 2>&1
 
 LOGS_BACKUP="$TEMP_DIR/logs_values.txt"
 _gs_restore() {
@@ -147,7 +157,7 @@ if [ -f "$LMKD_BACKUP" ]; then
     fi
   done < "$LMKD_BACKUP"
   rm -f "$LMKD_BACKUP"
-  _set_prop lmkd.reinit 1 2>/dev/null || { _lp=$(pidof lmkd 2>/dev/null); [ -n "$_lp" ] && kill -HUP "$_lp" 2>/dev/null; }
+  _set_prop lmkd.reinit 1 2>/dev/null
 fi
 
 RAM_BACKUP="$TEMP_DIR/ram_values.txt"
@@ -209,21 +219,30 @@ _devcfg_restore activity_manager activity_start_pss_defer
 _devcfg_restore interaction_jank_monitor enabled
 _devcfg_restore interaction_jank_monitor trace_threshold_frame_time_millis
 _gs_restore netstats_enabled
-logcat -G 256k 2>/dev/null
+_lsz=$(grep '^logcat_size=' "$LOGS_BACKUP" 2>/dev/null | cut -d= -f2)
+logcat -G "${_lsz:-256k}" 2>/dev/null
+_wv=$(grep '^wifi_verbose=' "$LOGS_BACKUP" 2>/dev/null | cut -d= -f2)
+[ "$_wv" = "enabled" ] && cmd wifi set-verbose-logging enabled -l 1 >/dev/null 2>&1
 _clv=$(grep '^console_loglevel=' "$LOGS_BACKUP" 2>/dev/null | cut -d= -f2)
-dmesg -n "${_clv:-7}" 2>/dev/null
+[ -n "$_clv" ] && dmesg -n "$_clv" 2>/dev/null
 echo 5 > /proc/sys/kernel/printk_ratelimit 2>/dev/null
 echo 10 > /proc/sys/kernel/printk_ratelimit_burst 2>/dev/null
 
 # Revert App Doze (including GMS if it was in the list)
 log "Reverting App Doze..."
 if [ -f "$DEVICEIDLE_XML" ]; then
-  sed -i "/<un-wl /d" "$DEVICEIDLE_XML"
+  for _list in "$TEMP_DIR/cad_unwl.txt" "$TEMP_DIR/doze_patches.txt"; do
+    [ -f "$_list" ] || continue
+    while IFS= read -r _pkg; do
+      _pkg=$(printf '%s' "$_pkg" | sed 's/#.*//;s/[[:space:]]//g')
+      case "$_pkg" in ''|*[!A-Za-z0-9_.]*) continue ;; esac
+      sed -i "/<un-wl n=\"$(printf '%s' "$_pkg" | sed 's/\./\\./g')\"/d" "$DEVICEIDLE_XML" 2>/dev/null
+    done < "$_list"
+  done
   restorecon "$DEVICEIDLE_XML" 2>/dev/null
 fi
 
 cmd deviceidle sys-whitelist +"$GMS_PKG" >/dev/null 2>&1
-dumpsys deviceidle whitelist +"$GMS_PKG" >/dev/null 2>&1
 
 for user_id in $_user_ids; do
   pm enable --user "$user_id" "$GMS_PKG/$GMS_PKG.auth.managed.admin.DeviceAdminReceiver" >/dev/null 2>&1
@@ -236,9 +255,9 @@ if [ -f "$PATCHES_FILE" ]; then
     case "$pkg" in ''|'#'*|'###'*) continue ;; esac
     pkg=$(echo "$pkg" | tr -d ' ')
     [ -z "$pkg" ] && continue
-    dumpsys deviceidle whitelist +"$pkg" >/dev/null 2>&1
+    _was_in_wl user "$pkg" && dumpsys deviceidle whitelist +"$pkg" >/dev/null 2>&1
     cmd deviceidle sys-whitelist +"$pkg" >/dev/null 2>&1
-    cmd deviceidle except-idle-whitelist +"$pkg" >/dev/null 2>&1
+    _was_in_wl system-excidle "$pkg" && cmd deviceidle except-idle-whitelist +"$pkg" >/dev/null 2>&1
     cmd appops set "$pkg" IGNORE_BATTERY_OPTIMIZATIONS default >/dev/null 2>&1
   done < "$PATCHES_FILE"
 fi
@@ -264,7 +283,14 @@ if [ -f "$SOO_STATE" ]; then
       data)       /system/bin/svc data enable 2>/dev/null ;;
       nfc)        /system/bin/svc nfc enable 2>/dev/null ;;
       location:*) settings put secure location_mode "${line#location:}" 2>/dev/null ;;
-      sensors)    dumpsys sensorservice enable 2>/dev/null ;;
+      sensors)
+        dumpsys sensorservice enable 2>/dev/null
+        if [ -f "$TEMP_DIR/soo_sensor_idle.txt" ]; then
+          for _sp in $(sort -u "$TEMP_DIR/soo_sensor_idle.txt"); do
+            cmd sensorservice reset-uid-state "$_sp" >/dev/null 2>&1
+          done
+        fi
+        ;;
       panel_lpm*) settings put global display_panel_lpm "${line#panel_lpm:}" 2>/dev/null ;;
     esac
   done < "$SOO_STATE"
@@ -306,7 +332,7 @@ done
 for _key in light_after_inactive_to light_pre_idle_to light_idle_to light_max_idle_to \
             inactive_to sensing_to motion_inactive_to idle_after_inactive_to \
             idle_to max_idle_to quick_doze_delay_to; do
-  device_config delete device_idle "$_key" >/dev/null 2>&1
+  _devcfg_restore device_idle "$_key"
 done
 
 if [ -f "$TEMP_DIR/deep_doze_restricted.txt" ]; then
@@ -317,7 +343,7 @@ if [ -f "$TEMP_DIR/deep_doze_restricted.txt" ]; then
     am set-inactive "$pkg" false 2>/dev/null
   done
 fi
-if [ ! -f "$TEMP_DIR/deep_doze_lockcycle" ]; then
+if [ ! -f "$TEMP_DIR/deep_doze_lockcycle" ] && { [ -s "$TEMP_DIR/deep_doze_restricted.txt" ] || [ -f "$_dd_backup" ] || [ -f "$TEMP_DIR/deep_doze_allow.txt" ]; }; then
   for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
     appops set "$pkg" WAKE_LOCK default 2>/dev/null
     appops set "$pkg" RUN_ANY_IN_BACKGROUND default 2>/dev/null
@@ -325,10 +351,16 @@ if [ ! -f "$TEMP_DIR/deep_doze_lockcycle" ]; then
     am set-inactive "$pkg" false 2>/dev/null
   done
 fi
+if [ -f "$TEMP_DIR/deep_doze_allow.txt" ]; then
+  while read -r pkg; do
+    case "$pkg" in ''|*[!A-Za-z0-9._]*) continue ;; esac
+    dumpsys deviceidle whitelist -"$pkg" >/dev/null 2>&1
+  done < "$TEMP_DIR/deep_doze_allow.txt"
+fi
 dumpsys sensorservice enable 2>/dev/null
 dumpsys deviceidle unforce 2>/dev/null
 _sdk=$(getprop ro.build.version.sdk 2>/dev/null); _sdk="${_sdk%%[!0-9]*}"
-[ -n "$_sdk" ] && [ "$_sdk" -ge 34 ] 2>/dev/null && cmd jobscheduler reset-flex-policy 2>/dev/null
+[ -n "$_sdk" ] && [ "$_sdk" -ge 33 ] 2>/dev/null && cmd jobscheduler reset-flex-policy 2>/dev/null
 
 # Revert DropBox
 log "Reverting DropBox..."

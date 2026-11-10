@@ -12,7 +12,6 @@
 /proc/sys/vm/vfs_cache_pressure|80
 /proc/sys/vm/oom_dump_tasks|0
 /proc/sys/vm/overcommit_memory|1
-/proc/sys/vm/overcommit_ratio|75
 /proc/sys/vm/watermark_scale_factor|100
 /proc/sys/vm/watermark_boost_factor|0
 /proc/sys/vm/nr_hugepages|0

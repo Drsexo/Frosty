@@ -40,9 +40,6 @@
 /sys/module/subsystem_restart/parameters/enable_mini_ramdumps|0
 /sys/module/subsystem_restart/parameters/enable_ramdumps|0
 
-# MMC
-/sys/module/mmc_core/parameters/use_spi_crc|0
-
 # TCP KEEPALIVE
 /proc/sys/net/ipv4/tcp_keepalive_time|600
 /proc/sys/net/ipv4/tcp_keepalive_intvl|20

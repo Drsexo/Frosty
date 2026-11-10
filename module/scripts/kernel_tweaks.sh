@@ -215,7 +215,9 @@ apply_kernel() {
 revert_kernel() {
   echo "Frosty v${MODVER:-?} - Tweaks (revert) - $(date '+%Y-%m-%d %H:%M:%S')" > "$TWEAKS_LOG"
 
-  local count=0
+  local count=0 _failed=0
+  local _keep="${KERNEL_BACKUP}.keep"
+  : > "$_keep"
   if [ -f "$KERNEL_BACKUP" ]; then
     while IFS= read -r line; do
       case "$line" in ''|'#'*) continue ;; esac
@@ -236,6 +238,8 @@ revert_kernel() {
           count=$((count + 1))
         else
           log_tweak "[FAIL] $name"
+          printf '%s\n' "$line" >> "$_keep"
+          _failed=$((_failed + 1))
         fi
         continue
       fi
@@ -246,11 +250,15 @@ revert_kernel() {
         count=$((count + 1))
       else
         log_tweak "[FAIL] $name"
+        printf '%s\n' "$line" >> "$_keep"
+        _failed=$((_failed + 1))
       fi
     done < "$KERNEL_BACKUP"
     rm -f "$KERNEL_BACKUP"
+    [ -s "$_keep" ] && mv -f "$_keep" "$KERNEL_BACKUP"
   fi
+  rm -f "$_keep"
   log_tweak ""
-  log_tweak "Restored $count kernel values"
-  echo "{\"status\":\"ok\",\"restored\":$count}"
+  log_tweak "Restored $count kernel values, $_failed kept for retry"
+  echo "{\"status\":\"ok\",\"restored\":$count,\"failed\":$_failed}"
 }

@@ -16,6 +16,7 @@ MONITOR_LOCKDIR="$MODDIR/tmp/soo_monitor.lock"
 EVENT_PIPE="$MODDIR/tmp/soo_events.fifo"
 
 DISABLED_FILE="$MODDIR/tmp/soo_disabled"
+SENSOR_IDLE_FILE="$MODDIR/tmp/soo_sensor_idle.txt"
 
 ENABLE_SCREEN_OFF_OPT=0
 SOO_KILL_WIFI=0
@@ -84,8 +85,8 @@ _location_mode()  {
 }
 _is_tethering() {
   [ "$(settings get global tether_on 2>/dev/null)" = "1" ] && return 0
-  dumpsys connectivity 2>/dev/null | grep -qiEm1 "TetheredState|tethering.*true" && return 0
-  return 1
+  dumpsys tethering 2>/dev/null | grep -qEm1 " - TetheredState" && return 0
+  dumpsys connectivity 2>/dev/null | grep -qEm1 " - TetheredState"
 }
 _guard_reason() {
   case "$1" in
@@ -99,14 +100,38 @@ _guard_reason() {
 
 _disable_sensors() {
   _call_active && return 1
-  _sensors_restrict
+  local _dialer _pkg _n=0
+  if ! { cmd sensorservice set-uid-state android active && cmd sensorservice reset-uid-state android; } >/dev/null 2>&1; then
+    log_soo "[SKIP] Per-app sensor control is not available on this device"
+    return 1
+  fi
+  _dialer=$(_default_dialer)
+  for _pkg in $(pm list packages -3 2>/dev/null | sed -n 's/^package://p'); do
+    [ "$_pkg" = "$_dialer" ] && continue
+    echo "$_pkg" >> "$SENSOR_IDLE_FILE"
+    cmd sensorservice set-uid-state "$_pkg" idle >/dev/null 2>&1 && _n=$((_n + 1))
+  done
   echo "sensors" >> "$DISABLED_FILE"
-  log_soo "[OK] Sensor access restricted"
+  log_soo "[OK] Sensor access blocked for $_n apps (system sensors untouched)"
 }
 
 _restore_sensors() {
-  _sensors_enable
-  log_soo "[OK] Sensor access restored"
+  local _pkg _n=0
+  if [ -f "$SENSOR_IDLE_FILE" ]; then
+    for _pkg in $(sort -u "$SENSOR_IDLE_FILE"); do
+      cmd sensorservice reset-uid-state "$_pkg" >/dev/null 2>&1 && _n=$((_n + 1))
+    done
+    rm -f "$SENSOR_IDLE_FILE"
+  fi
+  log_soo "[OK] Sensor access restored for $_n apps"
+}
+
+_release_sensors() {
+  grep -q "^sensors$" "$DISABLED_FILE" 2>/dev/null || return 0
+  _call_active || ! _is_locked || return 0
+  _restore_sensors
+  grep -v "^sensors$" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
+  mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null
 }
 
 _svc_toggle() {
@@ -134,7 +159,7 @@ _soo_manage_conn() {
   if grep -q "^${_tag}$" "$DISABLED_FILE" 2>/dev/null; then
     _why=$(_guard_reason "$_tag")
     [ -z "$_why" ] && { echo settled; return; }
-    _svc_toggle "$_svcname" enable "$_label"
+    _svc_toggle "$_svcname" enable "$_label" || { echo pending; return; }
     grep -v "^${_tag}$" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
     mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null
     log_soo "[OK] $_label restored - $_why active"
@@ -262,6 +287,25 @@ _rearm_display_restrictions() {
   fi
 }
 
+_forget_reenabled() {
+  local _entry _tag _fn
+  [ -f "$DISABLED_FILE" ] || return 0
+  for _entry in wifi:_wifi_is_on bt:_bt_is_on data:_data_is_on nfc:_nfc_is_on; do
+    _tag="${_entry%%:*}"
+    _fn="${_entry#*:}"
+    grep -q "^${_tag}$" "$DISABLED_FILE" 2>/dev/null || continue
+    "$_fn" || continue
+    grep -v "^${_tag}$" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
+    mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null
+    log_soo "[INFO] $_tag re-enabled by the user, re-arming"
+  done
+  if grep -q "^location:" "$DISABLED_FILE" 2>/dev/null && [ "$(_location_mode)" != "0" ]; then
+    grep -v "^location:" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
+    mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null
+    log_soo "[INFO] location re-enabled by the user, re-arming"
+  fi
+}
+
 _monitor_loop() {
   trap 'kill -0 "$feed_pid" 2>/dev/null && kill "$feed_pid" 2>/dev/null; rm -f "$EVENT_PIPE"; rmdir "$MONITOR_LOCKDIR" 2>/dev/null; exit 0' TERM INT
 
@@ -283,11 +327,7 @@ _monitor_loop() {
 
     if [ "$screen" = "ON" ] && [ -f "$DISABLED_FILE" ]; then
       was_screen_on=1
-      if grep -q "^sensors$" "$DISABLED_FILE" 2>/dev/null; then
-        _restore_sensors
-        grep -v "^sensors$" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
-        mv -f "${DISABLED_FILE}.tmp" "$DISABLED_FILE" 2>/dev/null
-      fi
+      _release_sensors
       if grep -q "^panel_lpm" "$DISABLED_FILE" 2>/dev/null; then
         _panel_lpm_restore "$(cat "$DISABLED_FILE")"
         grep -v "^panel_lpm" "$DISABLED_FILE" > "${DISABLED_FILE}.tmp" 2>/dev/null
@@ -328,6 +368,7 @@ _monitor_loop() {
       was_locked=1
       locked_since=$now
       conn_started=0; conn_settled=0; cache_done=0
+      [ "$SOO_RESTORE_ON_UNLOCK" = "1" ] || _forget_reenabled
       log_soo "Locked - conn=${SOO_CONN_DELAY}m clean=${SOO_RAM_CLEAN_DELAY}m[${SOO_RAM_CLEAN_MODE}]"
     fi
 
@@ -357,13 +398,25 @@ _monitor_loop() {
     [ "$_any_conn_feature" -gt 0 ] && { [ "$conn_started" = "0" ] || [ "$conn_settled" = "0" ]; } && all_done=0
     if [ "$SOO_RAM_CLEAN_MODE" != "off" ] && [ -n "$SOO_RAM_CLEAN_MODE" ] && [ "$cache_done" = "0" ]; then all_done=0; fi
 
-    if [ "$all_done" = "1" ]; then
-      _wait_event 5
-    elif [ "$conn_started" = "1" ] && [ "$conn_settled" = "0" ]; then
-      _wait_event 60
-    else
-      _wait_event 3
+    local _wait=5 _rem _clean_rem
+    [ "$event_fd" = "1" ] && _wait=30
+    if [ "$all_done" = "0" ]; then
+      if [ "$conn_started" = "1" ] && [ "$conn_settled" = "0" ]; then
+        _wait=60
+      else
+        _rem=$_wait
+        if [ "$conn_started" = "0" ] && [ "$_any_conn_feature" -gt 0 ]; then
+          _rem=$(( SOO_CONN_DELAY * 60 - elapsed ))
+        fi
+        if [ "$SOO_RAM_CLEAN_MODE" != "off" ] && [ -n "$SOO_RAM_CLEAN_MODE" ] && [ "$cache_done" = "0" ]; then
+          _clean_rem=$(( SOO_RAM_CLEAN_DELAY * 60 - elapsed ))
+          [ "$_clean_rem" -lt "$_rem" ] && _rem=$_clean_rem
+        fi
+        [ "$_rem" -lt "$_wait" ] && _wait=$_rem
+      fi
     fi
+    [ "$_wait" -lt 1 ] && _wait=1
+    _wait_event "$_wait"
   done
 }
 

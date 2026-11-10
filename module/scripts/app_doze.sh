@@ -7,6 +7,7 @@ MODDIR="${_d%/*}"
 [ -z "$MODDIR" ] && MODDIR="/data/adb/modules/Frosty"
 unset _d
 MODVER=$(grep "^version=" "$MODDIR/module.prop" 2>/dev/null | cut -d= -f2)
+. "$MODDIR/scripts/core.sh"
 
 LOGDIR="$MODDIR/logs"
 APP_DOZE_LOG="$LOGDIR/app_doze.log"
@@ -14,7 +15,12 @@ USER_PREFS="$MODDIR/config/user_prefs"
 PATCHES_FILE="$MODDIR/config/doze_patches.txt"
 OVERLAYS_FILE="$MODDIR/config/doze_xml_overlays.txt"
 BACKUP_DIR="$MODDIR/backup/overlays"
+INSTALLED_FILE="$MODDIR/tmp/cad_installed.txt"
+MISSING_FILE="$MODDIR/tmp/cad_missing.txt"
+SESSION_FILE="$MODDIR/tmp/cad_session_built"
+XML_OFF_FILE="$MODDIR/tmp/cad_xml_off"
 BUILD_STAMP="$MODDIR/backup/overlays.build"
+WL_ORIG_FILE="$MODDIR/tmp/cad_orig_wl.txt"
 
 GMS_PKG="com.google.android.gms"
 GMS_ADMIN1="$GMS_PKG/$GMS_PKG.auth.managed.admin.DeviceAdminReceiver"
@@ -42,9 +48,66 @@ _is_blocked() {
   return 1
 }
 
+_refresh_installed() {
+  local _t="${INSTALLED_FILE}.tmp"
+  pm list packages -u 2>/dev/null | sed -n 's/^package://p' | tr -d '\r' > "$_t"
+  if [ "$(grep -c '' "$_t")" -ge 20 ]; then
+    mv -f "$_t" "$INSTALLED_FILE"
+  else
+    rm -f "$_t" "$INSTALLED_FILE"
+  fi
+}
+
+_is_present() {
+  [ -s "$INSTALLED_FILE" ] || return 0
+  grep -qxF "$1" "$INSTALLED_FILE"
+}
+
+_note_missing() {
+  : > "$MISSING_FILE"
+  [ -s "$INSTALLED_FILE" ] || return 0
+  [ -f "$PATCHES_FILE" ] || return 0
+  local _p
+  for _p in $(sed 's/#.*//;s/[[:space:]]//g' "$PATCHES_FILE" | grep -v '^$' | sort -u); do
+    _is_blocked "$_p" && continue
+    if ! grep -qxF "$_p" "$INSTALLED_FILE"; then
+      echo "$_p" >> "$MISSING_FILE"
+      log_app "[SKIP] $_p is not installed (renamed or removed)"
+    fi
+  done
+}
+
 _load_packages() {
+  _load_packages_raw | while IFS= read -r _p; do
+    _is_present "$_p" && echo "$_p"
+  done
+}
+
+_valid_overlay() {
+  local _src="$1" _out="$2" _ranges="$3" _n_src _n_out _removed _bal
+  [ -s "$_out" ] && grep -q '</' "$_out" 2>/dev/null || return 1
+  _n_src=$(grep -c '' "$_src")
+  _n_out=$(grep -c '' "$_out")
+  _removed=$(printf '%s\n' "$_ranges" | awk -F'[,d]' 'NF>1 && $1!="" { if ($2=="") n+=1; else n+=$2-$1+1 } END { print n+0 }')
+  [ $((_n_src - _n_out)) -eq "$_removed" ] || return 1
+  [ "$(head -n1 "$_src")" = "$(head -n1 "$_out")" ] || return 1
+  [ "$(tail -n1 "$_src")" = "$(tail -n1 "$_out")" ] || return 1
+  if [ -n "$_ranges" ]; then
+    _bal=$(sed -n "$(printf '%s' "$_ranges" | sed 's/d$/p/' | tr '\n' ';')" "$_src" | awk '{ o+=gsub(/<[A-Za-z]/,"&"); s+=gsub(/\/>/,"&"); c+=gsub(/<\//,"&") } END { print o-s-c }')
+    [ "${_bal:-1}" -eq 0 ] || return 1
+    sed "$(printf '%s' "$_ranges" | tr '\n' ';')" "$_src" > "${_out}.chk"
+  else
+    cp "$_src" "${_out}.chk"
+  fi
+  cmp -s "${_out}.chk" "$_out"
+  _bal=$?
+  rm -f "${_out}.chk"
+  return $_bal
+}
+
+_load_packages_raw() {
   [ ! -f "$PATCHES_FILE" ] && return
-  sed 's/###.*//;s/#.*//;s/[[:space:]]//g' "$PATCHES_FILE" | grep -v '^$' | sort -u | while IFS= read -r _p; do
+  sed 's/#.*//;s/[[:space:]]//g' "$PATCHES_FILE" | grep -v '^$' | sort -u | while IFS= read -r _p; do
     _is_blocked "$_p" || echo "$_p"
   done
 }
@@ -120,7 +183,7 @@ _build_strip_ranges() {
     _lineno=$((_lineno + 1))
     if printf '%s\n' "$_line" | grep -qE '^[[:space:]]*</?[a-z][a-zA-Z0-9_]*'; then
       if [ -n "$_buf" ] && _unit_matches "$_buf" "$_grep"; then
-        _tagcount=$(printf '%s' "$_buf" | grep -oE '<[a-zA-Z/]' | wc -l)
+        _tagcount=$(printf '%s' "$_buf" | grep -oE '<[a-zA-Z]' | wc -l)
         if [ "$_tagcount" -gt 1 ]; then
           log_app "[WARN] Skipped removal (multiple tags on one line): $_src:$_start"
         elif [ "$_start" -eq $((_lineno - 1)) ]; then
@@ -136,7 +199,7 @@ _build_strip_ranges() {
     fi
   done < "$_src"
   if [ -n "$_buf" ] && _unit_matches "$_buf" "$_grep"; then
-    _tagcount=$(printf '%s' "$_buf" | grep -oE '<[a-zA-Z/]' | wc -l)
+    _tagcount=$(printf '%s' "$_buf" | grep -oE '<[a-zA-Z]' | wc -l)
     if [ "$_tagcount" -gt 1 ]; then
       log_app "[WARN] Skipped removal (multiple tags on one line): $_src:$_start"
     elif [ "$_start" -eq "$_lineno" ]; then
@@ -191,6 +254,11 @@ _apply_xml_overlays() {
     return 0
   fi
 
+  if [ -f "$XML_OFF_FILE" ]; then
+    log_app "[WARN] XML overlays are off after repeated unfinished boots, toggle App Doze to retry"
+    _remove_overlays
+    return 0
+  fi
   local count=0 scanned=0 _seen=""
   local _keep_tmp="$MODDIR/tmp/cad_keep_$$"
   mkdir -p "$MODDIR/tmp"
@@ -222,7 +290,13 @@ _apply_xml_overlays() {
           *) _rel="system/$_rel" ;;
         esac
 
-        local _src_file="$_real"
+        if [ ! -f "$SESSION_FILE" ] && [ -f "$BACKUP_DIR/$_rel" ] \
+       && ! cmp -s "$_real" "$BACKUP_DIR/$_rel" \
+       && ! { [ -f "$MODDIR/$_rel" ] && cmp -s "$_real" "$MODDIR/$_rel"; }; then
+      log_app "[INFO] System file changed since it was backed up, refreshing: $_rel"
+      rm -f "$BACKUP_DIR/$_rel" "$BACKUP_DIR/$_rel.sum" "$MODDIR/$_rel"
+    fi
+    local _src_file="$_real"
         [ -f "$BACKUP_DIR/$_rel" ] && _src_file="$BACKUP_DIR/$_rel"
 
         _xml_has_any_pkg "$_src_file" "$grep_pat" || continue
@@ -240,14 +314,15 @@ _apply_xml_overlays() {
         else
           cp -af "$_src_file" "$_tmp" 2>/dev/null
         fi
-        if [ -s "$_tmp" ] && grep -q '</' "$_tmp" 2>/dev/null; then
+        if _valid_overlay "$_src_file" "$_tmp" "$_ranges"; then
           if [ ! -f "$_dest" ] || ! cmp -s "$_tmp" "$_dest"; then
             mv -f "$_tmp" "$_dest"
             count=$((count + 1))
           else
             rm -f "$_tmp"
           fi
-          printf '%s\n' "$_dest" >> "$_keep_tmp"
+          cksum < "$_dest" > "$BACKUP_DIR/$_rel.sum" 2>/dev/null
+      printf '%s\n' "$_dest" >> "$_keep_tmp"
         else
           rm -f "$_tmp"
           log_app "[WARN] Skipped overlay - failed XML validation: $(basename "$_dest")"
@@ -270,6 +345,7 @@ _apply_xml_overlays() {
     [ -d "$MODDIR/$_root" ] && find "$MODDIR/$_root" -type d -empty -delete >/dev/null 2>&1
   done
 
+  : > "$SESSION_FILE"
   if [ "$count" -gt 0 ]; then
     mkdir -p "$(dirname "$_reboot_file")"
     : > "$_reboot_file" 2>/dev/null
@@ -324,10 +400,25 @@ scan() {
   rm -f "$_tmp_inst" "$_tmp_cand" "$_tmp_xmls" "$_tmp_hits"
 }
 
+_snapshot_wl() {
+  local _pkg="$1" _t _dump
+  touch "$WL_ORIG_FILE"
+  _dump=$(dumpsys deviceidle whitelist 2>/dev/null)
+  for _t in user system-excidle; do
+    printf '%s\n' "$_dump" | awk -F, -v t="$_t" -v p="$_pkg" '$1==t && $2==p {f=1} END {exit !f}' || continue
+    grep -qFx "$_t $_pkg" "$WL_ORIG_FILE" || echo "$_t $_pkg" >> "$WL_ORIG_FILE"
+  done
+}
+
+_was_in_wl() {
+  [ ! -f "$WL_ORIG_FILE" ] || grep -qFx "$1 $2" "$WL_ORIG_FILE"
+}
+
 _apply_pkg() {
   local pkg="$1"
   _is_blocked "$pkg" && return 0
 
+  _snapshot_wl "$pkg"
   local tiers=""
 
   dumpsys deviceidle whitelist -"$pkg" >/dev/null 2>&1
@@ -339,15 +430,6 @@ _apply_pkg() {
 
   cmd deviceidle except-idle-whitelist -"$pkg" >/dev/null 2>&1
   tiers="${tiers} except-idle-wl"
-
-  if [ -f /data/system/deviceidle.xml ] && \
-     grep -qF "<wl n=\"$pkg\"" /data/system/deviceidle.xml 2>/dev/null; then
-    local _esc_pkg
-    _esc_pkg=$(printf '%s' "$pkg" | sed 's/[][\.*^$\/]/\\&/g')
-    sed -i "/<wl n=\"$_esc_pkg\"/d" /data/system/deviceidle.xml
-    restorecon /data/system/deviceidle.xml 2>/dev/null
-    tiers="${tiers} xml-wl"
-  fi
 
   cmd appops set "$pkg" IGNORE_BATTERY_OPTIMIZATIONS ignore 2>/dev/null && \
     tiers="${tiers} appops"
@@ -376,6 +458,8 @@ apply() {
   [ "$ENABLE_CUSTOM_APP_DOZE" != "1" ] && { log_app "[SKIP] App Doze disabled"; return 0; }
 
   local pkgs
+  _refresh_installed
+  _note_missing
   pkgs=$(_load_packages)
   if [ -z "$pkgs" ]; then
     log_app "[INFO] No packages configured"
@@ -410,10 +494,11 @@ _restore_pkg() {
   local pkg="$1"
   _is_blocked "$pkg" && return 0
 
-  dumpsys deviceidle whitelist +"$pkg" >/dev/null 2>&1
+  _was_in_wl user "$pkg" && dumpsys deviceidle whitelist +"$pkg" >/dev/null 2>&1
   cmd deviceidle sys-whitelist +"$pkg" >/dev/null 2>&1
-  cmd deviceidle except-idle-whitelist +"$pkg" >/dev/null 2>&1
+  _was_in_wl system-excidle "$pkg" && cmd deviceidle except-idle-whitelist +"$pkg" >/dev/null 2>&1
   cmd appops set "$pkg" IGNORE_BATTERY_OPTIMIZATIONS default >/dev/null 2>&1
+  [ -f "$WL_ORIG_FILE" ] && sed -i "/^[a-z-]* $(printf '%s' "$pkg" | sed 's/\./\\./g')$/d" "$WL_ORIG_FILE"
 
   for _uid in $(_get_user_ids); do
     am set-inactive --user "$_uid" "$pkg" false 2>/dev/null
@@ -428,6 +513,7 @@ _restore_pkg() {
 }
 
 revert() {
+  rm -f "$XML_OFF_FILE" "$MODDIR/tmp/cad_boot_fail" "$SESSION_FILE"
   echo "Frosty v${MODVER:-?} - App Doze (REVERT) - $(date '+%Y-%m-%d %H:%M:%S')" > "$APP_DOZE_LOG"
 
   log_app "Removing XML overlays..."
@@ -435,6 +521,7 @@ revert() {
   log_app "[OK] XML overlay step complete"
 
   local pkgs
+  _refresh_installed
   pkgs=$(_load_packages)
   if [ -z "$pkgs" ]; then
     log_app "[INFO] No packages configured"
@@ -459,17 +546,13 @@ list_pkgs() {
   pkgs=$(sed 's/#.*//;s/[[:space:]]//g' "$PATCHES_FILE" | grep -v '^$')
   while IFS= read -r p || [ -n "$p" ]; do
     [ -z "$p" ] && continue
+    _valid_pkg "$p" || continue
     [ "$first" = "1" ] && first=0 || out="${out},"
     out="${out}\"${p}\""
   done <<EOF
 $pkgs
 EOF
   printf '{"status":"ok","packages":[%s]}\n' "$out"
-}
-
-_valid_pkg() {
-  case "$1" in ''|*[!A-Za-z0-9_.]*|[!A-Za-z]*) return 1 ;; esac
-  return 0
 }
 
 add_pkg() {
@@ -493,11 +576,15 @@ add_pkg() {
 
 remove_pkg() {
   local pkg="$1"
-  [ -z "$pkg" ] && { echo '{"status":"error"}'; return; }
+  _valid_pkg "$pkg" || { echo '{"status":"error"}'; return; }
   [ -f "$PATCHES_FILE" ] || { echo '{"status":"ok"}'; return; }
 
-  _restore_pkg "$pkg"
-  log_app "[OK] Removed from list and restored: $pkg"
+  if [ "$ENABLE_CUSTOM_APP_DOZE" = "1" ]; then
+    _restore_pkg "$pkg"
+    log_app "[OK] Removed from list and restored: $pkg"
+  else
+    log_app "[OK] Removed from list: $pkg"
+  fi
 
   local escaped
   escaped=$(printf '%s' "$pkg" | sed 's/[][\.*^$\/]/\\&/g')

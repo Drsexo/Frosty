@@ -194,7 +194,7 @@ div.fx-modal.fx-centered div.fx-modal-card{border-radius:0}
 .fx-search::placeholder{color:#606060}
 .fx-syscheck{display:flex;align-items:center;gap:6px;font:700 12.5px/1.2 var(--sans);letter-spacing:.4px}
 .fx-syscheck input{width:16px;height:16px;accent-color:var(--navy)}
-.fx-applist{max-height:48vh;overflow-y:auto;padding:0 2px}
+.fx-applist{overflow-y:auto;padding:0 2px}
 .fx-applist::-webkit-scrollbar{width:16px}
 .fx-applist::-webkit-scrollbar-track{background:repeating-conic-gradient(#DFDFDF 0 25%,#FFFFFF 0 50%);background-size:2px 2px}
 .fx-applist::-webkit-scrollbar-thumb{background:var(--gray);border:2px solid;border-color:#FFFFFF var(--gray-d) var(--gray-d) #FFFFFF}
@@ -332,8 +332,8 @@ div.fx-loadcard{background:var(--gray);color:#000000;border:2px solid;border-col
 
     <div class="view" data-fx-view="home">
       <div class="kpi">
-        <span class="kpi-n" data-fx-kpi>0</span><span class="kpi-d">/19</span>
-        <span class="kpi-l" data-i18n="kpi_sub">of 19 active</span>
+        <span class="kpi-n" data-fx-kpi>0</span><span class="kpi-d" data-fx-kpi-max>/--</span>
+        <span class="kpi-l" data-i18n="kpi_sub">active</span>
         <div class="ledbar" aria-hidden="true"></div>
       </div>
       <div class="acts">
@@ -460,7 +460,7 @@ div.fx-loadcard{background:var(--gray);color:#000000;border:2px solid;border-col
   <div class="statusbar">
     <span class="stcell" data-i18n="log_webui_ready">WebUI ready</span>
     <span class="stcell" id="st-view" data-i18n="nav_home">Home</span>
-    <span class="stcell st-kpi" id="st-kpi">0/19</span>
+    <span class="stcell st-kpi" id="st-kpi">0/--</span>
     <span class="stcell st-grip" aria-hidden="true"></span>
   </div>
 </div>
@@ -472,7 +472,7 @@ div.fx-loadcard{background:var(--gray);color:#000000;border:2px solid;border-col
   var k = document.getElementById('st-kpi');
   var v = document.getElementById('st-view');
   function upd(){
-    if (k) k.textContent = FX.counts().total + '/19';
+    if (k) k.textContent = FX.counts().total + '/' + FX.counts().max;
   }
   Array.prototype.forEach.call(document.querySelectorAll('[data-fx-nav]'), function (n) {
     n.addEventListener('click', function () {

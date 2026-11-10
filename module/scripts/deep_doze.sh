@@ -16,6 +16,7 @@ MONITOR_PID_FILE="$MODDIR/tmp/screen_monitor.pid"
 MONITOR_LOCKDIR="$MODDIR/tmp/screen_monitor.lock"
 EVENT_PIPE="$MODDIR/tmp/deep_doze_events.fifo"
 RESTRICTED_FILE="$MODDIR/tmp/deep_doze_restricted.txt"
+APPLIED_FILE="$MODDIR/tmp/deep_doze_applied.txt"
 MIGRATED_FILE="$MODDIR/tmp/deep_doze_lockcycle"
 SETTINGS_BACKUP="$MODDIR/backup/deep_doze_settings.txt"
 
@@ -28,9 +29,10 @@ mkdir -p "$LOGDIR" "$MODDIR/tmp"
 log_deep() { echo "[$(date '+%H:%M:%S')] $1" >> "$DEEP_DOZE_LOG"; }
 
 . "$MODDIR/scripts/monitor_common.sh"
+. "$MODDIR/scripts/core.sh"
 
 ensure_whitelist() {
-  if [ ! -f "$WHITELIST_FILE" ]; then
+  if [ ! -s "$WHITELIST_FILE" ]; then
     {
       echo "# Frosty - Doze Whitelist"
       echo "# Apps listed here are excluded from Deep Doze restrictions."
@@ -59,6 +61,47 @@ _refresh_defaults() {
   _DEF_HOME=$(cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME 2>/dev/null | grep / | tail -1 | sed 's#/.*##')
 }
 
+_ANDROID_EXEMPT=""
+
+_in_set() { printf '%s\n' "$2" | grep -qxF "$1"; }
+
+_load_android_exempt() {
+  _ANDROID_EXEMPT=$(dumpsys deviceidle whitelist 2>/dev/null | grep -E '^(system-excidle|system|user),' | cut -d, -f2)
+}
+
+_wl_packages() {
+  {
+    [ -f "$WHITELIST_FILE" ] && sed 's/#.*//;s/[[:space:]]//g' "$WHITELIST_FILE"
+    printf '%s\n' "$_DEF_DIALER" "$_DEF_SMS" "$_DEF_IME" "$_DEF_HOME"
+  } | grep -v '^$' | sort -u | while read -r _w; do
+    _valid_pkg "$_w" || continue
+    case "$_w" in
+      android|com.android.systemui|com.android.phone|com.android.settings|com.android.shell) continue ;;
+    esac
+    echo "$_w"
+  done
+}
+
+_op_mode() {
+  local _m
+  _m=$(appops get "$1" "$2" 2>/dev/null | head -n 1 | sed -n 's/^[A-Z_]*: \([a-z_]*\).*/\1/p')
+  echo "${_m:-default}"
+}
+
+_bucket_num() {
+  case "$1" in
+    exempted|EXEMPTED) echo 5 ;;
+    active|ACTIVE) echo 10 ;;
+    working_set|WORKING_SET) echo 20 ;;
+    frequent|FREQUENT) echo 30 ;;
+    rare|RARE) echo 40 ;;
+    restricted|RESTRICTED) echo 45 ;;
+    never|NEVER) echo 50 ;;
+    ''|*[!0-9]*) echo "" ;;
+    *) echo "$1" ;;
+  esac
+}
+
 is_whitelisted() {
   local pkg="$1"
   case "$pkg" in
@@ -69,6 +112,7 @@ is_whitelisted() {
   [ -n "$_DEF_SMS" ] && [ "$pkg" = "$_DEF_SMS" ] && return 0
   [ -n "$_DEF_IME" ] && [ "$pkg" = "$_DEF_IME" ] && return 0
   [ -n "$_DEF_HOME" ] && [ "$pkg" = "$_DEF_HOME" ] && return 0
+  [ -n "$_ANDROID_EXEMPT" ] && _in_set "$pkg" "$_ANDROID_EXEMPT" && return 0
   [ -f "$WHITELIST_FILE" ] && sed 's/#.*//;s/[[:space:]]//g' "$WHITELIST_FILE" | grep -qxF "$pkg" 2>/dev/null && return 0
   return 1
 }
@@ -109,12 +153,19 @@ apply_doze_constants() {
 
   settings put global device_idle_constants "$constants" >/dev/null 2>&1
 
-  local _kv _key _val
+  local _kv _key _val _chk
   for _kv in $(printf '%s' "$constants" | tr ',' ' '); do
     _key="${_kv%%=*}"
     _val="${_kv#*=}"
+    _devcfg_backup device_idle "$_key"
     device_config put device_idle "$_key" "$_val" >/dev/null 2>&1
   done
+  if command -v device_config >/dev/null 2>&1; then
+    _chk="${constants#*,inactive_to=}"
+    _chk="${_chk%%,*}"
+    [ "$(device_config get device_idle inactive_to 2>/dev/null)" = "$_chk" ] || \
+      log_deep "[WARN] device_idle flags did not stick (ignored or overridden by the ROM)"
+  fi
 
   dumpsys deviceidle enable all 2>/dev/null
   settings put global app_standby_enabled 1 >/dev/null 2>&1
@@ -132,7 +183,7 @@ revert_doze_constants() {
   for _key in light_after_inactive_to light_pre_idle_to light_idle_to light_max_idle_to \
               inactive_to sensing_to motion_inactive_to idle_after_inactive_to \
               idle_to max_idle_to quick_doze_delay_to; do
-    device_config delete device_idle "$_key" >/dev/null 2>&1
+    _devcfg_restore device_idle "$_key"
   done
 }
 
@@ -180,6 +231,82 @@ _record_restricted() {
   printf '%s %s\n' "$1" "$2" >> "$RESTRICTED_FILE"
 }
 
+_applied_bucket() {
+  case "$DEEP_DOZE_LEVEL" in
+    maximum) _supports_restricted_bucket && echo restricted || echo rare ;;
+    minimum) echo frequent ;;
+    *) echo rare ;;
+  esac
+}
+
+_record_applied() {
+  awk -v p="$1" '$1==p{f=1} END{exit !f}' "$APPLIED_FILE" 2>/dev/null && return 0
+  printf '%s %s %s\n' "$1" "$2" "$3" >> "$APPLIED_FILE"
+}
+
+_restore_pkg() {
+  local pkg="$1" bucket="$2" rec abucket owl cur
+  rec=$(awk -v p="$pkg" '$1==p{print; exit}' "$APPLIED_FILE" 2>/dev/null)
+  if [ -z "$rec" ]; then
+    _unrestrict_pkg "$pkg" "$bucket"
+    return
+  fi
+  abucket=$(echo "$rec" | cut -d' ' -f2)
+  owl=$(echo "$rec" | cut -d' ' -f3)
+  cur=$(_bucket_num "$(am get-standby-bucket "$pkg" 2>/dev/null | tail -1 | tr -d '[:space:]')")
+  if [ -z "$cur" ] || [ "$cur" = "$(_bucket_num "$abucket")" ]; then
+    am set-standby-bucket "$pkg" "${bucket:-active}" 2>/dev/null
+  else
+    log_deep "[SKIP] $pkg bucket changed since Frosty set it, left as is"
+  fi
+  if [ -n "$owl" ] && [ "$(_op_mode "$pkg" WAKE_LOCK)" = "deny" ]; then
+    case "$owl" in
+      allow|ignore|deny|foreground|errored) appops set "$pkg" WAKE_LOCK "$owl" 2>/dev/null ;;
+      *) appops set "$pkg" WAKE_LOCK default 2>/dev/null ;;
+    esac
+  fi
+}
+
+_clean_pkg() {
+  local pkg="$1" mode bucket changed=1
+  mode=$(_op_mode "$pkg" WAKE_LOCK)
+  case "$mode" in
+    default|allow) ;;
+    *)
+      appops set "$pkg" WAKE_LOCK default 2>/dev/null
+      log_deep "[OK] $pkg: WAKE_LOCK was $mode, reset to default"
+      changed=0
+      ;;
+  esac
+  bucket=$(_bucket_num "$(am get-standby-bucket "$pkg" 2>/dev/null | tail -1 | tr -d '[:space:]')")
+  case "$bucket" in
+    45|50)
+      am set-standby-bucket "$pkg" active 2>/dev/null
+      log_deep "[OK] $pkg: standby bucket $bucket reset to active"
+      changed=0
+      ;;
+  esac
+  case "$(am get-inactive "$pkg" 2>/dev/null)" in
+    *Idle=true*)
+      am set-inactive "$pkg" false 2>/dev/null
+      log_deep "[OK] $pkg: inactive state cleared"
+      changed=0
+      ;;
+  esac
+  return $changed
+}
+
+clean_whitelisted_apps() {
+  local _installed _p _n=0
+  _refresh_defaults
+  _installed=$(pm list packages 2>/dev/null | sed 's/^package://')
+  for _p in $(_wl_packages); do
+    _in_set "$_p" "$_installed" || continue
+    _clean_pkg "$_p" && _n=$((_n + 1))
+  done
+  log_deep "[OK] Whitelisted apps checked ($_n had leftover restrictions)"
+}
+
 restrict_apps() {
   local level="$1"
   log_deep "Restricting apps ($level)..."
@@ -191,6 +318,9 @@ restrict_apps() {
   fi
 
   _refresh_defaults
+  _load_android_exempt
+  local _abucket
+  _abucket=$(_applied_bucket)
 
   for pkg in $(pm list packages -3 2>/dev/null | cut -d: -f2); do
     [ -z "$pkg" ] && continue
@@ -203,8 +333,11 @@ restrict_apps() {
     esac
     case "$cur" in *[!A-Za-z0-9_]*) cur="" ;; esac
 
+    local _owl=""
+    [ "$DEEP_DOZE_LEVEL" = "maximum" ] && _owl=$(_op_mode "$pkg" WAKE_LOCK)
     _restrict_pkg "$pkg"
     _record_restricted "$pkg" "$cur"
+    _record_applied "$pkg" "$_abucket" "$_owl"
     count=$((count + 1))
   done
   case "$level" in
@@ -220,12 +353,12 @@ unrestrict_manifest() {
   _list=$(awk '!seen[$1]++' "$RESTRICTED_FILE")
   while read -r pkg bucket; do
     [ -n "$pkg" ] || continue
-    _unrestrict_pkg "$pkg" "$bucket"
+    _restore_pkg "$pkg" "$bucket"
     count=$((count + 1))
   done <<EOF
 $_list
 EOF
-  rm -f "$RESTRICTED_FILE"
+  rm -f "$RESTRICTED_FILE" "$APPLIED_FILE"
   log_deep "[OK] Unrestricted $count apps"
 }
 
@@ -251,24 +384,31 @@ _is_protected_wakelock_tag() {
 }
 
 kill_wakelocks() {
-  local killed=0
+  local killed=0 _uidmap _killed_pkgs=""
   local tmpfile="$MODDIR/tmp/wakelocks.txt"
   local procfile="$MODDIR/tmp/processes.txt"
   dumpsys power 2>/dev/null | grep -E "PARTIAL_WAKE_LOCK|FULL_WAKE_LOCK" > "$tmpfile"
   dumpsys activity processes 2>/dev/null > "$procfile"
+  _uidmap=$(pm list packages -U -3 2>/dev/null | sed -n 's/^package:\([^ ]*\) uid:\([0-9]*\).*/\2 \1/p')
 
   _refresh_defaults
+  _load_android_exempt
 
   while IFS= read -r line; do
     local tag
-    tag=$(echo "$line" | grep -oE '"[^"]*"' | head -1 | tr -d '"')
+    tag=$(printf '%s' "$line" | sed -n "s/^[^']*'\([^']*\)'.*/\1/p")
     [ -n "$tag" ] && _is_protected_wakelock_tag "$tag" && continue
 
-    local pkg
-    pkg=$(echo "$line" | grep -o "ws=WorkSource{[^}]*}" | \
-          grep -oE "[a-z][a-zA-Z0-9_.]+\.[a-zA-Z0-9_.]+" | head -1)
+    local pkg uid
+    pkg=$(printf '%s' "$line" | grep -o "ws=WorkSource{[^}]*}" | \
+          grep -oE "[a-z][a-zA-Z0-9_]*(\.[a-zA-Z0-9_]+)+" | head -1)
+    if [ -z "$pkg" ]; then
+      uid=$(printf '%s' "$line" | sed -n 's/.*(uid=\([0-9]*\).*/\1/p')
+      [ -n "$uid" ] && pkg=$(printf '%s\n' "$_uidmap" | awk -v u="$uid" '$1==u{print $2; exit}')
+    fi
     [ -z "$pkg" ] && continue
     is_whitelisted "$pkg" && continue
+    case "$_killed_pkgs" in *" $pkg "*) continue ;; esac
 
     local proc_state
     proc_state=$(awk -v p="$pkg" 'index($0, "packageList=") && index($0, p) { c = 6 } c > 0 { print; c-- }' "$procfile" | grep -oE "procState=[A-Z_]+" | head -1 | cut -d= -f2)
@@ -276,18 +416,18 @@ kill_wakelocks() {
       TOP|BOUND_TOP|BOUND_FG_SERVICE|FG_SERVICE) continue ;;
     esac
 
-    am kill "$pkg" 2>/dev/null && killed=$((killed + 1))
+    am kill "$pkg" 2>/dev/null && { killed=$((killed + 1)); _killed_pkgs="$_killed_pkgs $pkg "; }
   done < "$tmpfile"
   rm -f "$tmpfile" "$procfile"
   log_deep "[OK] Killed $killed wakelock holders"
 }
 
 _apply_sensor_state() {
-  if _call_active; then
+  if ! _screen_asleep || _call_active; then
     if [ "$_sensor_state" != "enabled" ]; then
       _sensors_enable
       _sensor_state="enabled"
-      log_deep "[OK] Sensor access restored (call active)"
+      log_deep "[OK] Sensor access restored"
     fi
   else
     if [ "$_sensor_state" != "restricted" ]; then
@@ -302,14 +442,15 @@ _wait_while_locked() {
   local _remain="$1" _sensor_aware="$2"
   local _deadline _chunk _now
   _deadline=$(( $(date +%s) + _remain ))
+  [ "$_sensor_aware" = "1" ] && _apply_sensor_state
   while true; do
-    [ "$_sensor_aware" = "1" ] && _apply_sensor_state
     _now=$(date +%s)
     _remain=$(( _deadline - _now ))
     [ "$_remain" -le 0 ] && return 1
     _chunk=15
     [ "$_chunk" -gt "$_remain" ] && _chunk="$_remain"
     _wait_event "$_chunk"
+    [ "$_sensor_aware" = "1" ] && _apply_sensor_state
     _is_locked || return 0
   done
 }
@@ -337,9 +478,7 @@ start_screen_monitor() {
     local _idle_wait=90
     while true; do
       if ! _is_locked; then
-        if [ "$_mon_always" = "1" ] && [ "$_mon_level" != "minimum" ]; then
-          _stepdeep
-        fi
+        [ "$_mon_always" = "1" ] && _stepdeep
         _wait_event "$_idle_wait"
         if [ "$event_fd" != "1" ]; then
           [ "$_idle_wait" -lt 180 ] && _idle_wait=$((_idle_wait + 30))
@@ -349,16 +488,6 @@ start_screen_monitor() {
         continue
       fi
       _idle_wait=90
-
-      if [ "$_mon_level" = "minimum" ]; then
-        log_deep "Locked - no wakelock killer at minimum level"
-        while _is_locked; do
-          _wait_event 15
-        done
-        [ "$_mon_always" = "1" ] || dumpsys deviceidle unforce 2>/dev/null
-        log_deep "Unlocked - monitor re-armed"
-        continue
-      fi
 
       log_deep "Locked - wakelock killer armed (5min)"
       local _sensor_aware=0
@@ -371,9 +500,10 @@ start_screen_monitor() {
         kill_wakelocks
         restrict_apps "$_mon_level"
         _stepdeep
+        [ "$_sensor_aware" = "1" ] && _apply_sensor_state
         while _is_locked; do
-          [ "$_sensor_aware" = "1" ] && _apply_sensor_state
           _wait_event 15
+          [ "$_sensor_aware" = "1" ] && _apply_sensor_state
         done
       fi
       if [ "$_mon_always" != "1" ]; then
@@ -388,7 +518,7 @@ start_screen_monitor() {
       fi
       log_deep "Unlocked - monitor re-armed"
     done
-  ) &
+  ) >/dev/null 2>&1 </dev/null &
   echo $! > "$MONITOR_PID_FILE"
   log_deep "[OK] Screen monitor started (PID $!)"
 }
@@ -407,7 +537,7 @@ _stepdeep() {
 _jobsched_flex() {
   local _sdk
   _sdk=$(getprop ro.build.version.sdk 2>/dev/null); _sdk="${_sdk%%[!0-9]*}"
-  [ -n "$_sdk" ] && [ "$_sdk" -ge 34 ] 2>/dev/null || return 0
+  [ -n "$_sdk" ] && [ "$_sdk" -ge 33 ] 2>/dev/null || return 0
   cmd jobscheduler help 2>/dev/null | grep -q 'flex-policy' || return 0
   case "$1" in
     freeze) cmd jobscheduler enable-flex-policy --option idle 2>/dev/null ;;
@@ -420,30 +550,45 @@ freeze_deep_doze() {
   echo "Frosty v${MODVER:-?} - Deep Doze (FREEZE) - $(date '+%Y-%m-%d %H:%M:%S')" > "$DEEP_DOZE_LOG"
   [ "$ENABLE_DEEP_DOZE" != "1" ] && return 0
 
+  local _legacy=0
+  if [ ! -f "$MIGRATED_FILE" ]; then
+    { [ -s "$RESTRICTED_FILE" ] || [ -f "$SETTINGS_BACKUP" ] || [ -f "$MODDIR/tmp/deep_doze_allow.txt" ]; } && _legacy=1
+  fi
+
   ensure_whitelist
   unrestrict_manifest
   if [ ! -f "$MIGRATED_FILE" ]; then
-    unrestrict_apps
+    [ "$_legacy" = "1" ] && unrestrict_apps
     : > "$MIGRATED_FILE"
   fi
   apply_doze_constants
+  clean_whitelisted_apps
   [ "$DEEP_DOZE_LEVEL" = "minimum" ] && restrict_apps "$DEEP_DOZE_LEVEL"
 
   if [ "$DEEP_DOZE_LEVEL" = "maximum" ]; then
     kill_wakelocks
   fi
-  start_screen_monitor
-  if [ "$DEEP_DOZE_LEVEL" != "minimum" ] && { [ "$DEEP_DOZE_ALWAYS" = "1" ] || _is_locked; }; then
-    _stepdeep
+  if [ "$DEEP_DOZE_LEVEL" = "minimum" ]; then
+    stop_screen_monitor
+    dumpsys deviceidle unforce 2>/dev/null
+  else
+    start_screen_monitor
+    if [ "$DEEP_DOZE_ALWAYS" = "1" ] || _is_locked; then
+      _stepdeep
+    fi
   fi
   _jobsched_flex freeze
 }
 
 stock_deep_doze() {
   echo "Frosty v${MODVER:-?} - Deep Doze (STOCK) - $(date '+%Y-%m-%d %H:%M:%S')" > "$DEEP_DOZE_LOG"
+  local _legacy=0
+  if [ ! -f "$MIGRATED_FILE" ]; then
+    { [ -s "$RESTRICTED_FILE" ] || [ -f "$SETTINGS_BACKUP" ] || [ -f "$MODDIR/tmp/deep_doze_allow.txt" ]; } && _legacy=1
+  fi
   revert_doze_constants
   unrestrict_manifest
-  [ -f "$MIGRATED_FILE" ] || unrestrict_apps
+  [ "$_legacy" = "1" ] && unrestrict_apps
   stop_screen_monitor
   dumpsys deviceidle unforce 2>/dev/null
   _jobsched_flex stock
@@ -467,7 +612,7 @@ case "$1" in
     fi
     ;;
   unrestrict_pkg)
-    [ -n "$2" ] && { _unrestrict_pkg "$2"; log_deep "[OK] $2 unrestricted (added to whitelist)"; }
+    [ -n "$2" ] && { _unrestrict_pkg "$2"; _clean_pkg "$2"; log_deep "[OK] $2 unrestricted (added to whitelist)"; }
     ;;
 esac
 exit $?

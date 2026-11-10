@@ -25,7 +25,12 @@ done
 echo "Frosty v${MODVER:-?} - Boot - $(date '+%Y-%m-%d %H:%M:%S')" > "$BOOT_LOG"
 echo "Frosty v${MODVER:-?} - Props - $(date '+%Y-%m-%d %H:%M:%S')" > "$PROPS_LOG"
 
-until [ "$(getprop sys.boot_completed)" = "1" ] && [ -d /sdcard ]; do sleep 5; done
+( until [ "$(getprop sys.boot_completed)" = "1" ]; do sleep 2; done; sleep 20; rm -f "$MODDIR/tmp/cad_boot_pending" "$MODDIR/tmp/cad_boot_fail" ) >/dev/null 2>&1 &
+
+until [ "$(getprop sys.boot_completed)" = "1" ]; do sleep 2; done
+[ -f "$MODDIR/tmp/soo_disabled" ] && sh "$MODDIR/scripts/screen_off_opt.sh" stop >/dev/null 2>&1
+
+until [ -d /sdcard ]; do sleep 5; done
 sleep 10
 log_boot "Boot initialized"
 

@@ -60,12 +60,13 @@ freeze_services() {
   [ ! -f "$GMS_LIST" ] && { echo "ERROR: Service list not found"; return 1; }
 
   local _frozen_file="$MODDIR/tmp/frozen_services.txt"
+  local _new_file="${_frozen_file}.new"
   _load_disabled_pkgs
   local _prev_frozen=""
   [ -f "$_frozen_file" ] && _prev_frozen=$(cat "$_frozen_file" 2>/dev/null)
-  > "$_frozen_file" 2>/dev/null || true
 
   mkdir -p "$MODDIR/tmp"
+  : > "$_new_file"
   local _jobs_tmp="$MODDIR/tmp/frosty_jobs_$$"
   : > "$_jobs_tmp"
   local _off_tmp="$MODDIR/tmp/frosty_off_$$"
@@ -73,7 +74,7 @@ freeze_services() {
 
   local _user_ids; _user_ids=$(_all_user_ids)
   local current_category="" count_ok=0 count_fail=0 count_kept=0
-  local _cap_f _cap_r
+  local _cap_f _cap_r _stale
 
   while IFS='|' read -r service category || [ -n "$service" ]; do
     case "$service" in ''|'#'*) continue ;; esac
@@ -93,7 +94,7 @@ freeze_services() {
       local _svc_pkg; _svc_pkg=$(printf '%s' "$service" | cut -d/ -f1)
       if _pkg_is_disabled "$_svc_pkg"; then
         if printf '%s\n' "$_prev_frozen" | grep -Fx "$service" >/dev/null 2>&1; then
-          printf '%s\n' "$service" >> "$_frozen_file"
+          printf '%s\n' "$service" >> "$_new_file"
           log_service "[OK] $service (re-tracked)"
           count_ok=$((count_ok + 1))
         else
@@ -106,11 +107,12 @@ freeze_services() {
         pm disable --user "$_uid" "$service" >/dev/null 2>&1 && _any_ok=1
       done
       if [ "$_any_ok" = "1" ]; then
-        printf '%s\n' "$service" >> "$_frozen_file"
+        printf '%s\n' "$service" >> "$_new_file"
         printf '%s\n' "$_svc_pkg" >> "$_jobs_tmp"
         log_service "[OK] $service"
         count_ok=$((count_ok + 1))
       else
+        printf '%s\n' "$_prev_frozen" | grep -Fx "$service" >/dev/null 2>&1 && printf '%s\n' "$service" >> "$_new_file"
         log_service "[FAIL] $service"
         count_fail=$((count_fail + 1))
       fi
@@ -134,8 +136,8 @@ freeze_services() {
   _cancel_jobs_for_pkgs "$_jobs_tmp" "$_user_ids"
 
   if [ -n "$_prev_frozen" ] && [ -s "$_off_tmp" ]; then
-    local _stale
     for _stale in $(printf '%s\n' "$_prev_frozen" | grep -Fxf "$_off_tmp"); do
+      _owned_by_app_doze "$_stale" && continue
       for _uid in $_user_ids; do
         pm enable --user "$_uid" "$_stale" >/dev/null 2>&1
       done
@@ -144,6 +146,20 @@ freeze_services() {
     done
   fi
   rm -f "$_off_tmp"
+
+  if [ -n "$_prev_frozen" ]; then
+    local _all_tmp="$MODDIR/tmp/frosty_all_$$"
+    cut -d'|' -f1 "$GMS_LIST" | tr -d ' ' > "$_all_tmp"
+    for _stale in $(printf '%s\n' "$_prev_frozen" | grep -vFxf "$_all_tmp"); do
+      for _uid in $_user_ids; do
+        pm enable --user "$_uid" "$_stale" >/dev/null 2>&1
+      done
+      log_service "[OK] $_stale (removed from the service list, re-enabled)"
+      count_kept=$((count_kept + 1))
+    done
+    rm -f "$_all_tmp"
+  fi
+  mv -f "$_new_file" "$_frozen_file"
 
   log_service ""
   log_service "Summary: $count_ok disabled, $count_kept re-enabled, $count_fail failed"
@@ -164,6 +180,7 @@ unfreeze_services() {
     log_service "Restoring from tracking file..."
     while IFS= read -r service; do
       case "$service" in ''|'#'*) continue ;; esac
+      _owned_by_app_doze "$service" && { log_service "[SKIP] $service (owned by App Doze)"; continue; }
       local _any_ok=0
       for _uid in $_user_ids; do
         pm enable --user "$_uid" "$service" >/dev/null 2>&1 && _any_ok=1
@@ -191,6 +208,7 @@ unfreeze_services() {
         _cap_r=$(printf '%s' "$current_category" | cut -c2-)
         log_service "# ${_cap_f}${_cap_r}"
       fi
+      _owned_by_app_doze "$service" && { log_service "[SKIP] $service (owned by App Doze)"; continue; }
       local _svc_pkg; _svc_pkg=$(printf '%s' "$service" | cut -d/ -f1)
       if _pkg_is_disabled "$_svc_pkg"; then
         log_service "[SKIP] $service (disabled by ROM, not re-enabling)"
@@ -241,7 +259,7 @@ freeze_category() {
     done
     if [ "$_any_ok" = "1" ]; then
       count=$((count + 1))
-      printf '%s\n' "$svc" >> "$_frozen_file"
+      grep -qFx "$svc" "$_frozen_file" 2>/dev/null || printf '%s\n' "$svc" >> "$_frozen_file"
       printf '%s\n' "$_svc_pkg" >> "$_jobs_tmp"
     else
       fail=$((fail + 1))

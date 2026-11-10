@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="hdr_sub">Оптимізатор батареї</string>
-  <string name="kpi_sub">з 19 активних</string>
+  <string name="kpi_sub">з {max} активних</string>
   <string name="status_count">{0} з {1} активних</string>
-  <string name="home_active">активно</string>
   <string name="menu_io">Імпорт / Експорт</string>
   <string name="menu_lang">Мова</string>
   <string name="menu_bugreport">Звіт про помилку</string>
@@ -49,7 +48,6 @@
   <string name="loading_reverting_kernel">Відновлення ядра...</string>
   <string name="log_kernel_applied">Ядро: застосовано {0}, помилка/не знайдено {1}, пропущено {2}</string>
   <string name="log_kernel_restored">Ядро: відновлено {0}</string>
-  <string name="log_kernel_vals_restored">Ядро: відновлено {0} значень</string>
   <string name="tgl_sysprops">Системні властивості (Props)</string>
   <string name="tgl_sysprops_desc">Вимикає налагоджувальне логування, заощаджує батарею та ОЗП</string>
   <string name="loading_applying_sysprops">Увімкнення системних властивостей...</string>
@@ -61,7 +59,6 @@
   <string name="tgl_blur_desc">Зменшує навантаження на GPU, працює плавніше на слабких пристроях</string>
   <string name="loading_applying_blur">Застосування налаштувань розмиття...</string>
   <string name="log_blur_state">Розмиття: {0}</string>
-  <string name="log_blur_restored">Розмиття відновлено</string>
   <string name="tgl_logs">Завершити логи</string>
   <string name="tgl_logs_desc">Примусово зупиняє фонові процеси логування, звільняє ОЗП</string>
   <string name="loading_killing_logs">Завершення процесів логування...</string>
@@ -80,7 +77,6 @@
   <string name="cad_btn">▶ Керування додатками</string>
   <string name="cad_title">Doze додатків</string>
   <string name="cad_notice">Вибрані додатки будуть видалені зі списку винятків Doze Android, щоб ОС могла їх оптимізувати. GMS можна вибрати для GMS Doze.</string>
-  <string name="cad_search">Пошук додатків...</string>
   <string name="cad_loading">Завантаження...</string>
   <string name="cad_empty">Додатків не знайдено</string>
   <string name="cad_warn_system">⚠ Цей пакет необхідний системі і не може бути доданий</string>
@@ -105,7 +101,6 @@
   <string name="wl_system">Системні</string>
   <string name="wl_loading">Завантаження додатків...</string>
   <string name="wl_empty">Додатків не знайдено</string>
-  <string name="wl_sep_other">Інші додатки</string>
   <string name="loading_applying_deep_doze">Застосування глибокого Doze...</string>
   <string name="loading_reverting_deep_doze">Скасування глибокого Doze...</string>
   <string name="loading_reapplying_deep">Повторне застосування глибокого Doze...</string>
@@ -121,13 +116,11 @@
     <string name="multitask_title">Профіль багатозадачності</string>
 <string name="multitask_desc">Налаштуйте швидкість закриття фонових додатків для звільнення оперативної пам'яті. Продуктивність залишає більше додатків готовими. Енергозбереження закриває більше раніше.</string>
   <string name="log_multitask_profile">Профіль багатозадачності встановлено: {0}</string>
-  <string name="log_multitask_reapplied">Профіль багатозадачності застосовано повторно</string>
   <string name="loading_applying_mt">Застосування профілю багатозадачності...</string>
   <string name="loading_reverting_mt">Відкат профілю багатозадачності...</string>
   <string name="log_mt_enabled">Профіль багатозадачності увімкнено: {0}</string>
   <string name="log_mt_reverted">Профіль багатозадачності скасовано</string>
   <string name="log_mt_reapplied">Профіль багатозадачності застосовано повторно</string>
-  <string name="log_mt_ram_off">Профіль багатозадачності вимкнено разом з оптимізатором ОЗП</string>
   <string name="ram_wl_btn">▶ Білий список очищення ОЗП</string>
   <string name="ram_wl_title">Білий список очищення ОЗП</string>
   <string name="ram_wl_notice">Додатки з білого списку ніколи не зупиняються примусово очищенням ОЗП.</string>
@@ -184,13 +177,10 @@
   <string name="cat_games">Ігри</string>
   <string name="cat_games_tag">Порушує роботу Play Ігри</string>
   <string name="loading_freezing_services">Заморожування служб GMS...</string>
-  <string name="loading_freezing_cats">Заморожування категорій GMS...</string>
   <string name="log_gms_frozen">GMS: вимкнено {0}, повторно увімкнено {1}, помилка/не знайдено {2}</string>
   <string name="log_gms_restored">GMS: повторно увімкнено {0}, помилка/не знайдено {1}</string>
   <string name="log_cat_frozen">{0}: вимкнено {1}, помилка/не знайдено {2}</string>
   <string name="log_cat_restored">{0}: повторно увімкнено {1}, помилка/не знайдено {2}</string>
-  <string name="log_cats_enabled">Усі категорії GMS увімкнено</string>
-  <string name="log_cats_disabled">Усі категорії GMS вимкнено</string>
   <string name="cat_bulk_enable">Увімкнути всі</string>
   <string name="cat_bulk_disable">Вимкнути всі</string>
   <string name="loading_enabling_all_cats">Увімкнення решти категорій...</string>
@@ -240,7 +230,6 @@
   <string name="loading_reverting_bss">Скасування енергозбереження...</string>
   <string name="log_bss_applied">Профіль енергозбереження застосовано</string>
   <string name="log_bss_reverted">Енергозбереження скасовано</string>
-  <string name="log_bss_reapplied">Енергозбереження застосовано повторно</string>
   <string name="tgl_ram_optimizer">Оптимізатор ОЗП</string>
   <string name="tgl_ram_optimizer_desc">Обмежує кешовані та порожні фонові процеси, оптимізує файл підкачки zram для збільшення вільної пам'яті</string>
   <string name="loading_applying_ram">Застосування оптимізатора ОЗП...</string>
@@ -260,7 +249,6 @@
   <string name="rc_stat_freed">ОЗП звільнено</string>
   <string name="io_title">Імпорт / Експорт</string>
   <string name="io_export">Експортувати поточні налаштування</string>
-  <string name="io_backups">Збережені бекапи</string>
   <string name="io_empty">Бекапи не знайдено</string>
   <string name="io_loading">Завантаження...</string>
   <string name="io_error">Помилка завантаження резервних копій</string>
@@ -275,7 +263,6 @@
   <string name="bugreport_title">Звіт про помилку</string>
   <string name="bugreport_notice">Збирає технічну інформацію про пристрій, конфігурацію та логи Frosty, а також список інших встановлених модулів. Додайте цей файл при повідомленні про помилку.</string>
   <string name="bugreport_generate">Створити звіт про помилку</string>
-  <string name="bugreport_saved">Збережені звіти</string>
   <string name="bugreport_empty">Звітів про помилки не знайдено</string>
   <string name="bugreport_generated">Звіт про помилку збережено в Frosty/Logs</string>
   <string name="bugreport_failed">Не вдалося створити звіт про помилку</string>
@@ -286,19 +273,11 @@
   <string name="loading_freezing">Заморожування</string>
   <string name="loading_unfreezing">Розморожування</string>
   <string name="loading_enabling_all">Увімкнення всіх налаштувань...</string>
-  <string name="loading_enabling_toggles">Увімкнення всіх перемикачів...</string>
   <string name="loading_reverting_all">Скидання всіх налаштувань...</string>
-  <string name="loading_disabling_toggles">Вимкнення всіх перемикачів...</string>
-  <string name="loading_disabling_cats">Вимкнення всіх категорій...</string>
-  <string name="loading_restoring_kernel">Відновлення параметрів ядра...</string>
-  <string name="loading_re_enabling_gms">Розморожування служб GMS...</string>
-  <string name="loading_restoring_blur">Відновлення розмиття...</string>
   <string name="loading_reapplying">Повторне застосування налаштувань...</string>
   <string name="log_freeze_all">Увімкнути все: застосування всіх параметрів...</string>
   <string name="log_reverting_all">Скинути все: вимкнення всіх параметрів...</string>
   <string name="log_reapply_start">Початок повторного застосування...</string>
-  <string name="log_toggles_enabled">Усі системні перемикачі увімкнено</string>
-  <string name="log_toggles_disabled">Усі системні перемикачі вимкнено</string>
   <string name="toast_frozen">Усе заморожено та застосовано</string>
   <string name="toast_stocked">Налаштування скинуто до заводських</string>
   <string name="toast_refreshed">Оновлено</string>
@@ -312,7 +291,6 @@
   <string name="toast_nothing_to_apply">Нічого застосовувати — спочатку увімкніть хоча б один пункт</string>
   <string name="sec_log">Журнал активності</string>
   <string name="log_webui_ready">WebUI готовий</string>
-  <string name="log_empty">Поки немає активності</string>
   <string name="log_reboot_effect">Перезавантажте для повного ефекту</string>
   <string name="log_not_applied">Збережені налаштування ще не застосовано. Перезавантажте або використовуйте Примусово застосувати налаштування.</string>
   <string name="kpi_title">Статус системи</string>
@@ -326,8 +304,5 @@
   <string name="theme_retro_desc">Класичний вигляд Windows 95.</string>
   <string name="theme_terminal_desc">Фосфорний екран CRT командного рядка.</string>
   <string name="theme_handheld_desc">Оболонка портативної ігрової консолі.</string>
-  <string name="about_github">Проєкт на GitHub</string>
   <string name="about_desc">Максимальне енергозбереження та оптимізація GMS. Заморожуйте служби GMS, вмикайте Doze, завершуйте логи та застосовуйте твіки ядра. Натисніть кнопку WebUI для зміни параметрів.</string>
-  <string name="ksu_unavailable_title">API KernelSU недоступне</string>
-  <string name="ksu_unavailable_desc">Для роботи цього WebUI необхідний KernelSU. Для Magisk/APatch використовуйте кнопку Action або WebUI-X.</string>
 </resources>

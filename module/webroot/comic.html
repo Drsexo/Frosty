@@ -197,7 +197,7 @@ div.fx-modal .fx-modal-body{padding:2px 0 16px}
 .fx-search::placeholder{color:#ABABAB}
 .fx-syscheck{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700}
 .fx-syscheck input{width:16px;height:16px;accent-color:var(--red)}
-.fx-applist{max-height:48vh;overflow-y:auto;padding:2px 12px 8px}
+.fx-applist{overflow-y:auto;padding:2px 12px 8px}
 .fx-approw{display:flex;align-items:center;gap:11px;padding:10px 6px;border-bottom:2px solid var(--ink);background:#FFFFFF;transition:background-color .15s ease}
 .fx-approw:active{background:var(--pale)}
 .fx-appico{width:40px;height:40px;border:2px solid var(--ink);border-radius:8px;background:#FFDCDC;display:flex;align-items:center;justify-content:center;font:800 13px/1 system-ui,sans-serif;color:var(--ink);overflow:hidden;flex:none}
@@ -387,9 +387,9 @@ html[dir=rtl] .row.fx-on{box-shadow:inset -4px 0 0 var(--red)}
     <div class="kpi-row">
       <div>
         <div class="kpi-n" data-fx-kpi>0</div>
-        <div class="kpi-cap" data-i18n="kpi_sub">of 19 active</div>
+        <div class="kpi-cap" data-i18n="kpi_sub">active</div>
       </div>
-      <span class="kpi-chip" data-fx-ratio="total">00/19</span>
+      <span class="kpi-chip" data-fx-ratio="total">00/--</span>
     </div>
     <div class="prog" aria-hidden="true"><div class="prog-f"></div></div>
   </div>
@@ -549,7 +549,7 @@ html[dir=rtl] .row.fx-on{box-shadow:inset -4px 0 0 var(--red)}
     var nodes=document.querySelectorAll('[data-fx-ratio]');
     for(var i=0;i<nodes.length;i++){
       var n=nodes[i];
-      if(n.getAttribute('data-fx-ratio')==='total'){n.textContent=pad(String(c.total))+'/19';}
+      if(n.getAttribute('data-fx-ratio')==='total'){n.textContent=pad(String(c.total))+'/'+c.max;}
       else{var p=String(n.textContent).split('/');if(p.length===2){n.textContent=pad(p[0])+'/'+pad(p[1]);}}
     }
   }

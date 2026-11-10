@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="hdr_sub">バッテリー最適化</string>
-  <string name="kpi_sub">19個中アクティブ</string>
+  <string name="kpi_sub">{max}個中アクティブ</string>
   <string name="status_count">{1} 個中 {0} 個有効</string>
-  <string name="home_active">有効</string>
   <string name="menu_io">インポート / エクスポート</string>
   <string name="menu_lang">言語</string>
   <string name="menu_bugreport">バグ報告</string>
@@ -49,7 +48,6 @@
   <string name="loading_reverting_kernel">カーネルを復元中...</string>
   <string name="log_kernel_applied">カーネル: {0} 適用、{1} 失敗/未検出、{2} スキップ</string>
   <string name="log_kernel_restored">カーネル: {0} 復元済み</string>
-  <string name="log_kernel_vals_restored">カーネル: {0} 値を復元済み</string>
   <string name="tgl_sysprops">システムプロパティ</string>
   <string name="tgl_sysprops_desc">デバッグログを無効化、バッテリーと RAM を節約</string>
   <string name="loading_applying_sysprops">システムプロパティを有効化中...</string>
@@ -61,7 +59,6 @@
   <string name="tgl_blur_desc">GPU 負荷を軽減、低スペック端末でよりスムーズに</string>
   <string name="loading_applying_blur">ぼかし設定を適用中...</string>
   <string name="log_blur_state">ぼかし: {0}</string>
-  <string name="log_blur_restored">ぼかし 復元済み</string>
   <string name="tgl_logs">ログを強制停止</string>
   <string name="tgl_logs_desc">バックグラウンドのログプロセスを停止、RAM を解放</string>
   <string name="loading_killing_logs">ログプロセスを強制停止中...</string>
@@ -80,7 +77,6 @@
   <string name="cad_btn">▶ アプリを管理</string>
   <string name="cad_title">アプリ Doze</string>
   <string name="cad_notice">選択したアプリはAndroidのDoze除外リストから削除され、OSが最適化できるようになります。GMSはGMS Dozeのために選択できます。</string>
-  <string name="cad_search">アプリを検索...</string>
   <string name="cad_loading">読み込み中...</string>
   <string name="cad_empty">アプリが見つかりません</string>
   <string name="cad_warn_system">⚠ このパッケージはシステムに必要なため追加できません</string>
@@ -105,7 +101,6 @@
   <string name="wl_system">システム</string>
   <string name="wl_loading">アプリを読み込み中...</string>
   <string name="wl_empty">アプリが見つかりません</string>
-  <string name="wl_sep_other">その他のアプリ</string>
   <string name="loading_applying_deep_doze">Deep Doze を適用中...</string>
   <string name="loading_reverting_deep_doze">Deep Doze を復元中...</string>
   <string name="loading_reapplying_deep">Deep Doze を再適用中...</string>
@@ -121,13 +116,11 @@
     <string name="multitask_title">マルチタスクプロファイル</string>
 <string name="multitask_desc">RAMを解放するためにバックグラウンドアプリが閉じられる速さを調整します。パフォーマンスはより多くのアプリを準備済みに保ちます。省電力はより早くより多く閉じます。</string>
   <string name="log_multitask_profile">マルチタスクプロファイルを{0}に設定しました</string>
-  <string name="log_multitask_reapplied">マルチタスクプロファイルを再適用しました</string>
   <string name="loading_applying_mt">マルチタスクプロファイルを適用しています...</string>
   <string name="loading_reverting_mt">マルチタスクプロファイルを復元しています...</string>
   <string name="log_mt_enabled">マルチタスクプロファイルが有効になりました: {0}</string>
   <string name="log_mt_reverted">マルチタスクプロファイルが復元されました</string>
   <string name="log_mt_reapplied">マルチタスクプロファイルが再適用されました</string>
-  <string name="log_mt_ram_off">RAMオプティマイザーと共にマルチタスクプロファイルが無効化されました</string>
   <string name="ram_wl_btn">▶ RAM クリーナーホワイトリスト</string>
   <string name="ram_wl_title">RAM クリーナーホワイトリスト</string>
   <string name="ram_wl_notice">ホワイトリスト登録アプリは RAM クリーナーによる強制停止を受けません。</string>
@@ -184,13 +177,10 @@
   <string name="cat_games">ゲーム</string>
   <string name="cat_games_tag">影響 · Play Games</string>
   <string name="loading_freezing_services">GMS サービスを無効化中...</string>
-  <string name="loading_freezing_cats">GMS カテゴリを無効化中...</string>
   <string name="log_gms_frozen">GMS: {0} 無効化、{1} 有効化、{2} 失敗/未検出</string>
   <string name="log_gms_restored">GMS: {0} 有効化、{1} 失敗/未検出</string>
   <string name="log_cat_frozen">{0}: {1} 無効化、{2} 失敗/未検出</string>
   <string name="log_cat_restored">{0}: {1} 有効化、{2} 失敗/未検出</string>
-  <string name="log_cats_enabled">すべての GMS カテゴリを有効化</string>
-  <string name="log_cats_disabled">すべての GMS カテゴリを無効化</string>
   <string name="cat_bulk_enable">すべて有効化</string>
   <string name="cat_bulk_disable">すべて無効化</string>
   <string name="loading_enabling_all_cats">残りのカテゴリを有効化しています...</string>
@@ -240,7 +230,6 @@
   <string name="loading_reverting_bss">バッテリーセーバーを復元中...</string>
   <string name="log_bss_applied">バッテリーセーバープロファイル 適用済み</string>
   <string name="log_bss_reverted">バッテリーセーバー 復元済み</string>
-  <string name="log_bss_reapplied">バッテリーセーバー 再適用済み</string>
   <string name="tgl_ram_optimizer">RAM 最適化</string>
   <string name="tgl_ram_optimizer_desc">キャッシュおよび空のバックグラウンドプロセスを制限し、zram スワップ動作を調整して空き RAM を増加</string>
   <string name="loading_applying_ram">RAM 最適化を適用中...</string>
@@ -260,7 +249,6 @@
   <string name="rc_stat_freed">解放された RAM</string>
   <string name="io_title">インポート / エクスポート</string>
   <string name="io_export">現在の設定をエクスポート</string>
-  <string name="io_backups">保存済みバックアップ</string>
   <string name="io_empty">バックアップが見つかりません</string>
   <string name="io_loading">読み込み中...</string>
   <string name="io_error">バックアップの読み込みエラー</string>
@@ -275,7 +263,6 @@
   <string name="bugreport_title">バグ報告</string>
   <string name="bugreport_notice">デバイスの技術情報、Frostyの設定とログ、および他のインストール済みモジュールのリストを収集します。バグを報告する際にこのファイルを添付してください。</string>
   <string name="bugreport_generate">バグレポートを生成</string>
-  <string name="bugreport_saved">保存されたレポート</string>
   <string name="bugreport_empty">バグレポートが見つかりません</string>
   <string name="bugreport_generated">バグレポートをFrosty/Logsに保存しました</string>
   <string name="bugreport_failed">バグレポートの生成に失敗しました</string>
@@ -286,19 +273,11 @@
   <string name="loading_freezing">無効化中</string>
   <string name="loading_unfreezing">有効化中</string>
   <string name="loading_enabling_all">すべての設定を有効化中...</string>
-  <string name="loading_enabling_toggles">すべてのトグルを有効化中...</string>
   <string name="loading_reverting_all">すべてを復元中...</string>
-  <string name="loading_disabling_toggles">すべてのトグルを無効化中...</string>
-  <string name="loading_disabling_cats">すべてのカテゴリを無効化中...</string>
-  <string name="loading_restoring_kernel">カーネル値を復元中...</string>
-  <string name="loading_re_enabling_gms">GMS サービスを再有効化中...</string>
-  <string name="loading_restoring_blur">ぼかしを復元中...</string>
   <string name="loading_reapplying">設定を再適用中...</string>
   <string name="log_freeze_all">すべて有効化: すべての調整を有効化中...</string>
   <string name="log_reverting_all">すべて復元: すべてを無効化中...</string>
   <string name="log_reapply_start">再適用を開始...</string>
-  <string name="log_toggles_enabled">すべてのシステムトグルを有効化</string>
-  <string name="log_toggles_disabled">すべてのシステムトグルを無効化</string>
   <string name="toast_frozen">すべての調整を適用済み</string>
   <string name="toast_stocked">すべて初期状態に復元</string>
   <string name="toast_refreshed">更新済み</string>
@@ -312,7 +291,6 @@
   <string name="toast_nothing_to_apply">適用対象なし - 先に何かを有効にしてください</string>
   <string name="sec_log">アクティビティログ</string>
   <string name="log_webui_ready">WebUI 準備完了</string>
-  <string name="log_empty">アクティビティなし</string>
   <string name="log_reboot_effect">完全な効果を得るには再起動</string>
   <string name="log_not_applied">保存された設定はまだ適用されていません。再起動するか設定を強制再適用を使用してください。</string>
   <string name="kpi_title">システムステータス</string>
@@ -326,8 +304,5 @@
   <string name="theme_retro_desc">クラシックなWindows 95の外観。</string>
   <string name="theme_terminal_desc">コマンドラインCRT蛍光スクリーン。</string>
   <string name="theme_handheld_desc">携帯型ゲーム機のシェル。</string>
-  <string name="about_github">GitHub で表示</string>
   <string name="about_desc">最大限のバッテリー節約と GMS 最適化。GMS サービスを無効化、Doze を有効化、ログを強制停止、カーネル調整を適用。WebUI ボタンで設定を編集。</string>
-  <string name="ksu_unavailable_title">KSU API が利用できません</string>
-  <string name="ksu_unavailable_desc">この WebUI は KernelSU が必要です。Magisk/APatch の場合は Action ボタンまたは WebUI-X を使用してください。</string>
 </resources>

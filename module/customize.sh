@@ -8,20 +8,6 @@ fi
 
 TIMEOUT=30
 
-COLS=$(stty size 2>/dev/null | awk '{print $2}')
-case "$COLS" in ''|*[!0-9]*) COLS=40 ;; esac
-[ "$COLS" -gt 54 ] && COLS=54; [ "$COLS" -lt 20 ] && COLS=40
-
-_iw=$((COLS - 4))
-LINE="" _i=0
-while [ $_i -lt $_iw ]; do
-  LINE="${LINE}─"
-  _i=$((_i + 1))
-done
-BOX_TOP="  ┌${LINE}┐"
-BOX_BOT="  └${LINE}┘"
-unset _i _iw
-
 if ! command -v timeout >/dev/null 2>&1; then
   timeout() {
     local _dur="$1"; shift
@@ -87,27 +73,11 @@ print_banner() {
   ui_print "     /_/ /_/|_|\____/___/ /_/     /_/  "
   ui_print ""
   ui_print "        ❆  Freeze your battery drain  ❆"
-  ui_print ""
 }
 
 print_section() {
-  local text="$1"
-  local nbytes nbytes_ascii len
-  nbytes=$(printf '%s' "$text" | wc -c)
-  nbytes_ascii=$(printf '%s' "$text" | LC_ALL=C tr -cd '[:print:]' | wc -c)
-  local overhead=$(( nbytes - nbytes_ascii ))
-  len=$(( nbytes_ascii + overhead / 2 ))
-  [ "$len" -le 0 ] && len=${#text}
-  local inner=$((COLS - 4))
-  local offset=$(( (inner - len) / 2 ))
-  [ "$offset" -lt 0 ] && offset=0
-  local pad=$((offset + 3))
-  local lpad="" _p=0
-  while [ $_p -lt $pad ]; do lpad="${lpad} "; _p=$((_p+1)); done
   ui_print ""
-  ui_print "$BOX_TOP"
-  ui_print "${lpad}${text}"
-  ui_print "$BOX_BOT"
+  ui_print "── $1 ──"
 }
 
 # Permissions
@@ -125,8 +95,8 @@ mkdir -p "$MODPATH/logs"
 # GMS check
 if ! pm list packages 2>/dev/null | grep -qx 'package:com.google.android.gms'; then
   ui_print ""
-  ui_print "  ⚠️  Google Play Services not found!"
-  ui_print "  GMS freezing and doze features will not work."
+  ui_print "⚠️ Google Play Services not found"
+  ui_print "GMS freezing and doze won't work"
   ui_print ""
 fi
 
@@ -162,45 +132,43 @@ case "$_LANG" in
 esac
 
 if [ -n "$_LANG_NAME" ]; then
-  print_section "$_LANG_FLAG  $_LANG_NAME detected"
-  ui_print ""
-  ui_print "  ⬆️ Vol UP   = Use $_LANG_NAME"
-  ui_print "  ⬇️ Vol DOWN = Keep English 🇬🇧"
-  ui_print "  ⏱️ ${TIMEOUT}s timeout → English"
-  ui_print ""
+  print_section "$_LANG_FLAG $_LANG_NAME detected"
+  ui_print "⬆️ Vol UP = Use $_LANG_NAME"
+  ui_print "⬇️ Vol DOWN = Keep English 🇬🇧"
+  ui_print "⏱️ ${TIMEOUT}s timeout → English"
 
   _chosen_lang="en"
   if [ "$HAS_GETEVENT" -eq 0 ]; then
-    ui_print "  → English (auto - no getevent)"
+    ui_print "→ English (auto)"
   else
     case "$(_wait_vol_key "$TIMEOUT")" in
-      up)   ui_print "  → $_LANG_FLAG $_LANG_NAME ✅"; _chosen_lang="$_LANG" ;;
-      down) ui_print "  → 🇬🇧 English ✅";              _chosen_lang="en" ;;
-      *)    ui_print "  → 🇬🇧 English (timeout)";       _chosen_lang="en" ;;
+      up)   ui_print "→ $_LANG_FLAG $_LANG_NAME ✅"; _chosen_lang="$_LANG" ;;
+      down) ui_print "→ 🇬🇧 English ✅"; _chosen_lang="en" ;;
+      *)    ui_print "→ 🇬🇧 English (timeout)"; _chosen_lang="en" ;;
     esac
   fi
   INSTALL_LANG="$_chosen_lang"
 fi
 
-s() {
+_s() {
   local key="$1"
   case "${INSTALL_LANG}:${key}" in
 
     # EXISTING CONFIG
-    fr:cfg_detected)  echo "♻️  Configuration existante détectée !" ;;
-    de:cfg_detected)  echo "♻️  Bestehende Konfiguration erkannt!" ;;
-    pl:cfg_detected)  echo "♻️  Wykryto istniejącą konfigurację!" ;;
-    it:cfg_detected)  echo "♻️  Configurazione esistente rilevata!" ;;
-    es:cfg_detected)  echo "♻️  ¡Configuración existente detectada!" ;;
-    pt:cfg_detected)  echo "♻️  Configuração existente detectada!" ;;
-    tr:cfg_detected)  echo "♻️  Mevcut yapılandırma tespit edildi!" ;;
-    id:cfg_detected)  echo "♻️  Konfigurasi saat ini terdeteksi!" ;;
-    ru:cfg_detected)  echo "♻️  Обнаружена существующая конфигурация!" ;;
-    uk:cfg_detected)  echo "♻️  Виявлено наявну конфігурацію!" ;;
-    zh:cfg_detected)  echo "♻️  检测到现有配置！" ;;
-    ja:cfg_detected)  echo "♻️  既存の設定が見つかりました！" ;;
-    ar:cfg_detected)  echo "♻️  تم اكتشاف إعدادات محفوظة!" ;;
-     *:cfg_detected)  echo "♻️  Existing configuration detected!" ;;
+    fr:cfg_detected)  echo "♻️ Config existante détectée" ;;
+    de:cfg_detected)  echo "♻️ Bestehende Konfig erkannt" ;;
+    pl:cfg_detected)  echo "♻️ Wykryto istniejący config" ;;
+    it:cfg_detected)  echo "♻️ Config esistente rilevata" ;;
+    es:cfg_detected)  echo "♻️ Config existente detectada" ;;
+    pt:cfg_detected)  echo "♻️ Config existente detectada" ;;
+    tr:cfg_detected)  echo "♻️ Mevcut yapılandırma tespit edildi" ;;
+    id:cfg_detected)  echo "♻️ Konfigurasi saat ini terdeteksi" ;;
+    ru:cfg_detected)  echo "♻️ Обнаружен существующий конфиг" ;;
+    uk:cfg_detected)  echo "♻️ Виявлено наявний конфіг" ;;
+    zh:cfg_detected)  echo "♻️ 检测到现有配置" ;;
+    ja:cfg_detected)  echo "♻️ 既存の設定を検出" ;;
+    ar:cfg_detected)  echo "♻️ تم اكتشاف إعدادات محفوظة" ;;
+     *:cfg_detected)  echo "♻️ Existing config detected" ;;
 
     fr:cfg_vol_keep)  echo "  ⬆️ Vol HAUT   = Garder config & whitelist" ;;
     de:cfg_vol_keep)  echo "  ⬆️ Vol HOCH   = Konfig & Whitelist behalten" ;;
@@ -215,22 +183,22 @@ s() {
     zh:cfg_vol_keep)  echo "  ⬆️ 音量上      = 保留配置和白名单" ;;
     ja:cfg_vol_keep)  echo "  ⬆️ 音量UP      = 設定とホワイトリストを保持" ;;
     ar:cfg_vol_keep)  echo "  ⬆️ رفع الصوت   = الإبقاء على الإعدادات والقائمة" ;;
-     *:cfg_vol_keep)  echo "  ⬆️ Vol UP     = Keep existing config & whitelist" ;;
+     *:cfg_vol_keep)  echo "⬆️ Vol UP = Keep config & whitelist" ;;
 
-    fr:cfg_vol_reset) echo "  ⬇️ Vol BAS    = Réinit. (tout désactivé)" ;;
-    de:cfg_vol_reset) echo "  ⬇️ Vol RUNTER = Zurücksetzen (alles aus)" ;;
-    pl:cfg_vol_reset) echo "  ⬇️ Vol DÓŁ    = Resetuj (wszystko wył.)" ;;
-    it:cfg_vol_reset) echo "  ⬇️ Vol GIÙ    = Ripristina (tutto off)" ;;
-    es:cfg_vol_reset) echo "  ⬇️ Vol ABAJO  = Restablecer (todo off)" ;;
-    pt:cfg_vol_reset) echo "  ⬇️ Vol BAIXO  = Redefinir (tudo off)" ;;
-    tr:cfg_vol_reset) echo "  ⬇️ Ses AŞAĞI  = Sıfırla (her şey kapalı)" ;;
-    id:cfg_vol_reset) echo "  ⬇️ Vol BAWAH  = Reset (semua nonaktif)" ;;
-    ru:cfg_vol_reset) echo "  ⬇️ Гром -     = Сброс (всё отключено)" ;;
-    uk:cfg_vol_reset) echo "  ⬇️ Гучн. -    = Скидання (все вимкнено)" ;;
-    zh:cfg_vol_reset) echo "  ⬇️ 音量下      = 重置 (全部关闭)" ;;
-    ja:cfg_vol_reset) echo "  ⬇️ 音量DOWN    = リセット (すべてオフ)" ;;
-    ar:cfg_vol_reset) echo "  ⬇️ خفض الصوت  = استعادة الافتراضي (معطل)" ;;
-     *:cfg_vol_reset) echo "  ⬇️ Vol DOWN   = Reset to defaults (everything off)" ;;
+    fr:cfg_vol_reset) echo "⬇️ Vol BAS = Réinit. valeurs par défaut" ;;
+    de:cfg_vol_reset) echo "⬇️ Vol RUNTER = Auf Standard zurücksetzen" ;;
+    pl:cfg_vol_reset) echo "⬇️ Vol DÓŁ = Resetuj do domyślnych" ;;
+    it:cfg_vol_reset) echo "⬇️ Vol GIÙ = Ripristina valori predefiniti" ;;
+    es:cfg_vol_reset) echo "⬇️ Vol ABAJO = Restablecer valores por defecto" ;;
+    pt:cfg_vol_reset) echo "⬇️ Vol BAIXO = Redefinir padrões" ;;
+    tr:cfg_vol_reset) echo "⬇️ Ses AŞAĞI = Varsayılanlara sıfırla" ;;
+    id:cfg_vol_reset) echo "⬇️ Vol BAWAH = Reset ke default" ;;
+    ru:cfg_vol_reset) echo "⬇️ Гром - = Сбросить настройки" ;;
+    uk:cfg_vol_reset) echo "⬇️ Гучн. - = Скинути налаштування" ;;
+    zh:cfg_vol_reset) echo "⬇️ 音量下键 = 恢复默认设置" ;;
+    ja:cfg_vol_reset) echo "⬇️ 音量DOWN = デフォルトに戻す" ;;
+    ar:cfg_vol_reset) echo "⬇️ خفض الصوت = استعادة الافتراضي" ;;
+     *:cfg_vol_reset) echo "⬇️ Vol DOWN = Reset to defaults" ;;
 
     fr:cfg_timeout)   echo "  ⏱️ ${TIMEOUT}s → conserve la configuration" ;;
     de:cfg_timeout)   echo "  ⏱️ ${TIMEOUT}s → behält Konfiguration" ;;
@@ -245,7 +213,7 @@ s() {
     zh:cfg_timeout)   echo "  ⏱️ ${TIMEOUT}s → 自动保留配置" ;;
     ja:cfg_timeout)   echo "  ⏱️ ${TIMEOUT}s → 既存の設定を保持" ;;
     ar:cfg_timeout)   echo "  ⏱️ مهلة ${TIMEOUT} ثانية → الاحتفاظ بالإعدادات" ;;
-     *:cfg_timeout)   echo "  ⏱️ ${TIMEOUT}s timeout → keeps existing" ;;
+     *:cfg_timeout)   echo "⏱️ ${TIMEOUT}s timeout → keeps existing" ;;
 
     fr:cfg_kept)      echo "  → Configuration existante conservée ✅" ;;
     de:cfg_kept)      echo "  → Bestehende Konfiguration beibehalten ✅" ;;
@@ -260,7 +228,7 @@ s() {
     zh:cfg_kept)      echo "  → 已保留现有配置 ✅" ;;
     ja:cfg_kept)      echo "  → 既存の設定を保持しました ✅" ;;
     ar:cfg_kept)      echo "  → تم الاحتفاظ بالإعدادات الحالية ✅" ;;
-     *:cfg_kept)      echo "  → Keeping existing config ✅" ;;
+     *:cfg_kept)      echo "→ Keeping existing config ✅" ;;
 
     fr:cfg_reset)     echo "  → Réinitialisation aux valeurs par défaut ⚙️" ;;
     de:cfg_reset)     echo "  → Auf Standardwerte zurückgesetzt ⚙️" ;;
@@ -275,68 +243,7 @@ s() {
     zh:cfg_reset)     echo "  → 已重置为默认设置 ⚙️" ;;
     ja:cfg_reset)     echo "  → デフォルト設定にリセットしました ⚙️" ;;
     ar:cfg_reset)     echo "  → استعادة الوضع الافتراضي ⚙️" ;;
-     *:cfg_reset)     echo "  → Resetting to defaults ⚙️" ;;
-
-    # SAVE CONFIG
-    fr:save_title)    echo "💾  Sauvegarde de la Configuration" ;;
-    de:save_title)    echo "💾  Konfiguration speichern" ;;
-    pl:save_title)    echo "💾  Zapisywanie konfiguracji" ;;
-    it:save_title)    echo "💾  Salvataggio configurazione" ;;
-    es:save_title)    echo "💾  Guardando Configuración" ;;
-    pt:save_title)    echo "💾  Salvando Configuração" ;;
-    tr:save_title)    echo "💾  Yapılandırma Kaydediliyor" ;;
-    id:save_title)    echo "💾  Menyimpan Konfigurasi" ;;
-    ru:save_title)    echo "💾  Сохранение конфигурации" ;;
-    uk:save_title)    echo "💾  Збереження конфігурації" ;;
-    zh:save_title)    echo "💾  保存配置" ;;
-    ja:save_title)    echo "💾  設定を保存" ;;
-    ar:save_title)    echo "💾  حفظ الإعدادات" ;;
-     *:save_title)    echo "💾  Saving Configuration" ;;
-
-    fr:save_kept)     echo "  ✓ Configuration existante conservée" ;;
-    de:save_kept)     echo "  ✓ Bestehende Konfiguration beibehalten" ;;
-    pl:save_kept)     echo "  ✓ Istniejąca konfiguracja zachowana" ;;
-    it:save_kept)     echo "  ✓ Configurazione esistente mantenuta" ;;
-    es:save_kept)     echo "  ✓ Configuración existente conservada" ;;
-    pt:save_kept)     echo "  ✓ Configuração existente mantida" ;;
-    tr:save_kept)     echo "  ✓ Mevcut yapılandırma korundu" ;;
-    id:save_kept)     echo "  ✓ Konfigurasi yang ada dipertahankan" ;;
-    ru:save_kept)     echo "  ✓ Существующая конфигурация сохранена" ;;
-    uk:save_kept)     echo "  ✓ Наявну конфігурацію збережено" ;;
-    zh:save_kept)     echo "  ✓ 已保留现有配置" ;;
-    ja:save_kept)     echo "  ✓ 既存の設定を保持しました" ;;
-    ar:save_kept)     echo "  ✓ تم الاحتفاظ بالإعدادات الحالية" ;;
-     *:save_kept)     echo "  ✓ Existing configuration kept" ;;
-
-    fr:save_wl)       echo "  ↩ Whitelists préservées" ;;
-    de:save_wl)       echo "  ↩ Whitelists beibehalten" ;;
-    pl:save_wl)       echo "  ↩ Białe listy zachowane" ;;
-    it:save_wl)       echo "  ↩ Whitelist preservate" ;;
-    es:save_wl)       echo "  ↩ Listas blancas preservadas" ;;
-    pt:save_wl)       echo "  ↩ Listas brancas preservadas" ;;
-    tr:save_wl)       echo "  ↩ Beyaz listeler korundu" ;;
-    id:save_wl)       echo "  ↩ Daftar putih dipertahankan" ;;
-    ru:save_wl)       echo "  ↩ Белые списки сохранены" ;;
-    uk:save_wl)       echo "  ↩ Білі списки збережено" ;;
-    zh:save_wl)       echo "  ↩ 白名单已保留" ;;
-    ja:save_wl)       echo "  ↩ ホワイトリストを保持" ;;
-    ar:save_wl)       echo "  ↩ تم الاحتفاظ بالقوائم البيضاء" ;;
-     *:save_wl)       echo "  ↩ Whitelists preserved" ;;
-
-    fr:save_default)  echo "  ✓ Config par défaut appliquée (tout désactivé)" ;;
-    de:save_default)  echo "  ✓ Standardkonfiguration angewendet (alles aus)" ;;
-    pl:save_default)  echo "  ✓ Konfiguracja domyślna (wszystko wyłączone)" ;;
-    it:save_default)  echo "  ✓ Config predefinita applicata (tutto off)" ;;
-    es:save_default)  echo "  ✓ Configuración por defecto (todo desactivado)" ;;
-    pt:save_default)  echo "  ✓ Configuração padrão aplicada (tudo off)" ;;
-    tr:save_default)  echo "  ✓ Varsayılan yapılandırma uygulandı (hepsi kapalı)" ;;
-    id:save_default)  echo "  ✓ Konfigurasi default diterapkan (semua nonaktif)" ;;
-    ru:save_default)  echo "  ✓ Применена конфигурация по умолчанию (всё выкл.)" ;;
-    uk:save_default)  echo "  ✓ Застосовано типову конфігурацію (все вимк.)" ;;
-    zh:save_default)  echo "  ✓ 已应用默认配置（全部关闭）" ;;
-    ja:save_default)  echo "  ✓ デフォルト設定を適用（すべてオフ）" ;;
-    ar:save_default)  echo "  ✓ تم تطبيق الإعداد الافتراضي (كل شيء معطل)" ;;
-     *:save_default)  echo "  ✓ Default config applied (everything off)" ;;
+     *:cfg_reset)     echo "→ Resetting to defaults ⚙️" ;;
 
     # INSTALLATION COMPLETE
     fr:done_title)    echo "✅  Installation Terminée" ;;
@@ -352,7 +259,7 @@ s() {
     zh:done_title)    echo "✅  安装完成" ;;
     ja:done_title)    echo "✅  インストール完了" ;;
     ar:done_title)    echo "✅  اكتمل التثبيت" ;;
-     *:done_title)    echo "✅  Installation Complete" ;;
+     *:done_title)    echo "✅ Installation Complete" ;;
 
     fr:done_reboot)   echo "  🔄 Redémarrez votre appareil" ;;
     de:done_reboot)   echo "  🔄 Gerät neu starten" ;;
@@ -367,7 +274,7 @@ s() {
     zh:done_reboot)   echo "  🔄 重启设备" ;;
     ja:done_reboot)   echo "  🔄 デバイスを再起動" ;;
     ar:done_reboot)   echo "  🔄 أعد تشغيل جهازك" ;;
-     *:done_reboot)   echo "  🔄 Reboot your device" ;;
+     *:done_reboot)   echo "🔄 Reboot your device" ;;
 
     fr:done_hotinstall)      echo "  ⚡ Installation à chaud demandée (KSU/APatch)" ;;
     de:done_hotinstall)      echo "  ⚡ Hot-Install angefordert (KSU/APatch)" ;;
@@ -382,22 +289,22 @@ s() {
     zh:done_hotinstall)      echo "  ⚡ 已请求热安装 (KSU/APatch)" ;;
     ja:done_hotinstall)      echo "  ⚡ ホットインストールが要求されました (KSU/APatch)" ;;
     ar:done_hotinstall)      echo "  ⚡ تم طلب التثبيت الساخن (KSU/APatch)" ;;
-     *:done_hotinstall)      echo "  ⚡ Hot install requested (KSU/APatch)" ;;
+     *:done_hotinstall)      echo "⚡ Hot install requested (KSU/APatch)" ;;
 
-    fr:done_hotinstall_note)      echo "     Actualisez la page WebUI - redémarrez si quelque chose semble anormal" ;;
-    de:done_hotinstall_note)      echo "     WebUI-Seite aktualisieren - bei Auffälligkeiten neu starten" ;;
-    pl:done_hotinstall_note)      echo "     Odśwież stronę WebUI - uruchom ponownie, jeśli coś wygląda nie tak" ;;
-    it:done_hotinstall_note)      echo "     Aggiorna la pagina WebUI - riavvia se qualcosa sembra anomalo" ;;
-    es:done_hotinstall_note)      echo "     Actualiza la página WebUI - reinicia si algo se ve extraño" ;;
-    pt:done_hotinstall_note)      echo "     Atualize a página WebUI - reinicie se algo parecer estranho" ;;
-    tr:done_hotinstall_note)      echo "     WebUI sayfasını yenileyin - bir şeyler ters görünüyorsa yeniden başlatın" ;;
-    id:done_hotinstall_note)      echo "     Muat ulang halaman WebUI - mulai ulang jika ada yang terlihat tidak beres" ;;
-    ru:done_hotinstall_note)      echo "     Обновите страницу WebUI - перезагрузите, если что-то работает некорректно" ;;
-    uk:done_hotinstall_note)      echo "     Оновіть сторінку WebUI - перезавантажте, якщо щось працює некоректно" ;;
-    zh:done_hotinstall_note)      echo "     刷新 WebUI 页面 - 如有异常请重启" ;;
-    ja:done_hotinstall_note)      echo "     WebUI ページを更新してください - 異常があれば再起動してください" ;;
-    ar:done_hotinstall_note)      echo "     حدّث صفحة WebUI - أعد التشغيل إذا بدا أي شيء غير طبيعي" ;;
-     *:done_hotinstall_note)      echo "     Refresh the WebUI page - reboot if anything looks off" ;;
+    fr:done_hotinstall_note)      echo "Actualisez la WebUI, redémarrez si anormal" ;;
+    de:done_hotinstall_note)      echo "WebUI aktualisieren, bei Auffälligkeiten neu starten" ;;
+    pl:done_hotinstall_note)      echo "Odśwież WebUI, uruchom ponownie jeśli coś nie tak" ;;
+    it:done_hotinstall_note)      echo "Aggiorna la WebUI, riavvia se qualcosa non va" ;;
+    es:done_hotinstall_note)      echo "Actualiza la WebUI, reinicia si algo se ve raro" ;;
+    pt:done_hotinstall_note)      echo "Atualize a WebUI, reinicie se algo parecer estranho" ;;
+    tr:done_hotinstall_note)      echo "WebUI'yi yenileyin, sorun görürseniz yeniden başlatın" ;;
+    id:done_hotinstall_note)      echo "Muat ulang WebUI, mulai ulang jika ada yang tidak beres" ;;
+    ru:done_hotinstall_note)      echo "Обновите WebUI, перезагрузите если что-то не так" ;;
+    uk:done_hotinstall_note)      echo "Оновіть WebUI, перезавантажте якщо щось не так" ;;
+    zh:done_hotinstall_note)      echo "刷新 WebUI，如有异常请重启" ;;
+    ja:done_hotinstall_note)      echo "WebUI を再読み込み、異常があれば再起動" ;;
+    ar:done_hotinstall_note)      echo "حدّث WebUI، أعد التشغيل إذا بدا غير طبيعي" ;;
+     *:done_hotinstall_note)      echo "Refresh WebUI, reboot if it looks off" ;;
 
     fr:done_webui)    echo "  ⚙️  Ouvrez la WebUI pour activer les fonctionnalités" ;;
     de:done_webui)    echo "  ⚙️  Öffne die WebUI, um Funktionen zu aktivieren" ;;
@@ -412,37 +319,22 @@ s() {
     zh:done_webui)    echo "  ⚙️  请打开 WebUI 启用所需的模块功能" ;;
     ja:done_webui)    echo "  ⚙️  WebUI を開いて機能を有効化してください" ;;
     ar:done_webui)    echo "  ⚙️  افتح واجهة WebUI لتفعيل الميزات" ;;
-     *:done_webui)    echo "  ⚙️  Open WebUI in your root manager to enable" ;;
+     *:done_webui)    echo "⚙️ Open the WebUI to enable" ;;
 
-    fr:done_off)      echo "     (tout commence DÉSACTIVÉ par défaut)" ;;
-    de:done_off)      echo "     (alles startet DEAKTIVIERT standardmäßig)" ;;
+    fr:done_off)      echo "(tout DÉSACTIVÉ par défaut)" ;;
+    de:done_off)      echo "(standardmäßig alles AUS)" ;;
     pl:done_off)      echo "     (domyślnie wszystko jest WYŁĄCZONE)" ;;
-    it:done_off)      echo "     (tutto parte DISATTIVATO di default)" ;;
-    es:done_off)      echo "     (todo comienza DESACTIVADO por defecto)" ;;
-    pt:done_off)      echo "     (tudo começa DESATIVADO por padrão)" ;;
-    tr:done_off)      echo "     (varsayılan olarak her şey KAPALI başlar)" ;;
-    id:done_off)      echo "     (semuanya DINONAKTIFKAN secara default)" ;;
+    it:done_off)      echo "(tutto DISATTIVATO di default)" ;;
+    es:done_off)      echo "(todo DESACTIVADO por defecto)" ;;
+    pt:done_off)      echo "(tudo DESATIVADO por padrão)" ;;
+    tr:done_off)      echo "(varsayılan olarak hepsi KAPALI)" ;;
+    id:done_off)      echo "(semua NONAKTIF secara default)" ;;
     ru:done_off)      echo "     (по умолчанию всё ОТКЛЮЧЕНО)" ;;
     uk:done_off)      echo "     (за замовчуванням усе ВИМКНЕНО)" ;;
-    zh:done_off)      echo "     （默认情况下所有功能均为关闭状态）" ;;
-    ja:done_off)      echo "     （デフォルトではすべてオフになっています）" ;;
+    zh:done_off)      echo "（默认全部关闭）" ;;
+    ja:done_off)      echo "（デフォルトですべてオフ）" ;;
     ar:done_off)      echo "     (كل شيء معطل افتراضياً)" ;;
-     *:done_off)      echo "     features, everything starts OFF by default" ;;
-
-    fr:done_logs)     echo "  📄 Journaux : $MODPATH/logs/" ;;
-    de:done_logs)     echo "  📄 Logs: $MODPATH/logs/" ;;
-    pl:done_logs)     echo "  📄 Logi: $MODPATH/logs/" ;;
-    it:done_logs)     echo "  📄 Log: $MODPATH/logs/" ;;
-    es:done_logs)     echo "  📄 Registros: $MODPATH/logs/" ;;
-    pt:done_logs)     echo "  📄 Logs: $MODPATH/logs/" ;;
-    tr:done_logs)     echo "  📄 Günlükler: $MODPATH/logs/" ;;
-    id:done_logs)     echo "  📄 Log: $MODPATH/logs/" ;;
-    ru:done_logs)     echo "  📄 Логи: $MODPATH/logs/" ;;
-    uk:done_logs)     echo "  📄 Логи: $MODPATH/logs/" ;;
-    zh:done_logs)     echo "  📄 日志: $MODPATH/logs/" ;;
-    ja:done_logs)     echo "  📄 ログ: $MODPATH/logs/" ;;
-    ar:done_logs)     echo "  📄 السجلات: $MODPATH/logs/" ;;
-     *:done_logs)     echo "  📄 Logs: $MODPATH/logs/" ;;
+     *:done_off)      echo "features (all OFF by default)" ;;
 
     fr:stay_frosty)   echo "❆  Reste au frais !  ❆" ;;
     de:stay_frosty)   echo "❆  Bleib cool!  ❆" ;;
@@ -457,26 +349,12 @@ s() {
     zh:stay_frosty)   echo "❆  保持凉爽！  ❆" ;;
     ja:stay_frosty)   echo "❆  Stay Frosty!  ❆" ;;
     ar:stay_frosty)   echo "❆  Stay Frosty!  ❆" ;;
-     *:stay_frosty)   echo "❆  Stay Frosty!  ❆" ;;
-
-    fr:dirty_flash_hint)  echo "  ℹ️  En cas de problème après la mise à jour : Désinstaller → Redémarrer → Réinstaller" ;;
-    de:dirty_flash_hint)  echo "  ℹ️  Bei Problemen nach dem Update: Deinstallieren → Neustart → Neu installieren" ;;
-    pl:dirty_flash_hint)  echo "  ℹ️  W razie problemów po aktualizacji: Odinstaluj → Uruchom ponownie → Zainstaluj ponownie" ;;
-    it:dirty_flash_hint)  echo "  ℹ️  In caso di problemi dopo l'aggiornamento: Disinstalla → Riavvia → Reinstalla" ;;
-    es:dirty_flash_hint)  echo "  ℹ️  Si tienes problemas tras actualizar: Desinstalar → Reiniciar → Reinstalar" ;;
-    pt:dirty_flash_hint)  echo "  ℹ️  Em caso de problemas após atualizar: Desinstalar → Reiniciar → Reinstalar" ;;
-    tr:dirty_flash_hint)  echo "  ℹ️  Güncelleme sonrası sorun yaşarsanız: Kaldır → Yeniden başlat → Yeniden kur" ;;
-    id:dirty_flash_hint)  echo "  ℹ️  Jika mengalami masalah setelah pembaruan: Hapus → Mulai ulang → Pasang ulang" ;;
-    ru:dirty_flash_hint)  echo "  ℹ️  При проблемах после обновления: Удалить → Перезагрузить → Установить заново" ;;
-    uk:dirty_flash_hint)  echo "  ℹ️  При проблемах після оновлення: Видалити → Перезавантажити → Встановити заново" ;;
-    zh:dirty_flash_hint)  echo "  ℹ️  更新后如有问题：卸载 → 重启 → 重新安装" ;;
-    ja:dirty_flash_hint)  echo "  ℹ️  更新後に問題がある場合: アンインストール → 再起動 → 再インストール" ;;
-    ar:dirty_flash_hint)  echo "  ℹ️  في حال مواجهة مشاكل بعد التحديث: إلغاء التثبيت → إعادة التشغيل → إعادة التثبيت" ;;
-     *:dirty_flash_hint)  echo "  ℹ️  If facing any issues after updating: Uninstall → Reboot → Reinstall" ;;
+     *:stay_frosty)   echo "❆ Stay Frosty! ❆" ;;
 
   esac
 }
 
+s() { _s "$1" | sed 's/^ *//; s/  */ /g'; }
 
 stop_old_monitors() {
   local _old="/data/adb/modules/$MODID"
@@ -492,7 +370,7 @@ carry_old_state() {
   local _old="/data/adb/modules/$MODID" _f
   mkdir -p "$MODPATH/backup" "$MODPATH/tmp"
   [ -d "$_old/backup" ] && cp -a "$_old/backup/." "$MODPATH/backup/" 2>/dev/null
-  for _f in soo_disabled frozen_services.txt mt_keys.txt deep_doze_restricted.txt deep_doze_lockcycle; do
+  for _f in soo_disabled frozen_services.txt mt_keys.txt deep_doze_restricted.txt deep_doze_lockcycle deep_doze_allow.txt cad_unwl.txt cad_orig_wl.txt; do
     [ -f "$_old/tmp/$_f" ] && cp -f "$_old/tmp/$_f" "$MODPATH/tmp/"
   done
 }
@@ -525,14 +403,12 @@ USE_EXISTING=0
 
 if [ -f "$EXISTING_PREFS" ]; then
   print_section "$(s cfg_detected)"
-  ui_print ""
   ui_print "$(s cfg_vol_keep)"
   ui_print "$(s cfg_vol_reset)"
   ui_print "$(s cfg_timeout)"
-  ui_print ""
 
   if [ "$HAS_GETEVENT" -eq 0 ]; then
-    ui_print "$(s cfg_kept) (auto - no getevent)"
+    ui_print "$(s cfg_kept) (auto)"
     USE_EXISTING=1
   else
     case "$(_wait_vol_key "$TIMEOUT")" in
@@ -545,8 +421,6 @@ fi
 
 stop_old_monitors
 
-# Save Configuration
-print_section "$(s save_title)"
 mkdir -p "$MODPATH/config"
 
 if [ "$USE_EXISTING" -eq 1 ]; then
@@ -565,11 +439,8 @@ if [ "$USE_EXISTING" -eq 1 ]; then
     sed -i 's/^ENABLE_CUSTOM_APP_DOZE=.*/ENABLE_CUSTOM_APP_DOZE=1/' "$MODPATH/config/user_prefs"
   fi
   sed -i '/^ENABLE_GMS_DOZE=/d' "$MODPATH/config/user_prefs"
-  ui_print ""
-  ui_print "$(s save_kept)"
   if [ -f "$EXISTING_WHITELIST" ]; then
     cp -f "$EXISTING_WHITELIST" "$MODPATH/config/doze_whitelist.txt"
-    ui_print "$(s save_wl)"
   fi
   if [ -f "$EXISTING_PATCHES" ]; then
     cp -f "$EXISTING_PATCHES" "$MODPATH/config/doze_patches.txt"
@@ -591,30 +462,19 @@ if [ "$USE_EXISTING" -eq 1 ]; then
   fi
 else
   revert_old_install
-  ui_print ""
-  ui_print "$(s save_default)"
   SYSPROP="$MODPATH/system.prop"
   SYSPROP_OLD="$MODPATH/system.prop.old"
   [ -f "$SYSPROP" ] && mv "$SYSPROP" "$SYSPROP_OLD"
 fi
 
 print_section "$(s done_title)"
-ui_print ""
 if [ "$KSU" = "true" ] || [ "$APATCH" = "true" ]; then
   ui_print "$(s done_hotinstall)"
   ui_print "$(s done_hotinstall_note)"
 else
   ui_print "$(s done_reboot)"
 fi
-ui_print "$(s done_webui)"
-ui_print "$(s done_off)"
-ui_print "$(s done_logs)"
-INSTALLED_PROP="/data/adb/modules/$MODID/module.prop"
-if [ -f "$INSTALLED_PROP" ]; then
-  ui_print ""
-  ui_print "$(s dirty_flash_hint)"
-fi
-ui_print ""
+ui_print "$(s done_webui) $(s done_off)"
 print_section "$(s stay_frosty)"
 ui_print ""
 

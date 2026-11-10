@@ -74,11 +74,15 @@ _call_active() {
   return 1
 }
 
+_default_dialer() {
+  local _d
+  _d=$(cmd telecom get-default-dialer 2>/dev/null)
+  case "$_d" in ''|null|*[!A-Za-z0-9_.]*) _d="com.android.phone" ;; esac
+  echo "$_d"
+}
+
 _sensors_restrict() {
-  local _allow
-  _allow=$(cmd telecom get-default-dialer 2>/dev/null)
-  case "$_allow" in ''|null|*[!A-Za-z0-9_.]*) _allow="com.android.phone" ;; esac
-  dumpsys sensorservice restrict "$_allow" >/dev/null 2>&1
+  dumpsys sensorservice restrict "$(_default_dialer)" >/dev/null 2>&1
 }
 
 _sensors_enable() {

@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="hdr_sub">محسّن البطارية</string>
-  <string name="kpi_sub">من 19 نشط</string>
+  <string name="kpi_sub">من {max} نشط</string>
   <string name="status_count">{0} من {1} نشط</string>
-  <string name="home_active">نشط</string>
   <string name="menu_io">استيراد / تصدير</string>
   <string name="menu_lang">اللغة</string>
   <string name="menu_bugreport">تبليغ عن خطأ</string>
@@ -49,7 +48,6 @@
   <string name="loading_reverting_kernel">استعادة Kernel...</string>
   <string name="log_kernel_applied">Kernel: {0} مطبّق، {1} فشل/غير موجود، {2} متخطى</string>
   <string name="log_kernel_restored">Kernel: {0} تم استعادته</string>
-  <string name="log_kernel_vals_restored">Kernel: {0} قيم تم استعادتها</string>
   <string name="tgl_sysprops">خصائص النظام</string>
   <string name="tgl_sysprops_desc">تعطيل تسجيل التصحيح، توفير البطارية وRAM</string>
   <string name="loading_applying_sysprops">تفعيل خصائص النظام...</string>
@@ -61,7 +59,6 @@
   <string name="tgl_blur_desc">تقليل حمل GPU، أداء أكثر سلاسة على الأجهزة الأضعف</string>
   <string name="loading_applying_blur">تطبيق إعدادات الضبابية...</string>
   <string name="log_blur_state">الضبابية: {0}</string>
-  <string name="log_blur_restored">تم استعادة الضبابية</string>
   <string name="tgl_logs">إنهاء السجلات</string>
   <string name="tgl_logs_desc">إيقاف مسجّلات الخلفية، تحرير RAM</string>
   <string name="loading_killing_logs">إنهاء عمليات السجل...</string>
@@ -80,7 +77,6 @@
   <string name="cad_btn">◀ إدارة التطبيقات</string>
   <string name="cad_title">Doze للتطبيقات</string>
   <string name="cad_notice">ستتم إزالة التطبيقات المحددة من قائمة إعفاء Doze في Android ليتمكن النظام من تحسينها. يمكن تحديد GMS لـ GMS Doze.</string>
-  <string name="cad_search">البحث عن تطبيقات...</string>
   <string name="cad_loading">جارٍ التحميل...</string>
   <string name="cad_empty">لم يتم العثور على تطبيقات</string>
   <string name="cad_warn_system">⚠ هذه الحزمة مطلوبة من قبل النظام ولا يمكن إضافتها</string>
@@ -105,7 +101,6 @@
   <string name="wl_system">النظام</string>
   <string name="wl_loading">جارٍ تحميل التطبيقات...</string>
   <string name="wl_empty">لم يتم العثور على تطبيقات</string>
-  <string name="wl_sep_other">تطبيقات أخرى</string>
   <string name="loading_applying_deep_doze">تطبيق Doze العميق...</string>
   <string name="loading_reverting_deep_doze">استعادة Doze العميق...</string>
   <string name="loading_reapplying_deep">إعادة تطبيق Doze العميق...</string>
@@ -121,13 +116,11 @@
     <string name="multitask_title">ملف تعريف تعدد المهام</string>
 <string name="multitask_desc">اضبط مدى سرعة إغلاق تطبيقات الخلفية لتحرير RAM. "الأداء" يبقي المزيد من التطبيقات جاهزة. "توفير الطاقة" يغلق المزيد أبكر.</string>
   <string name="log_multitask_profile">تم ضبط ملف تعريف تعدد المهام على {0}</string>
-  <string name="log_multitask_reapplied">تمت إعادة تطبيق ملف تعريف تعدد المهام</string>
   <string name="loading_applying_mt">تطبيق ملف تعريف تعدد المهام...</string>
   <string name="loading_reverting_mt">استعادة ملف تعريف تعدد المهام...</string>
   <string name="log_mt_enabled">تم تفعيل ملف تعريف تعدد المهام: {0}</string>
   <string name="log_mt_reverted">تمت استعادة ملف تعريف تعدد المهام</string>
   <string name="log_mt_reapplied">تمت إعادة تطبيق ملف تعريف تعدد المهام</string>
-  <string name="log_mt_ram_off">تم تعطيل ملف تعريف تعدد المهام مع محسّن RAM</string>
   <string name="ram_wl_btn">◀ القائمة البيضاء لمنظف RAM</string>
   <string name="ram_wl_title">القائمة البيضاء لمنظف RAM</string>
   <string name="ram_wl_notice">التطبيقات في القائمة البيضاء لا يتم إيقافها قسراً أبداً بواسطة منظف RAM.</string>
@@ -184,13 +177,10 @@
   <string name="cat_games">الألعاب</string>
   <string name="cat_games_tag">يعطّل · Play Games</string>
   <string name="loading_freezing_services">تعطيل خدمات GMS...</string>
-  <string name="loading_freezing_cats">تعطيل فئات GMS...</string>
   <string name="log_gms_frozen">GMS: {0} معطّل، {1} معاد التفعيل، {2} فشل/غير موجود</string>
   <string name="log_gms_restored">GMS: {0} معاد التفعيل، {1} فشل/غير موجود</string>
   <string name="log_cat_frozen">{0}: {1} معطّل، {2} فشل/غير موجود</string>
   <string name="log_cat_restored">{0}: {1} معاد التفعيل، {2} فشل/غير موجود</string>
-  <string name="log_cats_enabled">جميع فئات GMS مفعّلة</string>
-  <string name="log_cats_disabled">جميع فئات GMS معطّلة</string>
   <string name="cat_bulk_enable">تفعيل الكل</string>
   <string name="cat_bulk_disable">تعطيل الكل</string>
   <string name="loading_enabling_all_cats">جارٍ تفعيل الفئات المتبقية...</string>
@@ -240,7 +230,6 @@
   <string name="loading_reverting_bss">استعادة توفير البطارية...</string>
   <string name="log_bss_applied">تم تطبيق ملف توفير البطارية</string>
   <string name="log_bss_reverted">تم استعادة توفير البطارية</string>
-  <string name="log_bss_reapplied">تم إعادة تطبيق توفير البطارية</string>
   <string name="tgl_ram_optimizer">محسّن RAM</string>
   <string name="tgl_ram_optimizer_desc">تقييد العمليات المخزنة مؤقتاً والفارغة في الخلفية، ضبط سلوك تبديل zram لمزيد من RAM الحرة</string>
   <string name="loading_applying_ram">تطبيق محسّن RAM...</string>
@@ -260,7 +249,6 @@
   <string name="rc_stat_freed">RAM محررة</string>
   <string name="io_title">استيراد / تصدير</string>
   <string name="io_export">تصدير الإعدادات الحالية</string>
-  <string name="io_backups">نسخ احتياطية محفوظة</string>
   <string name="io_empty">لم يتم العثور على نسخ احتياطية</string>
   <string name="io_loading">جارٍ التحميل...</string>
   <string name="io_error">خطأ في تحميل النسخ الاحتياطية</string>
@@ -275,7 +263,6 @@
   <string name="bugreport_title">تبليغ عن خطأ</string>
   <string name="bugreport_notice">يجمع معلومات تقنية عن الجهاز، وإعدادات Frosty وسجلاته، وقائمة بالوحدات الأخرى المثبتة لديك. أرفق هذا الملف عند الإبلاغ عن خطأ.</string>
   <string name="bugreport_generate">إنشاء تقرير خطأ</string>
-  <string name="bugreport_saved">التقارير المحفوظة</string>
   <string name="bugreport_empty">لم يتم العثور على تقارير أخطاء</string>
   <string name="bugreport_generated">تم حفظ تقرير الخطأ في Frosty/Logs</string>
   <string name="bugreport_failed">فشل إنشاء تقرير الخطأ</string>
@@ -286,19 +273,11 @@
   <string name="loading_freezing">تعطيل</string>
   <string name="loading_unfreezing">إعادة تفعيل</string>
   <string name="loading_enabling_all">تفعيل جميع الإعدادات...</string>
-  <string name="loading_enabling_toggles">تفعيل جميع المفاتيح...</string>
   <string name="loading_reverting_all">استعادة كل شيء...</string>
-  <string name="loading_disabling_toggles">تعطيل جميع المفاتيح...</string>
-  <string name="loading_disabling_cats">تعطيل جميع الفئات...</string>
-  <string name="loading_restoring_kernel">استعادة قيم Kernel...</string>
-  <string name="loading_re_enabling_gms">إعادة تفعيل خدمات GMS...</string>
-  <string name="loading_restoring_blur">استعادة الضبابية...</string>
   <string name="loading_reapplying">إعادة تطبيق الإعدادات...</string>
   <string name="log_freeze_all">تفعيل الكل: تشغيل كل شيء...</string>
   <string name="log_reverting_all">استعادة الكل: تعطيل كل شيء...</string>
   <string name="log_reapply_start">بدء إعادة التطبيق...</string>
-  <string name="log_toggles_enabled">جميع مفاتيح النظام مفعّلة</string>
-  <string name="log_toggles_disabled">جميع مفاتيح النظام معطّلة</string>
   <string name="toast_frozen">تم تعطيل كل شيء وتطبيقه</string>
   <string name="toast_stocked">تم استعادة كل شيء إلى الوضع الأصلي</string>
   <string name="toast_refreshed">تم التحديث</string>
@@ -312,7 +291,6 @@
   <string name="toast_nothing_to_apply">لا شيء للتطبيق - فعّل شيئاً أولاً</string>
   <string name="sec_log">سجل النشاط</string>
   <string name="log_webui_ready">WebUI جاهز</string>
-  <string name="log_empty">لا نشاط بعد</string>
   <string name="log_reboot_effect">أعد التشغيل للتأثير الكامل</string>
   <string name="log_not_applied">الإعدادات المحفوظة غير مطبّقة بعد. أعد التشغيل أو استخدم إعادة تطبيق الإعدادات قسراً.</string>
   <string name="kpi_title">حالة النظام</string>
@@ -326,8 +304,5 @@
   <string name="theme_retro_desc">مظهر Windows 95 الكلاسيكي.</string>
   <string name="theme_terminal_desc">شاشة فوسفور CRT لسطر الأوامر.</string>
   <string name="theme_handheld_desc">واجهة جهاز ألعاب محمول.</string>
-  <string name="about_github">عرض على GitHub</string>
   <string name="about_desc">أقصى توفير للبطارية وتحسين GMS. تعطيل خدمات GMS، تفعيل Doze، إنهاء السجلات، تطبيق تحسينات Kernel. استخدم زر WebUI لتعديل الإعدادات.</string>
-  <string name="ksu_unavailable_title">KSU API غير متاح</string>
-  <string name="ksu_unavailable_desc">يتطلب WebUI هذا KernelSU. لـ Magisk/APatch، استخدم زر الإجراء أو WebUI-X.</string>
 </resources>
